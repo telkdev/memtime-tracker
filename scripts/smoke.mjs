@@ -107,6 +107,8 @@ async function main() {
   const mockPort = await freePort()
   const appPort = await freePort()
   const upstream = `http://127.0.0.1:${mockPort}/api/v1`
+  // Counted by the mock itself, so a window reset can't hide a spent request.
+  const upstreamRequests = async () => Number(await (await fetch(`http://127.0.0.1:${mockPort}/__requests`)).text())
   const mock = start('node', ['scripts/mock-api.mjs', String(mockPort)], { MOCK_LATENCY_MS: '20' })
   await waitFor(`http://127.0.0.1:${mockPort}/health`, mock)
 
@@ -161,11 +163,11 @@ async function main() {
   const missingTask = await call(base, '/api/tasks/999999')
   check('unknown task → 404 NOT_FOUND', missingTask.status === 404 && missingTask.json?.error?.code === 'NOT_FOUND')
   // An oversized page is refused by the query schema; the limiter must not have spent a token.
-  const before = await call(base, '/api/_meta/rate-limit')
+  const before = await upstreamRequests()
   const oversized = await call(base, '/api/time-entries?limit=1000')
-  const after = await call(base, '/api/_meta/rate-limit')
+  const after = await upstreamRequests()
   check('oversized page → 400 VALIDATION', oversized.status === 400 && oversized.json?.error?.code === 'VALIDATION', `status ${oversized.status}`)
-  check('oversized page costs no upstream call', after.json?.remaining >= before.json?.remaining, `${before.json?.remaining} → ${after.json?.remaining}`)
+  check('oversized page costs no upstream call', after === before, `${before} → ${after} upstream requests`)
   const unknown = await call(base, '/api/nope')
   check('unknown API route → BFF 404 shape', unknown.status === 404 && isBffError(unknown))
 
@@ -176,10 +178,10 @@ async function main() {
   }
   else {
     check('POST {} → 400 with field errors', empty.status === 400 && isBffError(empty) && !!empty.json.error.fields)
-    const beforeBad = await call(base, '/api/_meta/rate-limit')
+    const beforeBad = await upstreamRequests()
     await call(base, '/api/time-entries', { method: 'POST', body: JSON.stringify({ taskId: 1001, comment: '', start: 'yesterday', end: 'now' }) })
-    const afterBad = await call(base, '/api/_meta/rate-limit')
-    check('invalid POST costs no upstream call', afterBad.json?.remaining >= beforeBad.json?.remaining, `${beforeBad.json?.remaining} → ${afterBad.json?.remaining}`)
+    const afterBad = await upstreamRequests()
+    check('invalid POST costs no upstream call', afterBad === beforeBad, `${beforeBad} → ${afterBad} upstream requests`)
     const notJson = await call(base, '/api/time-entries', { method: 'POST', body: '{not json' })
     check('POST invalid JSON → 400 BFF shape', notJson.status === 400 && isBffError(notJson))
     const body = JSON.stringify({ taskId: 1001, comment: 'Smoke test', start: '2026-10-22T08:00:00.000Z', end: '2026-10-22T09:30:00.000Z' })

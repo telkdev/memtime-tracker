@@ -69,6 +69,8 @@ function list(rows, query) {
   return sorted.slice(offset, offset + limit)
 }
 
+let apiRequests = 0
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`)
   let rlHeaders = {}
@@ -79,6 +81,9 @@ const server = createServer(async (req, res) => {
   await new Promise(r => setTimeout(r, LATENCY_MS))
 
   if (url.pathname === '/health') return res.end('I\'m alive!')
+  // Test-only: how many API requests reached the mock, so smoke can prove a request cost nothing.
+  if (url.pathname === '/__requests') return res.end(String(apiRequests))
+  apiRequests++
   const key = (req.headers.authorization ?? '').replace(/^Bearer /, '')
   if (!key) {
     res.writeHead(401, { 'Content-Type': 'text/plain' })
