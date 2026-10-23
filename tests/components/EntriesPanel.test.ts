@@ -52,13 +52,31 @@ describe('EntriesPanel', () => {
     useState('task-names:queue').value = []
     useState('task-names:running').value = 0
   })
-  afterEach(() => {
+  afterEach(async () => {
+    // Let name lookups finish, so a late answer can't fill the next test's state.
+    await vi.waitFor(() => expect(useState('task-names:running').value).toBe(0))
     while (mounted.length) mounted.pop()!.unmount()
   })
 
   it('requests the page and size from the URL', async () => {
     await mountAt('/?page=3&size=10')
     expect(listCalls.at(-1)).toMatchObject({ limit: '10', offset: '20' })
+  })
+
+  it('sends one request per page change, not one per watcher', async () => {
+    await mountAt('/')
+    await useRouter().push('/?page=2')
+    await vi.waitFor(() => expect(listCalls).toHaveLength(2))
+    await flushPromises()
+    expect(listCalls.map(q => q.offset)).toEqual(['0', '25'])
+  })
+
+  it('reloads the page on screen once when a write clears the cache', async () => {
+    await mountAt('/')
+    useTimeEntryCache().invalidate()
+    await vi.waitFor(() => expect(listCalls).toHaveLength(2))
+    await flushPromises()
+    expect(listCalls.map(q => q.offset)).toEqual(['0', '0'])
   })
 
   it('shows entries grouped by local day with totals and local times', async () => {

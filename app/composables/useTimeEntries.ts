@@ -142,9 +142,11 @@ export function useTimeEntries() {
       router.replace({ query: queryFor(position.value.page, position.value.size) })
     }
     watch(() => pageKey(position.value.page, position.value.size), () => load(), { immediate: true })
-    // A write elsewhere cleared the cache: reload what's on screen.
+    // A write elsewhere cleared the cache: reload what's on screen. A page change also turns
+    // `current` empty for a moment, but the key watcher above already loads that one.
     watch(current, (page, before) => {
-      if (!page && before) load()
+      const { page: n, size } = position.value
+      if (!page && before && before.key === pageKey(n, size)) load()
     })
     onScopeDispose(clearRetry)
   }
