@@ -218,4 +218,14 @@ describe('EntriesPanel', () => {
     await mountAt('/?page=3&size=10')
     expect(useLastListPosition().value).toEqual({ page: 3, size: 10 })
   })
+
+  it('shows the brief\'s columns, and the task id even once the name is known', async () => {
+    const wrapper = await mountAt('/')
+    await vi.waitFor(() => expect(wrapper.text()).toContain('Design review'))
+    const headers = wrapper.findAll('thead th').map(th => th.text())
+    expect(headers).toEqual(expect.arrayContaining(['ID', 'Task ID', 'Comment', 'Start', 'End', 'Created At']))
+    const row = wrapper.find('tr[data-entry-id="103"]')
+    expect(row.text()).toContain('#7')
+    expect(row.text()).toContain('Design review')
+  })
 })

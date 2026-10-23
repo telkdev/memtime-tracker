@@ -16,7 +16,7 @@ const title = computed(() => {
   >
     <template v-if="label?.name">
       <div class="truncate font-medium text-highlighted">
-        {{ label.name }}
+        <span class="font-normal tabular-nums text-muted">#{{ taskId }}</span> {{ label.name }}
       </div>
       <div
         v-if="label.path"

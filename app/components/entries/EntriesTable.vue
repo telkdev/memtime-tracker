@@ -42,7 +42,7 @@ function onRowClick(event: MouseEvent, entry: TimeEntry) {
             scope="col"
             class="w-[22%] px-2 py-1 font-medium"
           >
-            Task
+            Task ID
           </th>
           <th
             scope="col"
@@ -72,7 +72,7 @@ function onRowClick(event: MouseEvent, entry: TimeEntry) {
             scope="col"
             class="w-28 py-1 pl-4 pr-2 font-medium"
           >
-            Created
+            Created At
           </th>
           <th
             scope="col"

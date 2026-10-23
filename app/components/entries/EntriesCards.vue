@@ -43,7 +43,7 @@ defineProps<{
               <span class="shrink-0 tabular-nums font-medium">{{ formatDuration(durationMs(entry.start, entry.end)) }}</span>
             </div>
             <div class="text-sm tabular-nums text-muted">
-              {{ formatTime(entry.start) }}–{{ formatTime(entry.end) }}<template v-if="entryEndDays(entry)"> (+{{ entryEndDays(entry) }}d)</template> · #{{ entry.id }} · created {{ formatShortDateTime(entry.createdAt) }}
+              {{ formatTime(entry.start) }}–{{ formatTime(entry.end) }}<template v-if="entryEndDays(entry)"> (+{{ entryEndDays(entry) }}d)</template> · #{{ entry.id }} · created at {{ formatShortDateTime(entry.createdAt) }}
             </div>
             <p class="line-clamp-2 text-sm">
               {{ entry.comment }}
