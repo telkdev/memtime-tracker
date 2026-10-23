@@ -79,6 +79,32 @@ describe('EntriesPanel', () => {
     expect(listCalls.map(q => q.offset)).toEqual(['0', '0'])
   })
 
+  it('shows an already-seen page again without asking the server (within the cache TTL)', async () => {
+    await mountAt('/')
+    const router = useRouter()
+    await router.push('/?page=2')
+    await vi.waitFor(() => expect(listCalls).toHaveLength(2))
+    await router.push('/?page=1')
+    await flushPromises()
+    expect(listCalls).toHaveLength(2)
+    expect(listCalls.map(q => q.offset)).toEqual(['0', '25'])
+  })
+
+  it('follows back and forward through pages via the URL', async () => {
+    const wrapper = await mountAt('/')
+    const router = useRouter()
+    await router.push('/?page=2')
+    await vi.waitFor(() => expect(wrapper.text()).toContain('Page 2'))
+    router.back()
+    await vi.waitFor(() => expect(router.currentRoute.value.query.page).toBeUndefined())
+    await vi.waitFor(() => expect(wrapper.text()).toContain('Page 1'))
+    router.forward()
+    await vi.waitFor(() => expect(router.currentRoute.value.query.page).toBe('2'))
+    await vi.waitFor(() => expect(wrapper.text()).toContain('Page 2'))
+    // Both pages came from memory after the first visit.
+    expect(listCalls).toHaveLength(2)
+  })
+
   it('shows entries grouped by local day with totals and local times', async () => {
     const wrapper = await mountAt('/')
     await vi.waitFor(() => expect(wrapper.text()).toContain('Sprint planning'))

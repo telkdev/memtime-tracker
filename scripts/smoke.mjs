@@ -161,6 +161,12 @@ async function main() {
   check('bad id → 400 VALIDATION', badId.status === 400 && badId.json?.error?.code === 'VALIDATION')
   const missingTask = await call(base, '/api/tasks/999999')
   check('unknown task → 404 NOT_FOUND', missingTask.status === 404 && missingTask.json?.error?.code === 'NOT_FOUND')
+  // An oversized page is refused by the query schema; the limiter must not have spent a token.
+  const before = await call(base, '/api/_meta/rate-limit')
+  const oversized = await call(base, '/api/time-entries?limit=1000')
+  const after = await call(base, '/api/_meta/rate-limit')
+  check('oversized page → 400 VALIDATION', oversized.status === 400 && oversized.json?.error?.code === 'VALIDATION', `status ${oversized.status}`)
+  check('oversized page costs no upstream call', after.json?.remaining >= before.json?.remaining, `${before.json?.remaining} → ${after.json?.remaining}`)
   const unknown = await call(base, '/api/nope')
   check('unknown API route → BFF 404 shape', unknown.status === 404 && isBffError(unknown))
 

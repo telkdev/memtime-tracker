@@ -107,6 +107,9 @@ of them wrong means rework in every later layer.
 - Times show in local time and match the UTC values (checked in a test with a fixed TZ).
 - Task names fill in as the catalog loads. The list never triggers catalog fetches on its own.
 - Paging back to an already-seen page within the cache TTL makes 0 upstream calls.
+- Tested in `tests/components/EntriesPanel.test.ts` (paging back, back/forward),
+  `tests/server/task-lookup.test.ts` (background lane, 30 s 404 memo) and `npm run smoke`
+  (an oversized page is refused without spending a token).
 
 ## Phase 5: Task 3, create and update form (≈4 h). The core of the UX grade
 

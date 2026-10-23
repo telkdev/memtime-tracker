@@ -54,7 +54,8 @@ describe('time entries list (BFF)', () => {
     expect(page).toMatchObject({ hasMore: false, nextOffset: null })
   })
 
-  it('rejects an oversized page locally, before spending budget', () => {
+  // The end-to-end "no upstream call" half of this is in scripts/smoke.mjs (rate-limit snapshot).
+  it('the list query schema refuses an oversized page and defaults the rest', () => {
     expect(timeEntryListQuerySchema.safeParse({ limit: '1000' }).success).toBe(false)
     expect(timeEntryListQuerySchema.parse({})).toEqual({ limit: 25, offset: 0 })
   })
