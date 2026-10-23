@@ -90,6 +90,9 @@ export function useEntryForm(opts: EntryFormOptions) {
     durationText.value = text
     const ms = parseDuration(text)
     durationInvalid.value = text.trim() !== '' && ms === null
+    // A refused End stays refused until something actually moves End; otherwise the End box would
+    // keep the refused text while the form saves a different time.
+    const moved = ms !== durationMs.value && !(ms === null && text.trim() !== '')
     if (ms !== null) {
       durationMs.value = ms
       if (anchorNow) {
@@ -100,7 +103,7 @@ export function useEntryForm(opts: EntryFormOptions) {
       }
     }
     else if (text.trim() === '') durationMs.value = null
-    endError.value = null
+    if (moved) endError.value = null
   }
 
   function repeatsLaterTonight(startAt: Date, text: string) {

@@ -87,8 +87,17 @@ describe('useEntryForm', () => {
     form.setDate('2026-10-25')
     form.setStartTime('02:15') // first occurrence, CEST (00:15Z)
     form.setEndTime('02:15') // the second 02:15, CET (01:15Z)
-    expect(form.errors.value.end).toBeUndefined()
+    expect(form.isValid.value).toBe(true)
     expect(form.durationMs.value).toBe(60 * 60_000)
+  })
+
+  it('keeps a refused End refused when the duration is entered again unchanged', async () => {
+    const form = filled() // 09:00 + 1h30
+    form.setEndTime('09:00')
+    form.setDurationText('1h30') // same chip clicked again: End doesn't move
+    expect(form.isValid.value).toBe(false)
+    form.setDurationText('2h') // End moves to 11:00, so the old error no longer applies
+    expect(form.isValid.value).toBe(true)
   })
 
   it('drops a stale End error when Start or Date changes, so a valid entry can be saved', async () => {
