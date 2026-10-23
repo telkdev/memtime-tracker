@@ -10,7 +10,9 @@ import {
   parseDuration,
   resolveEndTime,
   resolveLocal,
+  sameInstant,
   toTimeString,
+  toUtcIso,
   type Occurrence,
 } from '~/utils/time'
 
@@ -58,7 +60,7 @@ export function useEntryForm(opts: EntryFormOptions) {
   if (opts.entry) {
     // An edited entry may sit on the second pass through a repeated hour; keep it there.
     const r = resolveLocal(date.value, startTime.value, 'second')
-    if (r.ok && r.ambiguous && r.instant.toISOString() === new Date(opts.entry.start).toISOString()) startOccurrence.value = 'second'
+    if (r.ok && r.ambiguous && sameInstant(r.instant, opts.entry.start)) startOccurrence.value = 'second'
   }
 
   const start = computed(() => resolveLocal(date.value, startTime.value, startOccurrence.value))
@@ -134,8 +136,8 @@ export function useEntryForm(opts: EntryFormOptions) {
   const payload = computed(() => ({
     taskId: taskId.value ?? undefined,
     comment: comment.value,
-    start: start.value.ok ? start.value.instant.toISOString() : '',
-    end: end.value?.toISOString() ?? '',
+    start: start.value.ok ? toUtcIso(start.value.instant) : '',
+    end: end.value ? toUtcIso(end.value) : '',
   }))
 
   const localErrors = computed(() => {

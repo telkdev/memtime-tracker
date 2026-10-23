@@ -1,14 +1,14 @@
 // Pure helpers behind the entry form's defaults and warnings. They only look at entries that are
 // already loaded, so they never cost a request.
 import type { TimeEntry } from '#shared/schemas/timeEntry'
-import { roundDownToMinutes } from './time'
+import { roundDownToMinutes, startOfLocalDay } from './time'
 
 const FIVE_MIN_MS = 5 * 60_000
 export const LONG_ENTRY_MS = 12 * 60 * 60_000
 
 /** End of the latest entry that ended earlier today, else now rounded down to 15 minutes. */
 export function defaultStart(entries: readonly TimeEntry[], now: Date): Date {
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const startOfDay = startOfLocalDay(now).getTime()
   let latest: number | undefined
   for (const e of entries) {
     const end = Date.parse(e.end)

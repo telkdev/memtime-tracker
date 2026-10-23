@@ -201,3 +201,18 @@ export function parseDuration(input: string): number | null {
   }
   return null
 }
+
+/** The one place an instant becomes the UTC string we send upstream (hard rule 4). */
+export function toUtcIso(instant: Date): string {
+  return instant.toISOString()
+}
+
+/** Midnight at the start of `d`'s local calendar day. */
+export function startOfLocalDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
+
+/** True when two timestamps (Date or ISO string) are the same instant. */
+export function sameInstant(a: DateInput, b: DateInput): boolean {
+  return new Date(a).getTime() === new Date(b).getTime()
+}

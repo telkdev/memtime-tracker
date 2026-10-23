@@ -56,3 +56,12 @@ describe('time display helpers', () => {
     expect(formatDay('2025-10-23T07:00:00Z', 'en-GB', now)).toMatch(/^Thu,? 23 Oct 2025$/)
   })
 })
+
+describe('instant helpers', () => {
+  it('sends UTC with Z and finds the local midnight (Berlin)', async () => {
+    const { toUtcIso, startOfLocalDay, sameInstant } = await import('../../app/utils/time')
+    expect(toUtcIso(new Date(2026, 9, 23, 9, 0))).toBe('2026-10-23T07:00:00.000Z')
+    expect(startOfLocalDay(new Date(2026, 9, 23, 0, 30)).toISOString()).toBe('2026-10-22T22:00:00.000Z')
+    expect(sameInstant('2026-10-23T07:00:00Z', new Date('2026-10-23T07:00:00.000Z'))).toBe(true)
+  })
+})
