@@ -70,21 +70,24 @@ goes through `server/utils/memtime.ts`.
 
 ```
 app/
-  pages/                index.vue (tree + entries); Task 3 adds entries/new.vue, entries/[id]/edit.vue
+  pages/                index.vue (tree + entries), entries/new.vue, entries/[id]/edit.vue
   components/
     tree/               ClientTree.vue, TreeRow.vue, TreeToolbar.vue (rows built by utils/tree-rows.ts)
     entries/            EntriesPanel.vue, EntriesTable.vue, EntriesCards.vue, EntriesPager.vue, EntriesStatus.vue,
-                        EntriesTaskCell.vue; Task 3 adds EntryForm, TaskPicker, DurationInput
+                        EntriesTaskCell.vue; the form: EntryForm, EntryTimeFields, FormWarnings,
+                        FormAlerts, TaskPicker, TaskBrowser, DurationInput, EditEntry
     common/             RateLimitIndicator.vue, RetryCountdown.vue
-  composables/          useCatalog, useTimeEntries, useTaskNames, useRateLimitState, useNow
-  utils/                time.ts (local↔UTC, duration), api-error.ts (parseApiError), catalog.ts,
-                        entries.ts, tree-rows.ts
+  composables/          useCatalog, useTimeEntries (+ useTimeEntryCache, useReturnToList), useTaskNames,
+                        useRateLimitState, useNow, useEntryForm, useEntrySources, useEntrySaved,
+                        useLeaveGuard, useTimeEntry
+  utils/                time.ts (local↔UTC, DST, duration), api-error.ts (parseApiError), catalog.ts,
+                        entries.ts, tree-rows.ts, entry-form.ts, task-options.ts, errors.ts
 server/
   api/
     clients/index.get.ts, clients/[id]/projects.get.ts, projects/[id]/tasks.get.ts
     tasks/[id].get.ts              # name lookup for the entries list (background lane)
     catalog/refresh.post.ts        # drop the catalog cache
-    time-entries/index.get.ts      # Task 3 adds index.post.ts, [id].get.ts, [id].put.ts
+    time-entries/index.get.ts, index.post.ts, [id].get.ts, [id].put.ts
     _meta/rate-limit.get.ts        # local budget snapshot, costs no upstream call
     [...].ts                       # unknown /api/* → BFF 404 shape
   plugins/check-config.ts          # fail at startup without a key
@@ -94,10 +97,10 @@ server/
     rate-limiter.ts       # fixed window + priority lanes (pure, unit-tested)
     cache.ts              # TTL + SWR cache, in-flight coalescing
     errors.ts             # ApiException, anything thrown → ApiError body
-    api-handler.ts        # defineApiHandler, parseParams, parseQuery
-    catalog.ts, time-entries.ts
+    api-handler.ts        # defineApiHandler, parseParams, parseQuery, readJsonBody
+    catalog.ts, time-entries.ts, task-lookup.ts
 shared/
-  schemas/                # zod + inferred types: catalog, timeEntry, common (ApiError, Page)
+  schemas/                # zod + inferred types: catalog, timeEntry, timeEntryInput, common (ApiError, Page, ids)
 tests/
   unit/  server/  components/  fixtures/
 scripts/

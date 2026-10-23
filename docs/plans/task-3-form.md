@@ -69,9 +69,9 @@ Tests (fixed `TZ=Europe/Berlin`): round trip for normal times; 23:00 + 2h → ne
 gap at 02:30 on 2026-03-29; overlap at 02:30 on 2026-10-25 (both occurrences produce different
 UTC instants 1 h apart); every duration format plus junk.
 
-## Shared schema: `shared/schemas/timeEntry.ts`
+## Shared schema: `shared/schemas/timeEntryInput.ts`
 
-Adds `TimeEntryInput` next to Task 2's `TimeEntry` output schema (it doesn't replace it):
+`TimeEntryInput` lives in its own file next to Task 2's `TimeEntry` output schema (it doesn't replace it):
 
 ```ts
 TimeEntryInput = z.object({
@@ -101,7 +101,8 @@ to a shared piece; it comes with its own limiter test.
 
 ### Retry policy for writes (different from reads, on purpose)
 - **429** → retry is safe (the request wasn't processed). Same backoff as reads.
-- **PUT** on 5xx or network error → safe to retry once (PUT is idempotent).
+- **PUT** on 5xx or network error → not retried automatically either; the user retries (safe, PUT is
+  idempotent). Only a 429 is retried, by the client and the form's countdown.
 - **POST** on 5xx, timeout or connection reset → **never retried automatically**. The upstream has
   no idempotency key, so a retry could create a duplicate entry. The error says so (below).
 - **Duplicate-submit guard**: the BFF coalesces identical POST bodies that arrive within 5 s into
@@ -112,8 +113,8 @@ to a shared piece; it comes with its own limiter test.
 | Upstream | BFF | User sees |
 |---|---|---|
 | our Zod failure | 400 `VALIDATION`, `fields` | message under each field |
-| 400 `Invalid JSON body` | 400 `UPSTREAM_REJECTED` | "The server rejected this entry. Nothing was saved." (and log it: from our UI this means a bug in the BFF) |
-| 400 other text | 400 `UPSTREAM_REJECTED`, `fields` via a small lookup (`taskId`, `start`, `end`, `comment` mentioned in the text) | field message, or the summary with the server's reason |
+| 400 `Invalid JSON body` | 400 `BAD_REQUEST` | "The server rejected this entry. Nothing was saved." (and log it: from our UI this means a bug in the BFF) |
+| 400 other text | 400 `BAD_REQUEST`, `fields` via a small lookup (`taskId`, `start`, `end`, `comment` mentioned in the text) | field message, or the summary with the server's reason |
 | 404 `Time entry #N not found` | 404 `ENTRY_NOT_FOUND` | see the 404 flow below |
 | 404 `Unknown user` | 502 `UPSTREAM_AUTH` | "Server is misconfigured" (from Task 1) |
 | 429 after retries | 429 `RATE_LIMITED`, `retryAfter` | countdown, auto-retry once |
@@ -184,9 +185,10 @@ Banner: "This entry no longer exists. It may have been deleted." Actions: **"Cre
 A deep link to a missing id (`GET` 404) shows a page-level empty state with "Log new entry".
 
 ### Network or 5xx
-- PUT: "Couldn't reach the server. Your changes aren't saved." + Retry.
+- PUT: "Couldn't reach the server, so your changes may not be saved. Saving again is safe." + Retry.
 - POST: "Couldn't reach the server. The entry may not have been saved. Check the list before
-  trying again." + "Open list in new tab" + Retry. Honest, because we can't know.
+  trying again." + Retry. Honest, because we can't know. (An "Open list in new tab" action was
+  planned but left out: the list is one Cancel away and keeps the user's page.)
 
 ## Pages
 - `/entries/new` (`?taskId=` optional)
@@ -211,19 +213,19 @@ A deep link to a missing id (`GET` 404) shows a page-level empty state with "Log
 6. Component tests for the ACs below, then `npm run check` (≈45 min)
 
 ## Acceptance criteria
-- [ ] Keyboard only: pick a recent task, enter `1h30`, a comment, save, in under 10 seconds.
-- [ ] End before start can't be produced; End ≤ Start rolls to the next day with a visible badge.
-- [ ] 23:00 + 2h on 2026-10-22 saves `2026-10-22T21:00:00.000Z` → `2026-10-22T23:00:00.000Z`
+- [ ] Keyboard only: pick a recent task, enter `1h30`, a comment, save, in under 10 seconds. (the path exists: task → duration → comment → Ctrl+Enter; not tested or timed in a browser)
+- [x] End before start can't be produced; End ≤ Start rolls to the next day with a visible badge.
+- [x] 23:00 + 2h on 2026-10-22 saves `2026-10-22T21:00:00.000Z` → `2026-10-22T23:00:00.000Z`
       (Berlin, CEST).
-- [ ] 02:30 on 2026-03-29 shows the gap hint and can't be saved until fixed.
-- [ ] 02:30 on 2026-10-25 offers first/second occurrence; the two save as different UTC instants.
-- [ ] A mocked 404 on update offers "Create as new entry" with all values kept.
-- [ ] A mocked 400 with a field error shows it next to that field; `Invalid JSON body` shows the
+- [x] 02:30 on 2026-03-29 shows the gap hint and can't be saved until fixed.
+- [x] 02:30 on 2026-10-25 offers first/second occurrence; the two save as different UTC instants.
+- [x] A mocked 404 on update offers "Create as new entry" with all values kept.
+- [x] A mocked 400 with a field error shows it next to that field; `Invalid JSON body` shows the
       summary.
-- [ ] Double-clicking Save sends exactly one request (client) and the BFF coalesces duplicates.
-- [ ] A POST network failure is not retried automatically and says the entry may not be saved.
-- [ ] Invalid input costs 0 upstream calls.
-- [ ] `npm run check` passes.
+- [x] Double-clicking Save sends exactly one request (client) and the BFF coalesces duplicates.
+- [x] A POST network failure is not retried automatically and says the entry may not be saved.
+- [x] Invalid input costs 0 upstream calls.
+- [x] `npm run check` passes.
 
 ## Out of scope (on purpose)
 - Timer mode (start/stop): the most useful next feature, listed in the README.

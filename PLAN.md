@@ -77,7 +77,7 @@ of them wrong means rework in every later layer.
       lookup map `taskId → { task, project, client }` for the picker and list.
 - [x] `ClientTree.vue` / `TreeRow.vue`: skeletons, inline retry, "Load more" past the cap,
       keyboard navigation, ARIA tree roles.
-- [ ] Enter or the "Log time" action on a task → new entry form with the task prefilled.
+- [x] Enter or the "Log time" action on a task → new entry form with the task prefilled.
 - [ ] Optional: low-priority background prefetch of the first few clients' projects, only while the
       bucket has spare tokens.
 
@@ -113,22 +113,22 @@ of them wrong means rework in every later layer.
 
 ## Phase 5: Task 3, create and update form (≈4 h). The core of the UX grade
 
-- [ ] `app/utils/time.ts`: local date+time ↔ UTC ISO, duration parse/format, DST gap and overlap
+- [x] `app/utils/time.ts`: local date+time ↔ UTC ISO, duration parse/format, DST gap and overlap
       detection.
-- [ ] `TaskPicker.vue`: combobox over recent tasks + loaded catalog, showing
+- [x] `TaskPicker.vue`: combobox over recent tasks + loaded catalog, showing
       `Client › Project › Task`, with a "Browse tree" fallback.
-- [ ] `DurationInput.vue`: accepts `1h 30m`, `1:30`, `90m`, `1.5h` and stays in sync with End.
-- [ ] `EntryForm.vue`: smart defaults (start = end of the last entry today, or now rounded to
+- [x] `DurationInput.vue`: accepts `1h 30m`, `1:30`, `90m`, `1.5h` and stays in sync with End.
+- [x] `EntryForm.vue`: smart defaults (start = end of the last entry today, or now rounded to
       15 min), shared zod validation, field-level errors, warnings (over 12 h, in the future,
       overlap), double-submit guard, warning on leaving with unsaved changes.
-- [ ] Routes: `POST /api/time-entries` (upstream 201), `PUT /api/time-entries/:id`,
+- [x] Routes: `POST /api/time-entries` (upstream 201), `PUT /api/time-entries/:id`,
       `GET /api/time-entries/:id`. Validate the body with the shared schema (end > start, comment
       1 to 500 chars, numeric taskId) **before** spending budget. Use write priority and
       invalidate the list cache.
-- [ ] Pages: `/entries/new` (optional `?taskId=`), `/entries/:id/edit` (prefilled from the list
+- [x] Pages: `/entries/new` (optional `?taskId=`), `/entries/:id/edit` (prefilled from the list
       cache, otherwise `GET /time-entries/:id`, so deep links work).
-- [ ] Results: toast "Entry #123 created" / "updated", redirect with the row highlighted.
-- [ ] Errors: 400 → field errors or a readable summary. 404 → "This entry no longer exists" plus
+- [x] Results: toast "Entry #123 created" / "updated", redirect with the row highlighted.
+- [x] Errors: 400 → field errors or a readable summary. 404 → "This entry no longer exists" plus
       "Create as new". 429 → countdown and auto-retry. Network or 5xx → values kept and a Retry
       button.
 
@@ -147,10 +147,11 @@ of them wrong means rework in every later layer.
 - [ ] Accessibility pass: labels, focus order, `aria-describedby` on errors, contrast, visible
       focus.
 - [ ] Rate-limit banner, driven by BFF 429s and `/api/_meta/rate-limit`.
-- [ ] Security headers in the Nitro route rules (CSP, `X-Content-Type-Options`, `Referrer-Policy`).
+- [x] Security headers in the Nitro route rules (`X-Content-Type-Options`, `Referrer-Policy`,
+      `X-Frame-Options`). CSP is not set yet: Nuxt's inline hydration script needs a nonce setup.
 - [ ] Optional: Playwright smoke test (expand → pick task → create → see it in the list) against a
       mocked BFF.
-- [ ] README: setup, architecture diagram, the rate-limit strategy, trade-offs, known limits, and
+- [x] README: setup, architecture diagram, the rate-limit strategy, trade-offs, known limits, and
       what I'd do next (below).
 - [ ] Final check: no secrets in git history (`git log -p | grep -i bearer`), CI green.
 
