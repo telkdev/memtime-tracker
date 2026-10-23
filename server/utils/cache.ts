@@ -12,7 +12,7 @@ export interface CachedOptions {
   ttlMs: number
   /** After ttlMs, serve the stale value for this long while refreshing in the background. */
   staleMs?: number
-  /** Skip the cached value (still coalesces with an in-flight fetch). */
+  /** Skip the cached value. Still joins an in-flight cold load, never a background revalidation. */
   force?: boolean
 }
 
@@ -31,7 +31,9 @@ export function createCache(opts: { now?: () => number } = {}) {
   function load<T>(key: string, fn: Loader<T>, o: CachedOptions, revalidating: boolean): Promise<T> {
     const pending = inflight.get(key)
     // A caller who is waiting never joins a quiet revalidation: that one may sit in the background
-    // lane with no deadline. It starts its own load, which may cost one extra request.
+    // lane with no deadline. It starts its own load. The superseded revalidation still spends its
+    // request and its result is dropped (it may be older than the new load's); the trade-off is at
+    // most one extra background request per supersede, only under budget pressure.
     if (pending && (revalidating || !pending.revalidating)) return pending.promise as Promise<T>
 
     const p = fn({ revalidating })
@@ -80,6 +82,7 @@ export function createCache(opts: { now?: () => number } = {}) {
 
   function clear() {
     entries.clear()
+    inflight.clear()
   }
 
   return { cached, invalidate, invalidatePrefix, clear }

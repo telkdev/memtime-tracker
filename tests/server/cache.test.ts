@@ -90,6 +90,34 @@ describe('cache', () => {
     expect(await cache.cached('p:k', async () => 'unused', { ttlMs: 1000 })).toBe('fresh')
   })
 
+  it('coalesces cold and forced callers that arrive during a pending revalidation into one load', async () => {
+    const cache = createCache()
+    await cache.cached('k', async () => 'old', { ttlMs: 1000, staleMs: 1000 })
+    vi.advanceTimersByTime(1500)
+    let release: (v: string) => void = () => {}
+    expect(await cache.cached('k', () => new Promise<string>(r => (release = r)), { ttlMs: 1000, staleMs: 1000 })).toBe('old')
+
+    const cold = vi.fn(async () => 'new')
+    const results = await Promise.all([
+      cache.cached('k', cold, { ttlMs: 1000, force: true }),
+      cache.cached('k', cold, { ttlMs: 1000, force: true }),
+    ])
+    expect(results).toEqual(['new', 'new'])
+    expect(cold).toHaveBeenCalledTimes(1)
+    release('late')
+  })
+
+  it('clear() also forgets in-flight loads', async () => {
+    const cache = createCache()
+    let release: (v: string) => void = () => {}
+    const pending = cache.cached('k', () => new Promise<string>(r => (release = r)), { ttlMs: 1000 })
+    cache.clear()
+    await expect(cache.cached('k', async () => 'fresh', { ttlMs: 1000 })).resolves.toBe('fresh')
+    release('old')
+    await pending
+    expect(await cache.cached('k', async () => 'unused', { ttlMs: 1000 })).toBe('fresh')
+  })
+
   it('does not cache errors', async () => {
     const cache = createCache()
     const fn = vi.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce('ok')

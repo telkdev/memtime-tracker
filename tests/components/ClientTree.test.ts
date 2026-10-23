@@ -8,8 +8,13 @@ const page = <T>(items: T[]) => ({ items, hasMore: false, nextOffset: null })
 let calls: string[] = []
 
 let authFails = false
+let rootDown = false
 registerEndpoint('/api/clients', (event) => {
   calls.push('clients')
+  if (rootDown) {
+    event.node.res.statusCode = 503
+    return { error: { status: 503, code: 'UPSTREAM_UNAVAILABLE', message: 'Couldn\'t reach the time tracking service.' } }
+  }
   if (authFails) {
     event.node.res.statusCode = 502
     return { error: { status: 502, code: 'UPSTREAM_AUTH', message: 'The server is misconfigured: its API credentials were rejected.' } }
@@ -162,6 +167,26 @@ describe('ClientTree', () => {
     await flushPromises()
     expect(calls.length).toBe(before)
     authFails = false
+    w.unmount()
+  })
+
+  it('clears the refresh error once the clients load again through a Retry', async () => {
+    rootDown = true
+    refreshResponse = (event) => {
+      event.node.res.statusCode = 503
+      return { error: { status: 503, code: 'UPSTREAM_UNAVAILABLE', message: 'Service down.' } }
+    }
+    const w = await mountTree()
+    await vi.waitFor(() => expect(w.text()).toContain('Couldn\'t reach the time tracking service.'))
+    await w.find('button[aria-label="Refresh"]').trigger('click')
+    await vi.waitFor(() => expect(w.text()).toContain('Couldn\'t refresh. Service down.'))
+
+    rootDown = false
+    refreshResponse = () => ({ ok: true })
+    const retry = w.findAll('button').find(b => b.text() === 'Retry')!
+    await retry.trigger('click')
+    await vi.waitFor(() => expect(labels(w)).toEqual(['Acme', 'Globex', 'Stark']))
+    expect(w.text()).not.toContain('Couldn\'t refresh')
     w.unmount()
   })
 })
