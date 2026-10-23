@@ -77,7 +77,7 @@ function onKeydown(e: KeyboardEvent) {
       />
     </UFormField>
 
-    <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-[1.1fr_1fr_1.25fr_1.2fr]">
       <UFormField
         label="Date"
         name="date"
@@ -122,13 +122,15 @@ function onKeydown(e: KeyboardEvent) {
             class="min-w-0 flex-1"
             @change="f.setEndTime(endInput)"
           />
-          <UButton
-            color="neutral"
-            variant="ghost"
-            label="Now"
-            aria-label="Set end to now"
-            @click="f.setEndNow()"
-          />
+          <UTooltip text="End now">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-clock-arrow-down"
+              aria-label="Set end to now"
+              @click="f.setEndNow()"
+            />
+          </UTooltip>
         </div>
       </UFormField>
     </div>
