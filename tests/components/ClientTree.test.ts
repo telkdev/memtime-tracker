@@ -133,21 +133,7 @@ describe('ClientTree', () => {
     w.unmount()
   })
 
-  it('says why a failed refresh changed nothing, and keeps the loaded tree', async () => {
-    refreshResponse = (event) => {
-      event.node.res.statusCode = 429
-      return { error: { status: 429, code: 'RATE_LIMITED', message: 'Too many requests', retryAfter: 12 } }
-    }
-    const w = await mountTree()
-    await w.find('button[aria-label="Refresh"]').trigger('click')
-    await vi.waitFor(() => expect(w.find('[role=alert]').exists()).toBe(true))
-    expect(w.find('[role=alert]').text()).toContain('Try again in 12s')
-    expect(labels(w)).toEqual(['Acme', 'Globex', 'Stark'])
-    refreshResponse = () => ({ ok: true })
-    w.unmount()
-  })
-
-  it('shows the server message when a refresh fails for another reason', async () => {
+  it('says why a failed refresh changed nothing, keeps the tree, and clears once it works', async () => {
     refreshResponse = (event) => {
       event.node.res.statusCode = 503
       return { error: { status: 503, code: 'UPSTREAM_UNAVAILABLE', message: 'Couldn\'t reach the time tracking service.' } }
@@ -155,7 +141,12 @@ describe('ClientTree', () => {
     const w = await mountTree()
     await w.find('button[aria-label="Refresh"]').trigger('click')
     await vi.waitFor(() => expect(w.find('[role=alert]').text()).toContain('Couldn\'t reach the time tracking service.'))
+    expect(labels(w)).toEqual(['Acme', 'Globex', 'Stark'])
+
+    // The next refresh works: the tree reloads and the stale message goes away.
     refreshResponse = () => ({ ok: true })
+    await w.find('button[aria-label="Refresh"]').trigger('click')
+    await vi.waitFor(() => expect(w.find('[role=alert]').exists()).toBe(false))
     w.unmount()
   })
 

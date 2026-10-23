@@ -17,11 +17,11 @@ describe('parseApiError', () => {
   it('reports a request that got no answer as a connection problem', () => {
     const fetchError = Object.assign(new Error('fetch failed'), { name: 'FetchError' })
     expect(parseApiError(fetchError)).toMatchObject({ status: 0, code: 'UPSTREAM_UNAVAILABLE' })
-    expect(parseApiError(new TypeError('Failed to fetch'))).toMatchObject({ code: 'UPSTREAM_UNAVAILABLE' })
   })
 
   it('reports a status without our error shape, or a plain bug, as a generic failure', () => {
     expect(parseApiError({ statusCode: 500, data: '<html>' })).toMatchObject({ status: 500, code: 'INTERNAL' })
     expect(parseApiError(new Error('oops'))).toMatchObject({ code: 'INTERNAL' })
+    expect(parseApiError(new TypeError('Cannot read properties of undefined'))).toMatchObject({ code: 'INTERNAL' })
   })
 })

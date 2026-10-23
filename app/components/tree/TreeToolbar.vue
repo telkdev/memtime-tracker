@@ -6,6 +6,11 @@ const catalog = useCatalog()
 const refreshing = ref(false)
 const refreshError = ref<string | null>(null)
 
+// Once the clients load again (a retry, or the next refresh), the old message is no longer true.
+watch(() => catalog.node('root').status, (status) => {
+  if (status === 'loaded') refreshError.value = null
+})
+
 async function refresh() {
   refreshing.value = true
   refreshError.value = null
@@ -13,11 +18,9 @@ async function refresh() {
     await catalog.refresh()
   }
   catch (err) {
-    // The tree keeps what it had; say why nothing changed.
-    const error = parseApiError(err)
-    refreshError.value = error.code === 'RATE_LIMITED'
-      ? `Couldn't refresh: too many requests right now. Try again in ${Math.ceil(retryAfterMs(error) / 1000)}s.`
-      : `Couldn't refresh. ${error.message}`
+    // The tree keeps what it had; say why nothing changed. (The refresh POST itself makes no
+    // upstream call, so this is a connection or server problem, never a rate limit.)
+    refreshError.value = `Couldn't refresh. ${parseApiError(err).message}`
   }
   finally {
     refreshing.value = false

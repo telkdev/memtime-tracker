@@ -15,9 +15,9 @@ export function parseApiError(err: unknown): ApiErrorBody {
   const status = (err as { statusCode?: number } | null)?.statusCode
   if (status) return { status, code: 'INTERNAL', message: 'Something went wrong. Please try again.' }
 
-  // ofetch's FetchError (or a raw TypeError) without a status: the request never got an answer.
-  const name = (err as { name?: unknown } | null)?.name
-  if (name === 'FetchError' || err instanceof TypeError) {
+  // ofetch's FetchError without a status: the request never got an answer. A bare TypeError is
+  // a bug in our own code, not the network, so it falls through to the generic message.
+  if ((err as { name?: unknown } | null)?.name === 'FetchError') {
     return { status: 0, code: 'UPSTREAM_UNAVAILABLE', message: 'Couldn\'t reach the server. Check your connection and try again.' }
   }
   return { status: 0, code: 'INTERNAL', message: 'Something went wrong. Please try again.' }
