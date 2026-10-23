@@ -52,6 +52,36 @@ describe('useEntryForm', () => {
     expect(fetchMock.mock.calls[0]![1].body).toMatchObject({ start: '2026-10-22T21:00:00.000Z', end: '2026-10-22T23:00:00.000Z' })
   })
 
+  it('keeps End and duration in sync both ways', () => {
+    const form = filled() // 09:00 + 1h30
+    expect(form.endTime.value).toBe('10:30')
+    form.setDurationText('2h')
+    expect(form.endTime.value).toBe('11:00')
+    form.setEndTime('12:15')
+    expect(form.durationText.value).toBe('3h 15m')
+    // Moving the start keeps the duration and moves the end with it.
+    form.setStartTime('10:00')
+    expect(form.durationText.value).toBe('3h 15m')
+    expect(form.endTime.value).toBe('13:15')
+  })
+
+  it('never puts End before Start: an earlier end time means the next day', () => {
+    const form = filled()
+    form.setEndTime('08:00')
+    expect(form.endDayOffset.value).toBe(1)
+    expect(form.durationText.value).toBe('23h')
+    expect(form.end.value!.getTime()).toBeGreaterThan((form.start.value as { instant: Date }).instant.getTime())
+  })
+
+  it('refuses an End equal to Start instead of saving 0 or 24 hours', async () => {
+    const form = filled()
+    form.setEndTime('09:00')
+    expect(form.durationText.value).toBe('1h30') // unchanged
+    await form.submit()
+    expect(form.errors.value.end).toBe('End must be after the start time.')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('blocks saving a start time inside the DST gap and offers the fix', async () => {
     const form = filled()
     form.date.value = '2026-03-29'

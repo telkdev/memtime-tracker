@@ -100,6 +100,11 @@ export function useEntryForm(opts: EntryFormOptions) {
   function setEndTime(text: string) {
     endError.value = null
     if (!start.value.ok || !text) return
+    // Same as the start is almost always a slip, not a 24-hour entry: ask instead of guessing.
+    if (text === toTimeString(start.value.instant)) {
+      endError.value = 'End must be after the start time.'
+      return
+    }
     const r = resolveEndTime(start.value.instant, text)
     if (!r.ok) {
       endError.value = r.reason === 'gap' ? `${text} doesn't exist that night because clocks jump forward. Try ${r.suggestion}.` : 'Enter a valid end time.'

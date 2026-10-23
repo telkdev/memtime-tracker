@@ -46,4 +46,17 @@ describe('EntryForm', () => {
     await wrapper.find('input[name="start"]').setValue('02:30')
     expect(wrapper.text()).toContain('Use 03:30 instead')
   })
+
+  it('updates the duration field when End is edited, and End when the duration is', async () => {
+    const wrapper = await mountForm()
+    const duration = wrapper.find('input[name="duration"]')
+    const end = wrapper.find('input[name="end"]')
+    await duration.setValue('1h')
+    await duration.trigger('change')
+    expect((end.element as HTMLInputElement).value).toBe('10:00')
+
+    await end.setValue('11:45')
+    await end.trigger('change')
+    expect((duration.element as HTMLInputElement).value).toBe('2h 45m')
+  })
 })
