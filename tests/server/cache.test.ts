@@ -61,6 +61,35 @@ describe('cache', () => {
     expect(seen).toEqual([false, true, false])
   })
 
+  it('never makes a waiting caller join a quiet revalidation that is still queued', async () => {
+    const cache = createCache()
+    let release: (v: string) => void = () => {}
+    const slowRefresh = vi.fn(() => new Promise<string>(r => (release = r)))
+    await cache.cached('k', async () => 'old', { ttlMs: 1000, staleMs: 1000 })
+    vi.advanceTimersByTime(1500)
+    // Stale: served at once, refresh queued (think: background lane, no deadline).
+    expect(await cache.cached('k', slowRefresh, { ttlMs: 1000, staleMs: 1000 })).toBe('old')
+    vi.advanceTimersByTime(1000) // now past staleUntil, so the next caller must wait for data
+
+    const cold = vi.fn(async () => 'new')
+    await expect(cache.cached('k', cold, { ttlMs: 1000 })).resolves.toBe('new')
+    expect(cold).toHaveBeenCalledWith({ revalidating: false })
+    release('late')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(await cache.cached('k', async () => 'unused', { ttlMs: 1000 })).toBe('new')
+  })
+
+  it('after invalidation, a new call neither reuses nor is overwritten by the old in-flight load', async () => {
+    const cache = createCache()
+    let release: (v: string) => void = () => {}
+    const pending = cache.cached('p:k', () => new Promise<string>(r => (release = r)), { ttlMs: 1000 })
+    cache.invalidatePrefix('p:')
+    await expect(cache.cached('p:k', async () => 'fresh', { ttlMs: 1000 })).resolves.toBe('fresh')
+    release('stale')
+    await pending
+    expect(await cache.cached('p:k', async () => 'unused', { ttlMs: 1000 })).toBe('fresh')
+  })
+
   it('does not cache errors', async () => {
     const cache = createCache()
     const fn = vi.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce('ok')
