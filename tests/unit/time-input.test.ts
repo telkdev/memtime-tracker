@@ -80,6 +80,14 @@ describe('resolveEndTime', () => {
     expect(end.ok && end.instant.getTime() - start.getTime()).toBe(24 * 3_600_000)
   })
 
+  it('keeps an end in the repeated hour on the same night when the start is the second occurrence', () => {
+    const r = resolveLocal('2026-10-25', '02:15', 'second')
+    const start = r.ok ? r.instant : new Date(NaN)
+    expect(start.toISOString()).toBe('2026-10-25T01:15:00.000Z')
+    const end = resolveEndTime(start, '02:45')
+    expect(end.ok && end.instant.toISOString()).toBe('2026-10-25T01:45:00.000Z')
+  })
+
   it('counts real elapsed time across the fall-back night', () => {
     const start = instant('2026-10-24', '23:00')
     const end = resolveEndTime(start, '03:00')

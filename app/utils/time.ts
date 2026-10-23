@@ -155,6 +155,11 @@ export function zoneLabel(d: Date): string {
 export function resolveEndTime(start: Date, endTime: string, occurrence: Occurrence = 'first'): ResolvedLocal {
   const sameDay = resolveLocal(localDayKey(start), endTime, occurrence)
   if (!sameDay.ok || sameDay.instant.getTime() > start.getTime()) return sameDay
+  // In the repeated fall-back hour the second occurrence may still be after the start
+  // (start 02:15 second → end 02:45 second is 30 min, not a day later).
+  if (sameDay.ambiguous && sameDay.ambiguous.second.getTime() > start.getTime()) {
+    return { ...sameDay, instant: sameDay.ambiguous.second }
+  }
   const next = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1)
   return resolveLocal(localDayKey(next), endTime, occurrence)
 }
