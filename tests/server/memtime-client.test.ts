@@ -120,7 +120,7 @@ describe('memtime client', () => {
   it('uses ratelimit-reset as the pause after a 429 without Retry-After', async () => {
     vi.useFakeTimers()
     vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { client, fetch, limiter } = setup([json(429, { error: 'Too many requests' }, { 'ratelimit-reset': '10' })])
+    const { client, fetch, limiter } = setup([json(errors.rateLimited.status, errors.rateLimited.body, { ...errors.rateLimited.headers, 'ratelimit-reset': '10' })])
     // 10 s is past the 8 s interactive wait, so the caller gets RATE_LIMITED instead of a held request.
     const body = await apiError(client.request({ path: '/clients', schema: z.unknown() }))
     expect(body).toMatchObject({ status: 429, code: 'RATE_LIMITED', retryAfter: 10 })

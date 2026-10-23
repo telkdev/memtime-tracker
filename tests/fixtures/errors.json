@@ -1,5 +1,5 @@
 {
-  "_source": "Upstream error bodies as documented and as the real API returned them on 2026-10-23 (docs/API_NOTES.md). No key anywhere.",
+  "_source": "Upstream error bodies from docs/API_NOTES.md (documented, or seen live on 2026-10-23). Assumed, not documented: the body text of rateLimited and serverError (only the statuses and the ratelimit-* headers are documented). No key anywhere.",
   "badRequestDocs": { "status": 400, "body": { "error": "Invalid JSON body" } },
   "badRequestLive": { "status": 400, "body": { "error": "Invalid request body" } },
   "clientNotFound": { "status": 404, "body": { "error": "Client not found" } },

@@ -5,6 +5,7 @@ import { createMemtimeClient } from '../../server/utils/memtime-client'
 import { createRateLimiter } from '../../server/utils/rate-limiter'
 import { ApiException } from '../../server/utils/errors'
 import { timeEntryInputSchema } from '../../shared/schemas/timeEntryInput'
+import errors from '../fixtures/errors.json'
 
 const KEY = 'test-key-0123456789abcdefghijklmn'
 
@@ -96,7 +97,7 @@ describe('time entry writes', () => {
   })
 
   it('maps an update 404 to a plain "no longer exists" message', async () => {
-    setup([json(404, { error: 'Time entry #5 not found' })])
+    setup([json(errors.entryNotFoundPut.status, errors.entryNotFoundPut.body)])
     const body = await apiError(updateTimeEntry(5, input))
     expect(body).toMatchObject({ status: 404, code: 'NOT_FOUND', message: 'This entry no longer exists. It may have been deleted.' })
   })
