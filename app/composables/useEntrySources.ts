@@ -1,4 +1,3 @@
-import type { TimeEntry } from '#shared/schemas/timeEntry'
 import { buildTaskOptions, type TaskOption, type TaskOptionGroups } from '~/utils/task-options'
 import { recentTaskIds } from '~/utils/entry-form'
 
@@ -9,13 +8,15 @@ import { recentTaskIds } from '~/utils/entry-form'
  */
 export function useEntrySources() {
   const { taskIndex } = useCatalog()
-  // Wired to useTimeEntries().loadedEntries / getCached once the entries list lands.
-  const loadedEntries = computed<readonly TimeEntry[]>(() => [])
+  const { loadedEntries, getCached, invalidate } = useTimeEntryCache()
+  const taskNames = useTaskNames()
   const catalog = computed<readonly TaskOption[]>(() =>
     [...taskIndex.value.values()].map(({ task, project, client }) => ({ id: task.id, label: task.name, path: `${client.name} › ${project.name}` })),
   )
-  const nameOf = (id: number): string | undefined => taskIndex.value.get(id)?.task.name
-  const getCached = (_id: number): TimeEntry | undefined => undefined
+  const nameOf = (id: number): string | undefined => taskNames.label(id)?.name
+
+  // Names for recent tasks outside the loaded tree: one cached background lookup each.
+  watchEffect(() => taskNames.resolve(recentTaskIds(loadedEntries.value).filter(id => !taskIndex.value.has(id))))
 
   function taskGroups(include?: number | null): TaskOptionGroups {
     const ids = recentTaskIds(loadedEntries.value)
@@ -23,5 +24,5 @@ export function useEntrySources() {
     return buildTaskOptions(ids, catalog.value, nameOf)
   }
 
-  return { loadedEntries, getCached, taskGroups }
+  return { loadedEntries, getCached, invalidate, taskGroups }
 }
