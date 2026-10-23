@@ -9,6 +9,7 @@ const emit = defineEmits<{ mode: [mode: 'create' | 'edit'] }>()
 const sources = useEntrySources()
 const form = useEntryForm({ mode: 'edit', entry: props.entry, knownEntries: () => sources.loadedEntries.value })
 watch(form.mode, mode => emit('mode', mode))
+sources.watchTaskName(() => form.taskId.value)
 const taskGroups = computed(() => sources.taskGroups(form.taskId.value))
 const taskName = (id: number) => [...taskGroups.value.recent, ...taskGroups.value.catalog].find(o => o.id === id)?.label
 const browsing = ref(false)

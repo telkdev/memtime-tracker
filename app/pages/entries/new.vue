@@ -22,6 +22,7 @@ const form = useEntryForm({
   anchor: start.getTime() === roundDownToMinutes(now, 15).getTime() ? 'now' : 'start',
   knownEntries: () => sources.loadedEntries.value,
 })
+sources.watchTaskName(() => form.taskId.value)
 const taskGroups = computed(() => sources.taskGroups(form.taskId.value))
 const taskName = (id: number) => [...taskGroups.value.recent, ...taskGroups.value.catalog].find(o => o.id === id)?.label
 const browsing = ref(false)

@@ -18,11 +18,21 @@ export function useEntrySources() {
   // Names for recent tasks outside the loaded tree: one cached background lookup each.
   watchEffect(() => taskNames.resolve(recentTaskIds(loadedEntries.value).filter(id => !taskIndex.value.has(id))))
 
+  /**
+   * Keeps the name of the form's task known. On a deep link or reload no entries are loaded, so
+   * the recent-task lookup above doesn't cover it: one cached background lookup instead.
+   */
+  function watchTaskName(taskId: () => number | null) {
+    watch(taskId, (id) => {
+      if (id != null && !taskIndex.value.has(id)) taskNames.resolve([id])
+    }, { immediate: true })
+  }
+
   function taskGroups(include?: number | null): TaskOptionGroups {
     const ids = recentTaskIds(loadedEntries.value)
     if (include != null && !ids.includes(include) && !catalog.value.some(o => o.id === include)) ids.unshift(include)
     return buildTaskOptions(ids, catalog.value, nameOf)
   }
 
-  return { loadedEntries, getCached, invalidate, taskGroups }
+  return { loadedEntries, getCached, invalidate, taskGroups, watchTaskName }
 }
