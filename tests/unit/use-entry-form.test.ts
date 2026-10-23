@@ -147,6 +147,18 @@ describe('useEntryForm', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps edits typed while a save is in flight marked as unsaved', async () => {
+    let resolve: (v: unknown) => void = () => {}
+    fetchMock.mockImplementationOnce(() => new Promise(r => (resolve = r)))
+    const form = useEntryForm({ mode: 'edit', entry: saved, now })
+    form.comment.value = 'First edit'
+    const pending = form.submit()
+    form.comment.value = 'Typed during the save'
+    resolve({ entry: { ...saved, comment: 'First edit' } })
+    await pending
+    expect(form.isDirty.value).toBe(true)
+  })
+
   it('updates with PUT and the full entry', async () => {
     fetchMock.mockResolvedValueOnce({ entry: saved })
     const form = useEntryForm({ mode: 'edit', entry: saved, now })

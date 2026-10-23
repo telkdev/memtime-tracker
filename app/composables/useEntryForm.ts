@@ -238,12 +238,14 @@ export function useEntryForm(opts: EntryFormOptions) {
 
     pending.value = true
     error.value = null
+    // What is being sent. Edits typed while the request is in flight stay dirty afterwards.
+    const sent = snapshot()
     try {
       const body = timeEntryInputSchema.parse(payload.value) satisfies TimeEntryInput
       const res = mode.value === 'create'
         ? await $fetch<{ entry: TimeEntry }>('/api/time-entries', { method: 'POST', body, retry: 0 })
         : await $fetch<{ entry: TimeEntry }>(`/api/time-entries/${entryId.value}`, { method: 'PUT', body, retry: 0 })
-      saved.value = snapshot()
+      saved.value = sent
       return res.entry
     }
     catch (err) {
