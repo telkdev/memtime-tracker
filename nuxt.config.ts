@@ -20,6 +20,9 @@ export default defineNuxtConfig({
     public: {},
   },
   routeRules: {
+    // The entry form works in the user's local time, which the server doesn't know. Rendering it
+    // on the server would compute defaults in the server's zone and cause hydration mismatches.
+    '/entries/**': { ssr: false },
     '/**': {
       headers: {
         'X-Content-Type-Options': 'nosniff',
