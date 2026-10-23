@@ -142,7 +142,7 @@ export function resolveLocal(date: string, time: string, occurrence: Occurrence 
 
 /** Short zone label for a given instant, e.g. "CEST" or "GMT+2". */
 export function zoneLabel(d: Date): string {
-  const part = new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' })
+  const part = new Intl.DateTimeFormat(UI_LOCALE, { timeZoneName: 'short' })
     .formatToParts(d)
     .find(p => p.type === 'timeZoneName')
   return part?.value ?? ''
