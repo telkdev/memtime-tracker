@@ -1,6 +1,6 @@
 import type { LocationQuery } from 'vue-router'
 import { DEFAULT_TIME_ENTRY_PAGE_SIZE, TIME_ENTRY_PAGE_SIZES, type TimeEntry } from '#shared/schemas/timeEntry'
-import { durationMs, localDayKey } from './time'
+import { durationMs, localDayKey, localDaysBetween } from './time'
 
 export interface DayGroup {
   /** Local "YYYY-MM-DD". */
@@ -68,4 +68,18 @@ export function listPositionQuery({ page, size }: ListPosition): Record<string, 
 export function needsQueryFix(query: LocationQuery): boolean {
   const canonical = listPositionQuery(readListPosition(query))
   return single(query.page) !== canonical.page || single(query.size) !== canonical.size
+}
+
+export const entryEditPath = (entry: Pick<TimeEntry, 'id'>) => `/entries/${entry.id}/edit`
+
+/** Calendar days the entry runs past its start day, so 01:00 isn't misread as a negative duration. */
+export const entryEndDays = (entry: Pick<TimeEntry, 'start' | 'end'>) => Math.max(0, localDaysBetween(entry.start, entry.end))
+
+export const endsLaterLabel = (days: number) => `Ends ${days} day${days > 1 ? 's' : ''} later`
+
+/** Row highlight. An inset bar as well as the tint, so the highlight doesn't rely on colour alone. */
+export function entryRowClass(entry: TimeEntry, highlight: { id?: number | null, taskId?: number | null }) {
+  if (entry.id === highlight.id) return 'bg-primary/15 shadow-[inset_3px_0_0_var(--ui-primary)]'
+  if (entry.taskId === highlight.taskId) return 'bg-primary/5 shadow-[inset_3px_0_0_var(--ui-primary)]'
+  return ''
 }

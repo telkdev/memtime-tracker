@@ -72,8 +72,8 @@ goes through `server/utils/memtime.ts`.
 app/
   pages/                index.vue (tree + entries); Task 3 adds entries/new.vue, entries/[id]/edit.vue
   components/
-    tree/               ClientTree.vue, TreeRow.vue (rows built by utils/tree-rows.ts)
-    entries/            EntriesPanel.vue, EntriesTable.vue, EntriesPager.vue, EntriesStatus.vue,
+    tree/               ClientTree.vue, TreeRow.vue, TreeToolbar.vue (rows built by utils/tree-rows.ts)
+    entries/            EntriesPanel.vue, EntriesTable.vue, EntriesCards.vue, EntriesPager.vue, EntriesStatus.vue,
                         EntriesTaskCell.vue; Task 3 adds EntryForm, TaskPicker, DurationInput
     common/             RateLimitIndicator.vue
   composables/          useCatalog, useTimeEntries, useTaskNames, useRateLimitState, useNow
