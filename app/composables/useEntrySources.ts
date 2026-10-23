@@ -20,7 +20,7 @@ export function useEntrySources() {
 
   function taskGroups(include?: number | null): TaskOptionGroups {
     const ids = recentTaskIds(loadedEntries.value)
-    if (include && !ids.includes(include) && !catalog.value.some(o => o.id === include)) ids.unshift(include)
+    if (include != null && !ids.includes(include) && !catalog.value.some(o => o.id === include)) ids.unshift(include)
     return buildTaskOptions(ids, catalog.value, nameOf)
   }
 

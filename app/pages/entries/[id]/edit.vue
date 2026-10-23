@@ -10,11 +10,11 @@ const sources = useEntrySources()
 const id = idSchema.safeParse(route.params.id).data
 
 // Opened from the list: the entry is already in memory, so this costs no request.
-const cached = id ? sources.getCached(id) : undefined
+const cached = id === undefined ? undefined : sources.getCached(id)
 const { data, error, status, refresh } = await useAsyncData(
   `time-entry:${id}`,
   () => cached ? Promise.resolve({ entry: cached }) : $fetch<{ entry: TimeEntry }>(`/api/time-entries/${id}`, { retry: 0 }),
-  { immediate: !!id },
+  { immediate: id !== undefined },
 )
 const loadError = computed(() => error.value ? parseApiError(error.value) : null)
 </script>
@@ -23,13 +23,13 @@ const loadError = computed(() => error.value ? parseApiError(error.value) : null
   <div class="mx-auto max-w-2xl space-y-6">
     <h1 class="text-xl font-semibold">
       Edit entry<span
-        v-if="id"
+        v-if="id !== undefined"
         class="text-muted"
       > #{{ id }}</span>
     </h1>
 
     <UEmpty
-      v-if="!id || loadError?.code === 'NOT_FOUND'"
+      v-if="id === undefined || loadError?.code === 'NOT_FOUND'"
       icon="i-lucide-file-x"
       title="This entry doesn't exist"
       description="It may have been deleted, or the link is wrong."

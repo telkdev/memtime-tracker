@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TimeEntry } from '#shared/schemas/timeEntry'
+import { idSchema } from '#shared/schemas/common'
 import { defaultStart } from '~/utils/entry-form'
 import { roundDownToMinutes } from '~/utils/time'
 
@@ -7,13 +8,15 @@ useHead({ title: 'Log time' })
 
 const route = useRoute()
 const sources = useEntrySources()
-const queryTask = Number(route.query.taskId)
+// Ids start at 0, so parse instead of testing truthiness.
+const rawTask = route.query.taskId
+const queryTask = typeof rawTask === 'string' && rawTask !== '' ? idSchema.safeParse(rawTask).data : undefined
 
 const now = new Date()
 const start = defaultStart(sources.loadedEntries.value, now)
 const form = useEntryForm({
   mode: 'create',
-  taskId: Number.isInteger(queryTask) && queryTask > 0 ? queryTask : null,
+  taskId: queryTask ?? null,
   start,
   // Continuing after today's last entry: keep that start. Otherwise assume the work just ended.
   anchor: start.getTime() === roundDownToMinutes(now, 15).getTime() ? 'now' : 'start',

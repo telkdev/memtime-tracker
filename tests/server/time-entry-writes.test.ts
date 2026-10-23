@@ -107,8 +107,8 @@ describe('time entry writes', () => {
     expect(body.code).toBe('UPSTREAM_AUTH')
   })
 
-  it('shows "Invalid JSON body" as a summary without blaming a field', async () => {
-    setup([json(400, { error: 'Invalid JSON body' })])
+  it.each(['Invalid JSON body', 'Invalid request body'])('shows %j as a summary without blaming a field', async (upstream) => {
+    setup([json(400, { error: upstream })])
     const body = await apiError(createTimeEntry(input))
     expect(body).toMatchObject({ status: 400, message: 'The server rejected this entry. Nothing was saved.' })
     expect(body.fields).toBeUndefined()
@@ -118,6 +118,13 @@ describe('time entry writes', () => {
     setup([json(400, { error: 'Missing required field: comment' })])
     const body = await apiError(createTimeEntry(input))
     expect(body.fields).toEqual({ comment: 'Missing required field: comment' })
+  })
+
+  it('accepts id 0 and task 0, which exist upstream', async () => {
+    setup([json(200, { ...upstreamEntry, id: 0, taskId: 0 })])
+    const entry = await updateTimeEntry(0, { ...input, taskId: timeEntryInputSchema.parse({ ...input, taskId: 0 }).taskId })
+    expect(entry).toMatchObject({ id: 0, taskId: 0 })
+    expect(String((state.fetch.mock.calls[0] as [URL])[0])).toBe('https://api.test/api/v1/time-entries/0')
   })
 
   it('updates with PUT and the full entry', async () => {

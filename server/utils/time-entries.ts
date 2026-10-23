@@ -67,8 +67,9 @@ export function mapWriteError(err: unknown, op: 'create' | 'update'): unknown {
   }
 
   if (code === 'BAD_REQUEST') {
-    // Our BFF always sends valid JSON, so this means a bug on our side, not a user mistake.
-    if (/invalid json/i.test(message)) {
+    // The BFF always sends a complete, valid body, so this means a bug on our side, not a user
+    // mistake. The docs say "Invalid JSON body"; the live API says "Invalid request body".
+    if (/invalid (json|request) body/i.test(message)) {
       return new ApiException(400, 'BAD_REQUEST', 'The server rejected this entry. Nothing was saved.')
     }
     const field = FIELD_HINTS.find(([re]) => re.test(message))?.[1]
