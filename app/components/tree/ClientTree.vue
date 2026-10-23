@@ -24,6 +24,7 @@ const filter = ref('')
 const activeKey = ref<string | null>(null)
 const treeEl = ref<HTMLElement | null>(null)
 const refreshing = ref(false)
+const refreshError = ref<string | null>(null)
 
 onMounted(() => catalog.ensureLoaded('root'))
 
@@ -147,8 +148,16 @@ function onKeydown(e: KeyboardEvent) {
 
 async function refresh() {
   refreshing.value = true
+  refreshError.value = null
   try {
     await catalog.refresh()
+  }
+  catch (err) {
+    // The tree keeps what it had; say why nothing changed.
+    const error = parseApiError(err)
+    refreshError.value = error.code === 'RATE_LIMITED'
+      ? `Couldn't refresh: too many requests right now. Try again in ${Math.ceil(retryAfterMs(error) / 1000)}s.`
+      : `Couldn't refresh. ${error.message}`
   }
   finally {
     refreshing.value = false
@@ -194,6 +203,14 @@ const rootNode = computed(() => catalog.node('root'))
         @click="refresh"
       />
     </div>
+
+    <p
+      v-if="refreshError"
+      role="alert"
+      class="text-xs text-error"
+    >
+      {{ refreshError }}
+    </p>
 
     <p
       v-if="filter"

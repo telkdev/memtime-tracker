@@ -33,6 +33,8 @@ registerEndpoint('/api/clients/5/projects', async () => {
   await new Promise<void>(r => (releaseStark = r))
   return page([{ id: 50, clientId: 5, name: 'Arc reactor', ...at }])
 })
+let refreshResponse: (event: Parameters<Parameters<typeof registerEndpoint>[1]>[0]) => unknown = () => ({ ok: true })
+registerEndpoint('/api/catalog/refresh', { method: 'POST', handler: event => refreshResponse(event) })
 registerEndpoint('/api/_meta/rate-limit', () => ({ budget: 14, remaining: 10, resetsInMs: 1000, queued: 0, blockedForMs: 0 }))
 
 async function mountTree() {
@@ -123,6 +125,32 @@ describe('ClientTree', () => {
 
     releaseStark()
     await vi.waitFor(() => expect(document.activeElement?.getAttribute('data-key')).toBe('project:50'))
+    w.unmount()
+  })
+
+  it('says why a failed refresh changed nothing, and keeps the loaded tree', async () => {
+    refreshResponse = (event) => {
+      event.node.res.statusCode = 429
+      return { error: { status: 429, code: 'RATE_LIMITED', message: 'Too many requests', retryAfter: 12 } }
+    }
+    const w = await mountTree()
+    await w.find('button[aria-label="Refresh"]').trigger('click')
+    await vi.waitFor(() => expect(w.find('[role=alert]').exists()).toBe(true))
+    expect(w.find('[role=alert]').text()).toContain('Try again in 12s')
+    expect(labels(w)).toEqual(['Acme', 'Globex', 'Stark'])
+    refreshResponse = () => ({ ok: true })
+    w.unmount()
+  })
+
+  it('shows the server message when a refresh fails for another reason', async () => {
+    refreshResponse = (event) => {
+      event.node.res.statusCode = 503
+      return { error: { status: 503, code: 'UPSTREAM_UNAVAILABLE', message: 'Couldn\'t reach the time tracking service.' } }
+    }
+    const w = await mountTree()
+    await w.find('button[aria-label="Refresh"]').trigger('click')
+    await vi.waitFor(() => expect(w.find('[role=alert]').text()).toContain('Couldn\'t reach the time tracking service.'))
+    refreshResponse = () => ({ ok: true })
     w.unmount()
   })
 })
