@@ -34,10 +34,10 @@ export function findOverlaps(entries: readonly TimeEntry[], start: Date, end: Da
   return entries.filter(e => e.id !== excludeId && Date.parse(e.start) < t && Date.parse(e.end) > s)
 }
 
-export type EntryWarning =
-  | { kind: 'long' }
-  | { kind: 'future' }
-  | { kind: 'overlap', entry: TimeEntry }
+export type EntryWarning
+  = | { kind: 'long' }
+    | { kind: 'future' }
+    | { kind: 'overlap', entry: TimeEntry }
 
 export function entryWarnings(entries: readonly TimeEntry[], start: Date, end: Date, now: Date, excludeId?: number): EntryWarning[] {
   const warnings: EntryWarning[] = []

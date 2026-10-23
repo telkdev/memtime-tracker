@@ -82,11 +82,11 @@ const HOUR_MS = 60 * MINUTE
 /** Which of two identical wall-clock times to use when clocks fall back. */
 export type Occurrence = 'first' | 'second'
 
-export type ResolvedLocal =
-  | { ok: true, instant: Date, ambiguous?: { first: Date, second: Date } }
+export type ResolvedLocal
+  = | { ok: true, instant: Date, ambiguous?: { first: Date, second: Date } }
   /** The wall-clock time doesn't exist (clocks spring forward). `suggestion` is the time it lands on. */
-  | { ok: false, reason: 'gap', suggestion: string }
-  | { ok: false, reason: 'invalid' }
+    | { ok: false, reason: 'gap', suggestion: string }
+    | { ok: false, reason: 'invalid' }
 
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/

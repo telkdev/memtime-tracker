@@ -3,13 +3,13 @@ import { timeEntryInputSchema, type TimeEntryInput } from '#shared/schemas/timeE
 import { entryWarnings, type EntryWarning } from '~/utils/entry-form'
 import { isConnectionError, toUiError, type UiError } from '~/utils/errors'
 import {
-  calendarDaysBetween,
   formatDuration,
   fromUtcIso,
+  localDayKey,
+  localDaysBetween,
   parseDuration,
   resolveEndTime,
   resolveLocal,
-  toDateString,
   toTimeString,
   type Occurrence,
 } from '~/utils/time'
@@ -38,7 +38,7 @@ export function useEntryForm(opts: EntryFormOptions) {
   const mode = ref(opts.mode)
   const entryId = ref(opts.entry?.id)
 
-  const initialStart = opts.entry ? fromUtcIso(opts.entry.start) : { date: toDateString(opts.start ?? now()), time: toTimeString(opts.start ?? now()) }
+  const initialStart = opts.entry ? fromUtcIso(opts.entry.start) : { date: localDayKey(opts.start ?? now()), time: toTimeString(opts.start ?? now()) }
   const taskId = ref<number | null>(opts.entry?.taskId ?? opts.taskId ?? null)
   const date = ref(initialStart.date)
   const startTime = ref(initialStart.time)
@@ -58,7 +58,7 @@ export function useEntryForm(opts: EntryFormOptions) {
   const start = computed(() => resolveLocal(date.value, startTime.value, startOccurrence.value))
   const end = computed(() => start.value.ok && durationMs.value ? new Date(start.value.instant.getTime() + durationMs.value) : null)
   const endTime = computed(() => end.value ? toTimeString(end.value) : '')
-  const endDayOffset = computed(() => start.value.ok && end.value ? calendarDaysBetween(start.value.instant, end.value) : 0)
+  const endDayOffset = computed(() => start.value.ok && end.value ? localDaysBetween(start.value.instant, end.value) : 0)
   const startAmbiguous = computed(() => start.value.ok ? start.value.ambiguous : undefined)
 
   function setDurationText(text: string) {

@@ -89,7 +89,9 @@ describe('useEntryForm', () => {
 
   it('sends exactly one request when save is clicked twice', async () => {
     let resolve!: (v: unknown) => void
-    fetchMock.mockReturnValueOnce(new Promise((r) => { resolve = r }))
+    fetchMock.mockReturnValueOnce(new Promise((r) => {
+      resolve = r
+    }))
     const form = filled()
     const first = form.submit()
     const second = form.submit()
@@ -125,7 +127,9 @@ describe('useEntryForm', () => {
   })
 
   it('puts a server field error next to that field', async () => {
-    fetchMock.mockImplementationOnce(async () => { throw apiError(400, { code: 'BAD_REQUEST', message: 'The server rejected this entry', fields: { comment: 'Comment is too long' } }) })
+    fetchMock.mockImplementationOnce(async () => {
+      throw apiError(400, { code: 'BAD_REQUEST', message: 'The server rejected this entry', fields: { comment: 'Comment is too long' } })
+    })
     const form = filled()
     await form.submit()
     expect(form.errors.value.comment).toBe('Comment is too long')
