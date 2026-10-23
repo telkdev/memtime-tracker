@@ -15,7 +15,8 @@
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "mock:api": "node scripts/mock-api.mjs"
   },
   "dependencies": {
     "@nuxt/ui": "^4.12.0",

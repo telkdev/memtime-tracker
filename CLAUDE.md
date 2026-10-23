@@ -37,6 +37,7 @@ npm run test:watch
 npm run check                 # lint --fix + typecheck + test, quiet output (scripts/check.mjs)
 npm run check -- lint         # run one step: lint | typecheck | test
 npm run build && npm run preview
+npm run mock:api              # local mock API on :4010 (set NUXT_MEMTIME_BASE_URL to use it)
 ./scripts/probe-api.sh        # MANUAL ONLY: hits the real API, spends rate-limit budget
 ```
 
@@ -62,11 +63,11 @@ goes through `server/utils/memtime.ts`.
 app/
   pages/                index.vue (tree + entries), entries/new.vue, entries/[id]/edit.vue
   components/
-    tree/               ClientTree.vue, TreeNode.vue
+    tree/               ClientTree.vue, TreeRow.vue (rows built by utils/tree-rows.ts)
     entries/            EntriesTable.vue, EntryForm.vue, TaskPicker.vue, DurationInput.vue
-    common/             RateLimitBanner.vue, ErrorState.vue, EmptyState.vue
-  composables/          useCatalog.ts, useTimeEntries.ts, useApiError.ts, useRateLimitState.ts
-  utils/                time.ts (local↔UTC, duration parse/format), errors.ts
+    common/             RateLimitIndicator.vue
+  composables/          useCatalog.ts, useTimeEntries.ts, useRateLimitState.ts, useNow.ts
+  utils/                time.ts (local↔UTC, duration), api-error.ts (parseApiError), catalog.ts, tree-rows.ts
 server/
   api/
     clients/index.get.ts
@@ -126,6 +127,10 @@ Details are in `.claude/rules/`. Each file loads when you work on matching paths
 - Commits: Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`), small and focused.
 - Error shape returned by the BFF (always):
   `{ error: { status, code, message, fields?: Record<string,string>, retryAfter?: number } }`
+- Components are auto-imported by file name only (`pathPrefix: false`): `components/tree/ClientTree.vue`
+  is `<ClientTree>`. Keep file names unique.
+- Client `$fetch` calls to the BFF pass `retry: 0`. ofetch otherwise retries 429/5xx immediately,
+  which only burns rate-limit budget. Retrying is handled deliberately (waiting state + countdown).
 - Names: components in PascalCase, composables as `useX`, server utils in camelCase. Files under
   `server/api` follow Nitro method suffixes (`.get.ts`, `.post.ts`, `.put.ts`).
 - Comments explain *why*, not *what*. Leave out commented-out code.

@@ -14,6 +14,22 @@ cp .env.example .env     # put your key in NUXT_MEMTIME_API_KEY (the file is git
 npm run dev              # http://localhost:3000
 ```
 
+### Without an API key (mock API)
+
+`npm run mock:api` starts a local stand-in for the Memtime API on port 4010. It follows the
+documented behaviour: bare-array lists, `{ error }` bodies, the 15 requests/60 s limit, and
+`userId` echoing the key. Point the app at it:
+
+```bash
+npm run mock:api                       # terminal 1
+# .env: NUXT_MEMTIME_API_KEY=anything  NUXT_MEMTIME_BASE_URL=http://localhost:4010/api/v1
+npm run dev                            # terminal 2
+```
+
+Its data includes an archived client, a client with no projects, nested tasks, and a project with
+130 tasks so you can see "Load more". To watch the rate-limit handling, expand every client and
+project quickly. Nodes past the budget show a countdown and fill in on their own.
+
 ## Scripts
 
 | Command | What it does |
@@ -25,6 +41,7 @@ npm run dev              # http://localhost:3000
 | `npm run lint` / `npm run lint:fix` | ESLint only |
 | `npm run typecheck` | `nuxi typecheck` only |
 | `npm run test` / `npm run test:watch` | Vitest only |
+| `npm run mock:api` | Local mock of the Memtime API (port 4010) |
 | `./scripts/probe-api.sh` | Manual check of the real API contract. It spends about 6 requests of the 15/min budget, so never run it in CI. |
 
 ## Working with Claude Code
