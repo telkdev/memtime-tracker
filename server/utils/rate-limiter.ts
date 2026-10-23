@@ -13,6 +13,12 @@ export interface RateLimiterOptions {
   maxWaitMs: number
   /** Background work only runs while more than this many requests remain in the window. */
   backgroundReserve?: number
+  /**
+   * Most of the window background work may use, as a share of the budget (default half). Name
+   * lookups can queue dozens of jobs; without a cap they drain the window down to the reserve and
+   * the next expands and page changes have to wait for the reset.
+   */
+  backgroundShare?: number
   now?: () => number
   setTimer?: (fn: () => void, ms: number) => unknown
   clearTimer?: (handle: unknown) => void
@@ -53,10 +59,15 @@ export function createRateLimiter(opts: RateLimiterOptions) {
   const setTimer = opts.setTimer ?? ((fn, ms) => setTimeout(fn, ms))
   const clearTimer = opts.clearTimer ?? (h => clearTimeout(h as ReturnType<typeof setTimeout>))
   const reserve = opts.backgroundReserve ?? 3
+  const backgroundCap = Math.max(0, Math.min(
+    opts.budget - reserve,
+    Math.floor(opts.budget * (opts.backgroundShare ?? 0.5)),
+  ))
 
   const queues: Record<Lane, Job[]> = { write: [], interactive: [], background: [] }
   let windowStart = now()
   let used = 0
+  let backgroundUsed = 0
   let blockedUntil = 0
   let consecutivePenalties = 0
   let timer: unknown = null
@@ -67,12 +78,20 @@ export function createRateLimiter(opts: RateLimiterOptions) {
       const elapsedWindows = Math.floor((t - windowStart) / opts.windowMs)
       windowStart += elapsedWindows * opts.windowMs
       used = 0
+      backgroundUsed = 0
     }
+  }
+
+  /** Starts a fresh window at `t` (after a 429 or an upstream "0 remaining"). */
+  function restartWindowAt(t: number) {
+    windowStart = t
+    used = 0
+    backgroundUsed = 0
   }
 
   function remainingFor(lane: Lane) {
     const left = opts.budget - used
-    return lane === 'background' ? left - reserve : left
+    return lane === 'background' ? Math.min(left - reserve, backgroundCap - backgroundUsed) : left
   }
 
   function queuedCount() {
@@ -111,6 +130,7 @@ export function createRateLimiter(opts: RateLimiterOptions) {
       let job = nextJob()
       while (job) {
         used++
+        if (job.lane === 'background') backgroundUsed++
         job.run()
         job = nextJob()
       }
@@ -127,7 +147,7 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     if (t >= blockedUntil) rollWindow(t)
     const laneIndex = LANE_ORDER.indexOf(lane)
     const ahead = LANE_ORDER.slice(0, laneIndex + 1).reduce((n, l) => n + queues[l].length, 0)
-    const perWindow = lane === 'background' ? opts.budget - reserve : opts.budget
+    const perWindow = lane === 'background' ? backgroundCap : opts.budget
     const start = Math.max(t, blockedUntil)
     const availableNow = t >= blockedUntil ? remainingFor(lane) : 0
     if (ahead < availableNow) return start - t
@@ -165,8 +185,7 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     const t = now()
     blockedUntil = Math.max(blockedUntil, t + (retryAfterMs ?? step))
     // When the pause ends, start a fresh window rather than trusting our stale count.
-    windowStart = blockedUntil
-    used = 0
+    restartWindowAt(blockedUntil)
     if (timer !== null) clearTimer(timer)
     timer = setTimer(pump, blockedUntil - t)
   }
@@ -182,8 +201,7 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     rollWindow(t)
     if (upstreamRemaining <= 0) {
       blockedUntil = t + (resetMs ?? opts.windowMs)
-      windowStart = blockedUntil
-      used = 0
+      restartWindowAt(blockedUntil)
       if (timer !== null) clearTimer(timer)
       timer = setTimer(pump, blockedUntil - t)
       return

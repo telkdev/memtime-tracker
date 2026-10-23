@@ -24,8 +24,9 @@ The task-name lookups are the only real risk. A page of 25 entries spread over 2
 the tree hasn't loaded would cost 25 calls, almost two windows. Three rules keep that in check:
 
 1. Look up **distinct** task IDs only, and never one the client's `taskIndex` already knows.
-2. Run them in the `background` lane, so they only use tokens above the reserve (3) and never
-   delay a page change, an expand or a save.
+2. Run them in the `background` lane. It may use at most half the window (7 of 14) and never the
+   last 3 tokens, so at least 7 requests per window stay free for page changes, expands and
+   saves. The rest of the lookups continue in the next window.
 3. Show `Task #123` until the name arrives. The list is fully usable without names.
 
 In practice a user logs time on a handful of tasks, so a page usually needs 0 to 3 lookups.

@@ -25,7 +25,7 @@ describe('rate limiter', () => {
     const { limiter, calls, call } = setup()
     const jobs = Array.from({ length: 50 }, (_, i) => limiter.schedule('background', call(i)))
 
-    await vi.advanceTimersByTimeAsync(5 * WINDOW)
+    await vi.advanceTimersByTimeAsync(8 * WINDOW)
     await Promise.all(jobs)
 
     expect(calls).toHaveLength(50)
@@ -47,7 +47,7 @@ describe('rate limiter', () => {
     const bg = Array.from({ length: 3 }, (_, i) => limiter.schedule('background', track(`bg${i}`)))
     const fg = limiter.schedule('interactive', track('fg'), { maxWaitMs: Infinity })
 
-    await vi.advanceTimersByTimeAsync(WINDOW)
+    await vi.advanceTimersByTimeAsync(2 * WINDOW)
     await Promise.all([...bg, fg])
     expect(order[0]).toBe('fg')
   })
@@ -79,6 +79,35 @@ describe('rate limiter', () => {
 
     await vi.advanceTimersByTimeAsync(3 * WINDOW)
     await Promise.all(bg)
+  })
+
+  it('caps background work at half the window, so user actions never wait behind name lookups', async () => {
+    const { limiter, calls, call } = setup()
+    const lookups = Array.from({ length: 20 }, () => limiter.schedule('background', call()))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls).toHaveLength(7)
+
+    // A burst of expands and page changes right after still starts immediately.
+    const started = Date.now()
+    await Promise.all(Array.from({ length: 7 }, () => limiter.schedule('interactive', call())))
+    expect(calls).toHaveLength(14)
+    expect(Date.now()).toBe(started)
+
+    // The rest of the lookups continue in later windows, still at most 7 per window.
+    await vi.advanceTimersByTimeAsync(2 * WINDOW)
+    await Promise.all(lookups)
+    const firstWindowEnd = started + WINDOW
+    expect(calls.filter(t => t >= firstWindowEnd && t < firstWindowEnd + WINDOW)).toHaveLength(7)
+  })
+
+  it('lets background use less than its share when the upstream says the budget is low', async () => {
+    const { limiter, calls, call } = setup()
+    limiter.sync(6) // 5 left for us; reserve 3 → 2 for background
+    const lookups = Array.from({ length: 5 }, () => limiter.schedule('background', call()))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls).toHaveLength(2)
+    await vi.advanceTimersByTimeAsync(2 * WINDOW)
+    await Promise.all(lookups)
   })
 
   it('rejects instead of queueing when the wait would exceed maxWaitMs', async () => {

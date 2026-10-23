@@ -55,7 +55,9 @@ If the official docs disagree with this list, the docs win. Update this file and
 - **Priority queue** with three lanes, highest first:
   1. `write`: POST/PUT time entries. A save must never wait behind prefetching.
   2. `interactive`: a user expanded a node, changed page or opened edit.
-  3. `background`: prefetch and cache warming. Runs only when tokens > `reserve` (default 3).
+  3. `background`: name lookups, SWR refreshes, prefetch. Runs only when tokens > `reserve`
+     (default 3) and uses at most `backgroundShare` of the window (default half, 7 of 14), so
+     user actions always have budget left.
 - The window is assumed to be fixed. The 1-request margin absorbs clock skew between us and the
   server.
 - When the server gets a 429: pause every lane for `Retry-After`, else `ratelimit-reset`, else the
