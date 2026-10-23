@@ -9,6 +9,7 @@ import {
   localDaysBetween,
   parseDuration,
   resolveEndTime,
+  isValidLocalDate,
   resolveLocal,
   sameInstant,
   toTimeString,
@@ -143,10 +144,11 @@ export function useEntryForm(opts: EntryFormOptions) {
   const localErrors = computed(() => {
     const errors: Partial<Record<EntryField, string>> = {}
     const s = start.value
-    if (!s.ok) {
+    if (!isValidLocalDate(date.value)) errors.date = 'Enter a valid date.'
+    else if (!s.ok) {
       errors.start = s.reason === 'gap'
         ? `${startTime.value} doesn't exist on this day because clocks jump forward to ${s.suggestion}.`
-        : 'Enter a valid date and start time.'
+        : 'Enter a valid start time.'
     }
     if (durationInvalid.value) errors.duration = 'Try 1h 30m, 1:30 or 90m.'
     else if (durationMs.value === null) errors.duration = 'Enter how long you worked, or an end time.'
@@ -156,7 +158,7 @@ export function useEntryForm(opts: EntryFormOptions) {
       for (const issue of parsed.error.issues) {
         const field = FIELD_FOR_PATH[String(issue.path[0])]
         // start/end ISO issues are already explained by the start and duration messages above.
-        if (field && !errors[field] && !((field === 'start' || field === 'end') && (errors.start || errors.duration))) {
+        if (field && !errors[field] && !((field === 'start' || field === 'end') && (errors.date || errors.start || errors.duration))) {
           errors[field] = issue.message
         }
       }

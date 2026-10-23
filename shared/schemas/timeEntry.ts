@@ -11,7 +11,7 @@ export const isoTimestampSchema = z.iso.datetime({ offset: true, error: 'Expecte
  * What we send upstream: UTC with `Z` only (hard rule 4). Task 3's input schema must use this,
  * not isoTimestampSchema, so a local or offset time can't reach the API.
  */
-export const utcTimestampSchema = z.iso.datetime({ error: 'Expected a UTC ISO 8601 timestamp ending in Z' })
+export const utcTimestampSchema = z.iso.datetime({ error: 'Use a UTC ISO 8601 timestamp, like 2026-10-23T09:00:00.000Z.' })
 
 /**
  * The upstream shape. Server-only: `userId` holds the raw API key, so this schema must never be

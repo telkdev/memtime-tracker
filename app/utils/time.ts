@@ -216,3 +216,8 @@ export function startOfLocalDay(d: Date): Date {
 export function sameInstant(a: DateInput, b: DateInput): boolean {
   return new Date(a).getTime() === new Date(b).getTime()
 }
+
+/** True for a real local calendar date in `YYYY-MM-DD` form (noon is never in a DST gap). */
+export function isValidLocalDate(date: string): boolean {
+  return resolveLocal(date, '12:00').ok
+}

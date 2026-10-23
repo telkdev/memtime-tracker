@@ -98,6 +98,15 @@ describe('useEntryForm', () => {
     expect(form.isValid.value).toBe(true)
   })
 
+  it('reports an impossible date under Date, not under Start', async () => {
+    const form = filled()
+    form.setDate('2026-02-31')
+    await form.submit()
+    expect(form.errors.value.date).toBe('Enter a valid date.')
+    expect(form.errors.value.start).toBeUndefined()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('blocks saving a start time inside the DST gap and offers the fix', async () => {
     const form = filled()
     form.date.value = '2026-03-29'

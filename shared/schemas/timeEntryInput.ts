@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { utcTimestampSchema } from './timeEntry'
 
 // Shared by the entry form and the BFF, so a field error reads the same in both places.
 // The API documents no limits; the comment cap and the 24 h cap are our own rules.
@@ -6,7 +7,8 @@ import { z } from 'zod'
 export const COMMENT_MAX = 500
 export const MAX_ENTRY_MS = 24 * 60 * 60_000
 
-const utcIso = z.iso.datetime({ message: 'Use a UTC ISO 8601 timestamp, like 2026-10-23T09:00:00.000Z.' })
+// The shared UTC-only rule (hard rule 4): Z only, no local or offset times.
+const utcIso = utcTimestampSchema
 
 export const timeEntryInputSchema = z.object({
   taskId: z.number({ message: 'Pick a task.' }).int().nonnegative({ message: 'Pick a task.' }),
