@@ -1,0 +1,11 @@
+# npm run check -- --no-fix
+# Commit: 7f09d1d (main), run 2026-10-23T19:42Z, TZ=Europe/Berlin via the test setup. Local mock API only.
+
+
+> check
+> node scripts/check.mjs --no-fix
+
+✓ lint (4.1s)
+✓ typecheck (9.5s)
+✓ test (12.5s)
+exit: 0

@@ -10,10 +10,10 @@ Every finding from the six QA runs, the commit that fixed it, and how the fix wa
 | [3](qa-run-3.md) | the fixes for run 2 | PASS WITH NOTES | 5 minor |
 | [4](qa-run-4.md) | whole app after merging the form (Task 3) | PASS WITH NOTES | 4 major, 11 minor |
 | [5](qa-run-5.md) | the fixes for run 4 | PASS WITH NOTES | 2 major, 7 minor |
-| [6](qa-run-6.md) | the fixes for run 5 | see report | see report |
+| [6](qa-run-6.md) | the fixes for run 5 | PASS WITH NOTES | 5 minor |
 
-Plus two found outside a QA run: the End-field review point (below) and a 500 on malformed JSON
-that `npm run smoke` caught right after the merge.
+Plus three found outside a QA run, while merging the form: a lint failure, a 500 on malformed JSON
+that `npm run smoke` caught, and the End-field review point.
 
 ## Run 1
 
@@ -82,14 +82,24 @@ that `npm run smoke` caught right after the merge.
 | # | Sev. | Finding | Fix commit | Verified by |
 |---|---|---|---|---|
 | 1 | major | After a Date change cleared a refused End, the End box still showed the refused time, not the one saved | `1abdf2e` | `entry-form.test.ts` "shows the End that will be saved once a Date change clears a refused End" (fails without the fix: `expected '09:00' to be '10:30'`) |
-| 2 | major | README linked `docs/qa/`, which wasn't committed yet | the docs/qa commit | `git ls-files docs/qa` |
+| 2 | major | README linked `docs/qa/`, which wasn't committed yet | `fcebc04` | `git ls-files docs/qa` |
 | 3 | minor | task-3-form.md: `ENTRY_NOT_FOUND`, "positive int", `refreshNuxtData`, "End ≤ Start rolls" | `72b9513` | Plan now matches the code |
 | 4 | minor | Fixtures claimed undocumented 429/500 bodies; two fixtures unused | `69ec446` | `_source` marks them assumed; `memtime-client.test.ts` uses `rateLimited`, `time-entry-writes.test.ts` uses `entryNotFoundPut` |
-| 5 | minor | "Log as a new entry" heading untested; tab title stayed "Edit entry" | `feed5d1` | `edit-page.test.ts` "turns the heading into a create after a 404 on save…" (fails without the `mode` event); the tab title follows `mode` (not asserted) |
+| 5 | minor | "Log as a new entry" heading untested; tab title stayed "Edit entry" | `feed5d1` | `edit-page.test.ts` "turns the heading into a create after a 404 on save…" (fails if the page's `@mode` handler is removed; the handler already existed, so this adds the missing test rather than fixing a bug); the tab title follows `mode` (not asserted) |
 | 6 | minor | A backdated create or a moved edit may land off the page the list opens, so no highlight | `72b9513` | Accepted and written down: task-3-form.md "Known limits", `listReturnQuery` docblock. The toast confirms the save. |
 | 7 | minor | End = Start refused in the repeated fall-back hour, where it means one hour | `9e74c5c` | `use-entry-form.test.ts` "accepts an End equal to Start in the repeated fall-back hour as one hour later" (fails without the fix: 1h30 stays) |
 | 8 | minor | useEntrySources docblock said it never makes requests | `72b9513` | Docblock names the background task-name lookups |
 | 9 | minor | Zero-cost smoke checks compared `remaining`, which a window reset can fool | `d0598c0` | The mock counts requests (`/__requests`); smoke asserts the count is unchanged |
+
+## Run 6
+
+| # | Sev. | Finding | Fix commit | Verified by |
+|---|---|---|---|---|
+| 1 | minor | Re-entering the same duration cleared a refused End's error while the End box kept the refused time | `b7a2331` | `use-entry-form.test.ts` "keeps a refused End refused when the duration is entered again unchanged" (fails without the fix: `expected true to be false`) |
+| 2 | minor | acceptance.md still said "End ≤ Start rolls" | this commit | Row now matches the plan and cites the form tests |
+| 3 | minor | docs/qa claims ahead of the evidence (totals before run 6, "two" outside-QA findings, an overstated "fails without the fix", a wrong test file, an unnamed commit, a key scan not yet run) | this commit | Each corrected; the scan result is at the end of `smoke.log` |
+| 4 | minor | The fall-back test's error assertion could never fail before a submit | `b7a2331` | Asserts `isValid` instead |
+| 5 | minor | Tab title "Log new entry" vs heading "Log as a new entry" | `7f09d1d` | Same words in both |
 
 ## Rejected
 
