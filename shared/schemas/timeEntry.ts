@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { decimalIntSchema } from './common'
 
 /**
  * ISO 8601 timestamp from the upstream, with `Z` or an explicit offset. One without an offset
@@ -39,8 +40,8 @@ export const TIME_ENTRY_PAGE_SIZES = [10, 25, 50, 100] as const
 export const DEFAULT_TIME_ENTRY_PAGE_SIZE = 25
 
 export const timeEntryListQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).default(DEFAULT_TIME_ENTRY_PAGE_SIZE),
-  offset: z.coerce.number().int().min(0).default(0),
+  limit: decimalIntSchema.pipe(z.number().min(1).max(100)).default(DEFAULT_TIME_ENTRY_PAGE_SIZE),
+  offset: decimalIntSchema.default(0),
   /** `refresh=1` bypasses the server cache (the Refresh button). */
   refresh: z.enum(['1']).optional(),
 })

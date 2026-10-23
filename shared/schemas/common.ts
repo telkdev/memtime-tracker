@@ -1,7 +1,16 @@
 import { z } from 'zod'
 
+/**
+ * A non-negative whole number from a route param or query string. Plain digits only: z.coerce
+ * would also read "0x10" as 16 and "1e2" as 100, so a crafted URL could address another entry.
+ */
+export const decimalIntSchema = z.union([
+  z.number().int().nonnegative(),
+  z.string().regex(/^\d{1,15}$/, 'Expected a whole number').transform(Number),
+])
+
 /** Integer id from route params / query strings. The upstream really uses 0 (time entry #0). */
-export const idSchema = z.coerce.number().int().nonnegative()
+export const idSchema = decimalIntSchema
 
 /** Our pagination envelope. The upstream returns bare arrays without totals. */
 export interface Page<T> {
