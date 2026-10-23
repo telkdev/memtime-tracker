@@ -171,6 +171,26 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     timer = setTimer(pump, blockedUntil - t)
   }
 
+  /**
+   * Call with the upstream `ratelimit-remaining` header. Other clients of the same key (a second
+   * tab of another app, curl) spend the same budget, so our own count can be too optimistic. We keep
+   * one request of headroom below what the upstream reports. At 0 we pause until its reset.
+   */
+  function sync(upstreamRemaining: number, resetMs?: number) {
+    const t = now()
+    if (t < blockedUntil) return
+    rollWindow(t)
+    if (upstreamRemaining <= 0) {
+      blockedUntil = t + (resetMs ?? opts.windowMs)
+      windowStart = blockedUntil
+      used = 0
+      if (timer !== null) clearTimer(timer)
+      timer = setTimer(pump, blockedUntil - t)
+      return
+    }
+    used = Math.min(opts.budget, Math.max(used, opts.budget - (upstreamRemaining - 1)))
+  }
+
   /** Call after a successful upstream response. */
   function recordSuccess() {
     consecutivePenalties = 0
@@ -189,7 +209,7 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     }
   }
 
-  return { schedule, penalize, recordSuccess, snapshot }
+  return { schedule, penalize, sync, recordSuccess, snapshot }
 }
 
 export type RateLimiter = ReturnType<typeof createRateLimiter>

@@ -71,6 +71,7 @@ const inactiveStatus = computed(() =>
       <span
         class="truncate"
         :class="{ 'font-medium': row.kind === 'client' }"
+        :title="row.label"
       >{{ row.label }}</span>
       <UBadge
         v-if="inactiveStatus"

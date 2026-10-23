@@ -194,7 +194,8 @@ of them wrong means rework in every later layer.
 - Delete with confirmation, using `DELETE /time-entries/:id` (documented, not required).
   Undo isn't possible without re-creating the entry, so a confirm dialog is the honest UX.
 
-## Still open (probe)
+## Settled by the real-API run (2026-10-23)
 
-- Fixed or sliding window. Any rate-limit headers at all.
-- What `Task.parent` means. Does `/health` count against the limit?
+- Rate-limit headers exist (`ratelimit-remaining`, `ratelimit-reset`); the limiter syncs from them.
+- Tasks have `projectId`, no `parent`. A bad key is a plain-text 401. IDs can be 0.
+- Still unknown: fixed vs sliding window, and whether `/health` counts against the limit.

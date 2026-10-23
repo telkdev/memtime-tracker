@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// Local stand-in for the Memtime API, following API_V1_DOCUMENTATION.md: bare-array lists with
-// limit/offset/sortBy/order, `{ error }` bodies, a 15 req/60s limit, and userId echoing the key.
+// Local stand-in for the Memtime API, matching what the real API returned on 2026-10-23 (not only
+// the docs): bare-array lists with limit/offset/sortBy/order, `{ error }` bodies, a 15 req/60s limit
+// with ratelimit-* headers, tasks with projectId and no parent, plain-text 401 for a bad key,
+// entry ids from 0, and userId echoing the key.
 // Lets you develop and demo without spending the real budget.
 //   node scripts/mock-api.mjs [port]   then   NUXT_MEMTIME_BASE_URL=http://localhost:4010/api/v1
 import { createServer } from 'node:http'
@@ -29,13 +31,9 @@ for (const [clientId, names] of Object.entries(plan)) {
     const project = { id: ++projectId, clientId: Number(clientId), name, status: name === 'Maintenance' ? 'archived' : 'active', createdAt: ts(10), updatedAt: ts(10) }
     projects.push(project)
     const count = name === 'Bulk import' ? 130 : 3 + (projectId % 3)
-    let firstOfProject = 0
     for (let i = 1; i <= count; i++) {
       const id = ++taskId
-      if (i === 1) firstOfProject = id
-      // A couple of subtasks to exercise `parent`.
-      const parent = name === 'Mobile app' && i > 3 ? firstOfProject : 0
-      tasks.push({ id, projectId: project.id, parent, name: name === 'Bulk import' ? `Import batch ${String(i).padStart(3, '0')}` : ['Design', 'Development', 'Code review', 'QA', 'Meetings', 'Planning'][i - 1] ?? `Task ${i}`, status: 'active', createdAt: ts(20), updatedAt: ts(20) })
+      tasks.push({ id, projectId: project.id, name: name === 'Bulk import' ? `Import batch ${String(i).padStart(3, '0')}` : ['Design', 'Development', 'Code review', 'QA', 'Meetings', 'Planning'][i - 1] ?? `Task ${i}`, status: 'active', createdAt: ts(20), updatedAt: ts(20) })
     }
   }
 }
@@ -43,13 +41,23 @@ const entries = []
 
 let windowStart = Date.now()
 let used = 0
-function rateLimited() {
+/** Counts the request and returns the ratelimit-* headers the real API sends. */
+function rateLimit() {
   const now = Date.now()
   if (now - windowStart >= WINDOW_MS) {
     windowStart = now
     used = 0
   }
-  return ++used > LIMIT
+  used++
+  return {
+    limited: used > LIMIT,
+    headers: {
+      'ratelimit-limit': String(LIMIT),
+      'ratelimit-policy': `${LIMIT};w=${WINDOW_MS / 1000}`,
+      'ratelimit-remaining': String(Math.max(0, LIMIT - used)),
+      'ratelimit-reset': String(Math.ceil((windowStart + WINDOW_MS - now) / 1000)),
+    },
+  }
 }
 
 function list(rows, query) {
@@ -61,36 +69,38 @@ function list(rows, query) {
   return sorted.slice(offset, offset + limit)
 }
 
-// Tasks carry no projectId upstream; the mock keeps it internally for filtering.
-// eslint-disable-next-line no-unused-vars
-const strip = ({ projectId: _projectId, ...task }) => task
-
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`)
+  let rlHeaders = {}
   const send = (status, body) => {
-    res.writeHead(status, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify(body, null, 2))
+    res.writeHead(status, { 'Content-Type': 'application/json', ...rlHeaders })
+    res.end(JSON.stringify(body))
   }
   await new Promise(r => setTimeout(r, LATENCY_MS))
 
   if (url.pathname === '/health') return res.end('I\'m alive!')
   const key = (req.headers.authorization ?? '').replace(/^Bearer /, '')
-  if (!key) return send(404, { error: 'Unknown user' })
-  if (rateLimited()) return send(429, { error: 'Too many requests' })
+  if (!key) {
+    res.writeHead(401, { 'Content-Type': 'text/plain' })
+    return res.end('Unauthorized')
+  }
+  const rl = rateLimit()
+  rlHeaders = rl.headers
+  if (rl.limited) return send(429, { error: 'Too many requests' })
 
   const path = url.pathname.replace(/^\/api\/v1/, '')
   const q = url.searchParams
   let m
   if (req.method === 'GET' && path === '/clients') return send(200, list(clients, q))
   if (req.method === 'GET' && (m = path.match(/^\/clients\/(\d+)\/projects$/))) return send(200, list(projects.filter(p => p.clientId === Number(m[1])), q))
-  if (req.method === 'GET' && (m = path.match(/^\/projects\/(\d+)\/tasks$/))) return send(200, list(tasks.filter(t => t.projectId === Number(m[1])).map(strip), q))
+  if (req.method === 'GET' && (m = path.match(/^\/projects\/(\d+)\/tasks$/))) return send(200, list(tasks.filter(t => t.projectId === Number(m[1])), q))
   if (req.method === 'GET' && (m = path.match(/^\/clients\/(\d+)$/))) {
     const c = clients.find(x => x.id === Number(m[1]))
     return c ? send(200, c) : send(404, { error: 'Client not found' })
   }
   if (req.method === 'GET' && (m = path.match(/^\/tasks\/(\d+)$/))) {
     const t = tasks.find(x => x.id === Number(m[1]))
-    return t ? send(200, strip(t)) : send(404, { error: 'Task not found' })
+    return t ? send(200, t) : send(404, { error: 'Task not found' })
   }
   if (req.method === 'GET' && path === '/time-entries') return send(200, list(entries.filter(e => e.userId === key), q))
   if ((m = path.match(/^\/time-entries\/(\d+)$/)) && req.method === 'GET') {
@@ -106,13 +116,13 @@ const server = createServer(async (req, res) => {
       }))
     }
     catch {
-      return send(400, { error: 'Invalid JSON body' })
+      return send(400, { error: 'Invalid request body' })
     }
     const missing = ['taskId', 'comment', 'start', 'end'].filter(f => body[f] === undefined)
     if (missing.length) return send(400, { error: `Missing required fields: ${missing.join(', ')}` })
     const now = new Date().toISOString()
     if (req.method === 'POST' && path === '/time-entries') {
-      const entry = { id: entries.length + 1, taskId: body.taskId, userId: key, comment: body.comment, start: body.start, end: body.end, createdAt: now, updatedAt: now }
+      const entry = { id: entries.length, taskId: body.taskId, userId: key, comment: body.comment, start: body.start, end: body.end, createdAt: now, updatedAt: now }
       entries.push(entry)
       return send(201, entry)
     }

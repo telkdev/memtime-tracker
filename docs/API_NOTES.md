@@ -5,6 +5,23 @@ Source: the API v1 documentation the user shared on 2026-10-23
 **verify** are not documented or the docs are ambiguous. Confirm them with
 `scripts/probe-api.sh` and update this file.
 
+## Verified against the real API (2026-10-23)
+
+These were checked with real requests and **override anything below that disagrees**.
+
+- **Rate-limit headers exist** on every response: `ratelimit-limit: 15`,
+  `ratelimit-policy: 15;w=60`, `ratelimit-remaining: N`, `ratelimit-reset: <seconds>`. No
+  `Retry-After` was seen. The BFF syncs its limiter from `ratelimit-remaining` (keeping one spare)
+  and uses `ratelimit-reset` as the pause after a 429. The budget is per key, so curl or a second
+  app instance spends it too.
+- **A bad key gives `401` with a plain-text body `Unauthorized`**, not `404 Unknown user`.
+- **Tasks have `projectId` and no `parent`.** `parent` stays optional in our schema (default 0).
+- **IDs start at 0.** Time entry `#0` exists, so id params are validated as non-negative.
+- Invalid write body → `400 Invalid request body` (not `Invalid JSON body`).
+  404 messages: `Time entry not found` (GET), `Time entry #N not found` (PUT).
+- Status values seen: `in-progress`, `pending`, `completed`. There are exactly 100 clients.
+- JSON responses are compact. Timestamps are ISO 8601 with `Z`.
+
 ## Basics
 
 - Base URL `https://interview-api.memtime-demo.deno.net/api/v1`. The doc examples use

@@ -108,6 +108,30 @@ describe('memtime client', () => {
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 
+  it('syncs the limiter from the upstream ratelimit-remaining header', async () => {
+    const { client, limiter } = setup([json(200, [], { 'ratelimit-remaining': '3', 'ratelimit-reset': '42' })])
+    await client.list({ path: '/clients', itemSchema: clientSchema })
+    expect(limiter.snapshot().remaining).toBe(2)
+  })
+
+  it('uses ratelimit-reset as the pause after a 429 without Retry-After', async () => {
+    vi.useFakeTimers()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { client, fetch, limiter } = setup([json(429, { error: 'Too many requests' }, { 'ratelimit-reset': '10' })])
+    // 10 s is past the 8 s interactive wait, so the caller gets RATE_LIMITED instead of a held request.
+    const body = await apiError(client.request({ path: '/clients', schema: z.unknown() }))
+    expect(body).toMatchObject({ status: 429, code: 'RATE_LIMITED', retryAfter: 10 })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(limiter.snapshot().blockedForMs).toBe(10_000)
+  })
+
+  it('maps a plain-text 401 Unauthorized to UPSTREAM_AUTH', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { client } = setup([new Response('Unauthorized', { status: 401 })])
+    const body = await apiError(client.request({ path: '/clients', schema: z.unknown() }))
+    expect(body).toMatchObject({ status: 502, code: 'UPSTREAM_AUTH' })
+  })
+
   it('gives up with RATE_LIMITED and a retryAfter when 429s persist', async () => {
     vi.useFakeTimers()
     const { client } = setup(Array.from({ length: 5 }, () => json(429, { error: 'Too many requests' })))

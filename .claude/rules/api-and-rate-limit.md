@@ -15,8 +15,9 @@ paths:
 - Base URL: `https://interview-api.memtime-demo.deno.net/api/v1`
   (config: `NUXT_MEMTIME_BASE_URL`, default above)
 - Auth: `Authorization: Bearer <key>` on every request
-- Rate limit: **15 requests per 60 s window**, per key. **No rate-limit headers and no
-  `Retry-After` are documented.** We track the budget ourselves.
+- Rate limit: **15 requests per 60 s window**, per key. The real API sends `ratelimit-remaining`
+  and `ratelimit-reset` (seconds), but no `Retry-After`. We track the budget ourselves and sync it
+  down from `ratelimit-remaining` (`limiter.sync`), since other clients of the key share it.
 - Endpoints we use: `GET /clients`, `GET /clients/:id/projects`, `GET /projects/:id/tasks`,
   `GET /tasks/:id`, `GET /time-entries`, `GET /time-entries/:id`, `POST /time-entries` (201),
   `PUT /time-entries/:id`. `DELETE /time-entries/:id` exists but is out of scope (stretch goal).
@@ -25,7 +26,8 @@ paths:
 - IDs are numbers. Write body: `{ taskId: number, comment, start, end }`, all required. PUT replaces
   the whole entry.
 - Errors are `{ "error": "<string>" }` only, with no field details. Statuses: 400, 404, 429, 500.
-- **A bad key gives `404 Unknown user`** on `/time-entries`, not 401.
+- **A bad key gives `401` with a plain-text `Unauthorized` body** (verified; the docs say 404).
+- Tasks carry `projectId` and no `parent`. IDs can be 0.
 
 ## ⚠ `TimeEntry.userId` is the raw API key
 
@@ -56,10 +58,8 @@ If the official docs disagree with this list, the docs win. Update this file and
   3. `background`: prefetch and cache warming. Runs only when tokens > `reserve` (default 3).
 - The window is assumed to be fixed. The 1-request margin absorbs clock skew between us and the
   server.
-- When the server gets a 429: there's no `Retry-After`, so assume the window is spent. Drain the
-  bucket so every caller waits, then retry with backoff (2 s, 5 s, 15 s, with jitter, capped at
-  60 s, max 3 retries). If a `Retry-After` header does show up, honour it. Code that handles it
-  costs little.
+- When the server gets a 429: pause every lane for `Retry-After`, else `ratelimit-reset`, else the
+  escalating backoff (2 s, 5 s, 15 s, 60 s), then retry (max 3 retries).
 - **Max queue wait** for interactive requests is about 8 s. Past that, the BFF returns `429` with
   `retryAfter` instead of holding the HTTP request open. The client composable then shows a
   countdown and retries by itself.
@@ -95,8 +95,8 @@ If the official docs disagree with this list, the docs win. Update this file and
   `{ error: { status, code, message, fields?, retryAfter? } }`
 - Field errors come from **our** Zod validation in the BFF, which runs before any upstream call
   and so also saves budget. The upstream only returns a string. Map the few known messages
-  (`Invalid JSON body`, `Time entry #N not found`) with a lookup table, and show anything else as a
+  (`Invalid request body`, `Time entry #N not found`) with a lookup table, and show anything else as a
   summary.
-- Upstream 401/403, or `404 Unknown user` on `/time-entries` → BFF 502, `code: "UPSTREAM_AUTH"`,
+- Upstream 401/403 (or the documented `404 Unknown user`) → BFF 502, `code: "UPSTREAM_AUTH"`,
   a generic message, and a log line for the operator.
 - Set `Cache-Control: no-store` on time-entry responses.

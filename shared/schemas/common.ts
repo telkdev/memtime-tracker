@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
-/** Positive integer id, accepted from route params / query strings. */
-export const idSchema = z.coerce.number().int().positive()
+/** Integer id from route params / query strings. The upstream really uses 0 (time entry #0). */
+export const idSchema = z.coerce.number().int().nonnegative()
 
 /** Our pagination envelope. The upstream returns bare arrays without totals. */
 export interface Page<T> {

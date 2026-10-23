@@ -135,12 +135,17 @@ export function createMemtimeClient(opts: MemtimeClientOptions) {
         throw err
       })
 
+      const resetMs = parseRetryAfter(res.headers.get('ratelimit-reset'))
       if (res.status === 429) {
-        opts.limiter.penalize(parseRetryAfter(res.headers.get('retry-after')))
+        opts.limiter.penalize(parseRetryAfter(res.headers.get('retry-after')) ?? resetMs)
         console.warn(`[memtime] ${method} ${req.path} → 429 (attempt ${attempt + 1})`)
         if (attempt < maxRetries) continue
         throw rateLimited(opts.limiter.snapshot().resetsInMs)
       }
+
+      // The upstream sends IETF draft headers (ratelimit-remaining/-reset, seconds).
+      const remaining = Number.parseInt(res.headers.get('ratelimit-remaining') ?? '', 10)
+      if (Number.isFinite(remaining)) opts.limiter.sync(remaining, resetMs)
 
       if (res.status < 200 || res.status >= 300) throw toException(method, req.path, res)
       opts.limiter.recordSuccess()
