@@ -87,7 +87,8 @@ export function entryRowClass(entry: TimeEntry, highlight: { id?: number | null,
 /**
  * Where to go after a save. An update returns to the page the user was on, so they keep their
  * place and the edited row is highlighted there. A new entry is usually the newest, so it opens
- * page 1 at the user's page size.
+ * page 1 at the user's page size. A backdated entry, or an edit that moves Start far, can land on
+ * another page; then nothing is highlighted, and the toast is the confirmation.
  */
 export function listReturnQuery(last: ListPosition, verb: 'created' | 'updated' | 'cancel', id?: number): Record<string, string> {
   const position = verb === 'created' ? { page: 1, size: last.size } : last

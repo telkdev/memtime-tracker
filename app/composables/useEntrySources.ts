@@ -4,7 +4,8 @@ import { recentTaskIds } from '~/utils/entry-form'
 /**
  * Everything the entry form reads from the rest of the app, in one place: loaded entries
  * (recent tasks, smart start, overlaps), the loaded catalog (picker) and task names.
- * All of it is data that's already in memory; nothing here triggers a request.
+ * Almost all of it is already in memory. The only requests are task-name lookups for tasks the
+ * tree hasn't loaded: cached, and in the server's background lane.
  */
 export function useEntrySources() {
   const { taskIndex } = useCatalog()

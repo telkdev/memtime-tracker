@@ -33,8 +33,10 @@ badge when it falls on a later date. This one choice removes the midnight bug cl
 Sync rules (the same ones Toggl and Harvest use, so they feel familiar):
 - Change **Start** → duration stays, End moves.
 - Change **Duration** → End moves.
-- Change **End time** → duration is recomputed. If End ≤ Start on the same date, it rolls to the
-  next day (shown by the badge). End is never before Start by construction.
+- Change **End time** → duration is recomputed. If End < Start on the same date, it rolls to the
+  next day (shown by the badge). End equal to Start is refused ("End must be after the start
+  time."), except in the repeated fall-back hour, where it means one hour later. End is never
+  before Start by construction.
 - "Until now" button next to End sets End = now (rounded to the minute).
 
 Why not separate end date input: in practice it's the field people forget to change, which
@@ -95,7 +97,7 @@ to a shared piece; it comes with its own limiter test.
 ### Routes
 - `POST /api/time-entries` → validate with `TimeEntryInput` **before** the limiter (400 with
   `fields`, 0 budget) → upstream `POST` (expects 201) → strip `userId` → 201 `{ entry }`.
-- `PUT /api/time-entries/:id` → same validation, id must be a positive int → upstream `PUT` → 200.
+- `PUT /api/time-entries/:id` → same validation, id must be a decimal integer (0 allowed; `0x10` and `1e2` refused) → upstream `PUT` → 200.
 - `GET /api/time-entries/:id` → for deep links. May already exist from Task 2; reuse if so.
 - On any successful write: invalidate the `time-entries` cache prefix.
 
@@ -115,7 +117,7 @@ to a shared piece; it comes with its own limiter test.
 | our Zod failure | 400 `VALIDATION`, `fields` | message under each field |
 | 400 `Invalid JSON body` | 400 `BAD_REQUEST` | "The server rejected this entry. Nothing was saved." (and log it: from our UI this means a bug in the BFF) |
 | 400 other text | 400 `BAD_REQUEST`, `fields` via a small lookup (`taskId`, `start`, `end`, `comment` mentioned in the text) | field message, or the summary with the server's reason |
-| 404 `Time entry #N not found` | 404 `ENTRY_NOT_FOUND` | see the 404 flow below |
+| 404 `Time entry #N not found` | 404 `NOT_FOUND` | see the 404 flow below |
 | 404 `Unknown user` | 502 `UPSTREAM_AUTH` | "Server is misconfigured" (from Task 1) |
 | 429 after retries | 429 `RATE_LIMITED`, `retryAfter` | countdown, auto-retry once |
 | 5xx / network | 502 `UPSTREAM_UNAVAILABLE` | see below |
@@ -201,7 +203,7 @@ A deep link to a missing id (`GET` 404) shows a page-level empty state with "Log
   `useTimeEntries` one small addition: `getCached(id)` that looks through pages already in the
   `useFetch` cache, plus read access to the loaded entries (for recent tasks, smart start,
   overlap). Server-side invalidation is `cache.invalidatePrefix('time-entries:')`, as their plan
-  says; on the client I call `refreshNuxtData` for the `entries:` keys after a save. The list reads `?highlight=<id>` to highlight the saved row. Display
+  says; on the client a save calls the list cache's `invalidate()` and `clearNuxtData` for the list keys, so the next list visit refetches. The list reads `?highlight=<id>` to highlight the saved row. Display
   formatting in `time.ts` is Task 2's; the parsing and DST functions above are mine.
 
 ## Build steps (each one commit)
@@ -214,7 +216,7 @@ A deep link to a missing id (`GET` 404) shows a page-level empty state with "Log
 
 ## Acceptance criteria
 - [ ] Keyboard only: pick a recent task, enter `1h30`, a comment, save, in under 10 seconds. (the path exists: task → duration → comment → Ctrl+Enter; not tested or timed in a browser)
-- [x] End before start can't be produced; End ≤ Start rolls to the next day with a visible badge.
+- [x] End before start can't be produced; End < Start rolls to the next day with a visible badge; End = Start is refused.
 - [x] 23:00 + 2h on 2026-10-22 saves `2026-10-22T21:00:00.000Z` → `2026-10-22T23:00:00.000Z`
       (Berlin, CEST).
 - [x] 02:30 on 2026-03-29 shows the gap hint and can't be saved until fixed.
@@ -226,6 +228,12 @@ A deep link to a missing id (`GET` 404) shows a page-level empty state with "Log
 - [x] A POST network failure is not retried automatically and says the entry may not be saved.
 - [x] Invalid input costs 0 upstream calls.
 - [x] `npm run check` passes.
+
+## Known limits
+- After a save the list highlights the saved row only if it is on the page the list opens. A
+  create opens page 1 (new entries are usually the newest), and an update returns to the page the
+  user came from, so a backdated create, or an edit that moves Start far enough, lands on another
+  page. The toast still confirms the save. Finding the row's page would cost extra upstream calls.
 
 ## Out of scope (on purpose)
 - Timer mode (start/stop): the most useful next feature, listed in the README.
