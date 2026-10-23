@@ -1,21 +1,12 @@
 <script setup lang="ts">
-import type { TimeEntry } from '#shared/schemas/timeEntry'
 import { idSchema } from '#shared/schemas/common'
 import { parseApiError } from '~/utils/api-error'
 
 useHead({ title: 'Edit entry' })
 
 const route = useRoute()
-const sources = useEntrySources()
 const id = idSchema.safeParse(route.params.id).data
-
-// Opened from the list: the entry is already in memory, so this costs no request.
-const cached = id === undefined ? undefined : sources.getCached(id)
-const { data, error, status, refresh } = await useAsyncData(
-  `time-entry:${id}`,
-  () => cached ? Promise.resolve({ entry: cached }) : $fetch<{ entry: TimeEntry }>(`/api/time-entries/${id}`, { retry: 0 }),
-  { immediate: id !== undefined },
-)
+const { data, error, status, refresh } = await useTimeEntry(id)
 const loadError = computed(() => error.value ? parseApiError(error.value) : null)
 </script>
 
