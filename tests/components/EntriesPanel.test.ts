@@ -213,4 +213,9 @@ describe('EntriesPanel', () => {
       vi.useRealTimers()
     }
   })
+
+  it('remembers the page on screen, so a save can return to it', async () => {
+    await mountAt('/?page=3&size=10')
+    expect(useLastListPosition().value).toEqual({ page: 3, size: 10 })
+  })
 })

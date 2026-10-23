@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { entryEditPath, entryEndDays, entryRowClass, endsLaterLabel } from '../../app/utils/entries'
+import { entryEditPath, entryEndDays, entryRowClass, endsLaterLabel, listReturnQuery } from '../../app/utils/entries'
 
 const entry = { id: 0, taskId: 7, comment: '', start: '2026-10-22T21:00:00.000Z', end: '2026-10-22T23:30:00.000Z', createdAt: '', updatedAt: '' }
 
@@ -18,5 +18,19 @@ describe('entry row helpers', () => {
     expect(entryRowClass(entry, { id: 0 })).toContain('bg-primary/15')
     expect(entryRowClass(entry, { taskId: 7 })).toContain('bg-primary/5')
     expect(entryRowClass(entry, { id: null, taskId: null })).toBe('')
+  })
+})
+
+describe('listReturnQuery', () => {
+  it('returns an update to the page the user came from, with the row highlighted', () => {
+    expect(listReturnQuery({ page: 3, size: 50 }, 'updated', 12)).toEqual({ page: '3', size: '50', highlight: '12' })
+  })
+
+  it('opens page 1 at the same size after a create (new entries are the newest)', () => {
+    expect(listReturnQuery({ page: 3, size: 50 }, 'created', 0)).toEqual({ size: '50', highlight: '0' })
+  })
+
+  it('cancels back to the same page without a highlight', () => {
+    expect(listReturnQuery({ page: 2, size: 25 }, 'cancel')).toEqual({ page: '2' })
   })
 })

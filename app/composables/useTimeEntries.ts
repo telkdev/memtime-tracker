@@ -1,6 +1,6 @@
 import { pageSchema, type ApiErrorBody } from '#shared/schemas/common'
-import { timeEntrySchema, type TimeEntry } from '#shared/schemas/timeEntry'
-import { listPositionQuery, needsQueryFix, readListPosition } from '~/utils/entries'
+import { DEFAULT_TIME_ENTRY_PAGE_SIZE, timeEntrySchema, type TimeEntry } from '#shared/schemas/timeEntry'
+import { listPositionQuery, listReturnQuery, needsQueryFix, readListPosition, type ListPosition } from '~/utils/entries'
 
 /** Matches the BFF cache: within this window a page is shown from memory without asking again. */
 const CLIENT_FRESH_MS = 15_000
@@ -51,6 +51,18 @@ export function useTimeEntryCache() {
   return { pages, loadedEntries, getCached, invalidate }
 }
 
+/** The list page the user last looked at, so the form can send them back to it. */
+export function useLastListPosition() {
+  return useState<ListPosition>('time-entries:last-position', () => ({ page: 1, size: DEFAULT_TIME_ENTRY_PAGE_SIZE }))
+}
+
+/** Navigates back to the list after a save or cancel (see listReturnQuery). */
+export function useReturnToList() {
+  const last = useLastListPosition()
+  return (verb: 'created' | 'updated' | 'cancel', id?: number) =>
+    navigateTo({ path: '/', query: listReturnQuery(last.value, verb, id) })
+}
+
 /**
  * The paginated list, driven by `?page&size` in the URL. Fetches only in the browser: times are
  * shown in the viewer's zone, which the server doesn't know.
@@ -62,6 +74,7 @@ export function useTimeEntries() {
   const { refreshSnapshot } = useRateLimitState()
 
   const position = computed(() => readListPosition(route.query))
+  const lastPosition = useLastListPosition()
   const current = computed(() => pages.value[pageKey(position.value.page, position.value.size)])
   /** Last page that was on screen; kept visible (dimmed) while the next one loads or waits. */
   const shown = shallowRef<LoadedPage>()
@@ -141,7 +154,10 @@ export function useTimeEntries() {
     if (needsQueryFix(route.query)) {
       router.replace({ query: queryFor(position.value.page, position.value.size) })
     }
-    watch(() => pageKey(position.value.page, position.value.size), () => load(), { immediate: true })
+    watch(() => pageKey(position.value.page, position.value.size), () => {
+      lastPosition.value = position.value
+      load()
+    }, { immediate: true })
     // A write elsewhere cleared the cache: reload what's on screen. A page change also turns
     // `current` empty for a moment, but the key watcher above already loads that one.
     watch(current, (page, before) => {

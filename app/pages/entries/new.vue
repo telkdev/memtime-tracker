@@ -28,6 +28,7 @@ const browsing = ref(false)
 
 useLeaveGuard(() => form.isDirty.value && !form.pending.value)
 const onSaved = useEntrySaved()
+const returnToList = useReturnToList()
 
 async function handleSaved(entry: TimeEntry, { another }: { another: boolean }) {
   if (another) form.resetForNext(entry)
@@ -45,7 +46,7 @@ async function handleSaved(entry: TimeEntry, { another }: { another: boolean }) 
       :task-groups="taskGroups"
       @saved="handleSaved"
       @browse="browsing = true"
-      @cancel="navigateTo('/')"
+      @cancel="returnToList('cancel')"
     />
     <TaskBrowser
       v-model:open="browsing"

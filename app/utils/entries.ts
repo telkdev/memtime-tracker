@@ -83,3 +83,13 @@ export function entryRowClass(entry: TimeEntry, highlight: { id?: number | null,
   if (entry.taskId === highlight.taskId) return 'bg-primary/5 shadow-[inset_3px_0_0_var(--ui-primary)]'
   return ''
 }
+
+/**
+ * Where to go after a save. An update returns to the page the user was on, so they keep their
+ * place and the edited row is highlighted there. A new entry is usually the newest, so it opens
+ * page 1 at the user's page size.
+ */
+export function listReturnQuery(last: ListPosition, verb: 'created' | 'updated' | 'cancel', id?: number): Record<string, string> {
+  const position = verb === 'created' ? { page: 1, size: last.size } : last
+  return { ...listPositionQuery(position), ...(id === undefined ? {} : { highlight: String(id) }) }
+}

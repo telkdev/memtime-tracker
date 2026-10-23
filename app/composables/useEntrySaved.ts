@@ -1,10 +1,11 @@
 import type { TimeEntry } from '#shared/schemas/timeEntry'
 import { formatDuration, formatTime } from '~/utils/time'
 
-/** Toast + return to the list with the saved row highlighted. Shared by the create and edit pages. */
+/** Toast + return to the list (the page the user came from) with the saved row highlighted. Shared by the create and edit pages. */
 export function useEntrySaved() {
   const toast = useToast()
   const { invalidate } = useTimeEntryCache()
+  const returnToList = useReturnToList()
 
   return async function onSaved(entry: TimeEntry, verb: 'created' | 'updated', taskName: string | undefined, navigate = true) {
     const ms = Date.parse(entry.end) - Date.parse(entry.start)
@@ -19,6 +20,6 @@ export function useEntrySaved() {
     // nothing; the list refetches only the page it shows.
     invalidate()
     clearNuxtData(`time-entry:${entry.id}`)
-    if (navigate) await navigateTo({ path: '/', query: { highlight: entry.id } })
+    if (navigate) await returnToList(verb, entry.id)
   }
 }
