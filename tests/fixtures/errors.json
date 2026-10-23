@@ -1,0 +1,11 @@
+{
+  "_source": "Upstream error bodies as documented and as the real API returned them on 2026-10-23 (docs/API_NOTES.md). No key anywhere.",
+  "badRequestDocs": { "status": 400, "body": { "error": "Invalid JSON body" } },
+  "badRequestLive": { "status": 400, "body": { "error": "Invalid request body" } },
+  "clientNotFound": { "status": 404, "body": { "error": "Client not found" } },
+  "entryNotFoundGet": { "status": 404, "body": { "error": "Time entry not found" } },
+  "entryNotFoundPut": { "status": 404, "body": { "error": "Time entry #999 not found" } },
+  "unknownUser": { "status": 404, "body": { "error": "Unknown user" } },
+  "rateLimited": { "status": 429, "body": { "error": "Too many requests" }, "headers": { "ratelimit-remaining": "0", "ratelimit-reset": "42" } },
+  "serverError": { "status": 500, "body": { "error": "Internal" } }
+}

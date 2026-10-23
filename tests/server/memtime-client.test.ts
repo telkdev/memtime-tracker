@@ -6,6 +6,7 @@ import { createMemtimeClient, parseRetryAfter } from '../../server/utils/memtime
 import { createRateLimiter } from '../../server/utils/rate-limiter'
 import { ApiException } from '../../server/utils/errors'
 import clientsFixture from '../fixtures/clients.json'
+import errors from '../fixtures/errors.json'
 
 const KEY = 'test-key-0123456789abcdefghijklmn'
 
@@ -73,12 +74,14 @@ describe('memtime client', () => {
   })
 
   it.each([
-    [404, { error: 'Client not found' }, { status: 404, code: 'NOT_FOUND', message: 'Client not found' }],
-    [404, { error: 'Unknown user' }, { status: 502, code: 'UPSTREAM_AUTH' }],
-    [401, { error: 'Unauthorized' }, { status: 502, code: 'UPSTREAM_AUTH' }],
-    [400, { error: 'Invalid JSON body' }, { status: 400, code: 'BAD_REQUEST', message: 'Invalid JSON body' }],
-    [500, { error: 'Internal' }, { status: 502, code: 'UPSTREAM_UNAVAILABLE' }],
-  ])('maps upstream %i %j', async (status, body, expected) => {
+    [errors.clientNotFound, { status: 404, code: 'NOT_FOUND', message: 'Client not found' }],
+    [errors.entryNotFoundGet, { status: 404, code: 'NOT_FOUND', message: 'Time entry not found' }],
+    [errors.unknownUser, { status: 502, code: 'UPSTREAM_AUTH' }],
+    [{ status: 401, body: { error: 'Unauthorized' } }, { status: 502, code: 'UPSTREAM_AUTH' }],
+    [errors.badRequestDocs, { status: 400, code: 'BAD_REQUEST', message: 'Invalid JSON body' }],
+    [errors.badRequestLive, { status: 400, code: 'BAD_REQUEST', message: 'Invalid request body' }],
+    [errors.serverError, { status: 502, code: 'UPSTREAM_UNAVAILABLE' }],
+  ])('maps upstream %j', async ({ status, body }, expected) => {
     const { client } = setup([json(status, body)])
     expect(await apiError(client.request({ path: '/clients/1', schema: z.unknown() }))).toMatchObject(expected)
   })
