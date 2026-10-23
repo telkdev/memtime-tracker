@@ -41,7 +41,7 @@ If the official docs disagree with this list, the docs win. Update this file and
 
 ## The key
 
-- Only `server/utils/memtime.ts` reads `useRuntimeConfig(event).memtimeApiKey`.
+- Only `server/utils/memtime.ts` reads `useRuntimeConfig().memtimeApiKey`.
 - On startup (a Nitro plugin), fail loudly if the key is missing. Don't fail later with a confusing
   401.
 - Never log request headers. Redact `authorization` if you log requests at all.
@@ -85,8 +85,8 @@ If the official docs disagree with this list, the docs win. Update this file and
 - There's no total, so request `limit + 1` and use the extra item only to decide `hasMore`. Don't
   show it. The UI shows Prev/Next, not page numbers.
 - Time entries: always send `sortBy=start&order=desc`. Most recent first is what users expect.
-- To fetch "all" projects or tasks of one node, loop pages through the limiter at `interactive`
-  priority, with a hard cap (for example 10 pages) and a visible "load more" past the cap.
+- Projects and tasks of one node: each BFF request serves one page of 100 at `interactive`
+  priority. Past that the tree shows "Load more", which fetches the next page on demand.
 
 ## BFF routes
 

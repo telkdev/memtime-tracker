@@ -15,7 +15,7 @@ Why first: the plan below assumes things about response shapes, pagination and e
 of them wrong means rework in every later layer.
 
 - [x] Read the docs → `docs/API_NOTES.md` written, and the rules updated to match.
-- [ ] Run `./scripts/probe-api.sh` once, by hand, to settle the **verify** items: window type,
+- [x] Run `./scripts/probe-api.sh` once, by hand, to settle the **verify** items: window type,
       whether any rate-limit headers exist, timestamp format, what `Task.parent` means, `status`
       values, whether `/health` counts against the limit.
 
@@ -26,16 +26,16 @@ of them wrong means rework in every later layer.
 
 ## Phase 1: Scaffold and tooling (≈1.5 h)
 
-- [ ] `npx nuxi@latest init` (Nuxt 4), add `@nuxt/ui`, `@nuxt/eslint`, `@nuxt/test-utils`, `zod`,
+- [x] `npx nuxi@latest init` (Nuxt 4), add `@nuxt/ui`, `@nuxt/eslint`, `@nuxt/test-utils`, `zod`,
       `vitest`, `@vue/test-utils`, `happy-dom`.
-- [ ] Add npm scripts: `dev`, `build`, `preview`, `lint`, `lint:fix`, `typecheck`, `test`,
+- [x] Add npm scripts: `dev`, `build`, `preview`, `lint`, `lint:fix`, `typecheck`, `test`,
       `test:watch`, and `"check": "node scripts/check.mjs"`.
-- [ ] `nuxt.config.ts`: `runtimeConfig.memtimeApiKey` (private) and `memtimeBaseUrl`, with nothing
+- [x] `nuxt.config.ts`: `runtimeConfig.memtimeApiKey` (private) and `memtimeBaseUrl`, with nothing
       under `public`.
-- [ ] Nitro plugin that fails startup with a clear message if the key is missing.
-- [ ] Vitest config with `TZ=Europe/Berlin` (it has DST, so the DST tests mean something).
-- [ ] App shell: header (app name, the user's time zone), main layout, toasts.
-- [ ] GitHub Actions: install → `npm run check`. CI gets no key.
+- [x] Nitro plugin that fails startup with a clear message if the key is missing.
+- [x] Vitest config with `TZ=Europe/Berlin` (it has DST, so the DST tests mean something).
+- [x] App shell: header (app name, the user's time zone), main layout, toasts.
+- [x] GitHub Actions: install → `npm run check`. CI gets no key.
 
 **AC**
 - `npm run dev` starts. Without the key it fails at startup with an actionable message.
@@ -45,17 +45,18 @@ of them wrong means rework in every later layer.
 
 ## Phase 2: BFF core: upstream client, limiter, cache, errors (≈3 h). The part reviewers look at most
 
-- [ ] `shared/schemas/*`: zod for Client, Project, Task, TimeEntry, TimeEntryInput, ApiError, and a
+- [x] `shared/schemas/*`: zod for Client, Project, Task, TimeEntry, ApiError (TimeEntryInput comes
+      with Task 3), and a
       generic Page<T>, all based on Phase 0 findings.
-- [ ] `server/utils/rate-limiter.ts`: token bucket (15/60s, configurable), three priority lanes
+- [x] `server/utils/rate-limiter.ts`: fixed window (15/60s, configurable), three priority lanes
       (write > interactive > background), background reserve, max wait → 429, injectable clock.
-- [ ] `server/utils/cache.ts`: TTL + SWR, in-flight coalescing, prefix invalidation.
-- [ ] `server/utils/memtime.ts`: the only upstream caller. It adds auth, goes through the limiter
+- [x] `server/utils/cache.ts`: TTL + SWR, in-flight coalescing, prefix invalidation.
+- [x] `server/utils/memtime.ts`: the only upstream caller. It adds auth, goes through the limiter
       (budget 14 per 60 s window), retries on 429 with backoff (no Retry-After is documented),
       parses with zod, and maps `{ error: string }` to `ApiError`.
-- [ ] Time-entry output schema **without `userId`** (the upstream puts the raw API key there).
-- [ ] `server/utils/errors.ts`: upstream status → `{ status, code, message, fields?, retryAfter? }`.
-- [ ] `GET /api/_meta/rate-limit`: local token snapshot, so the UI can show the budget (costs no
+- [x] Time-entry output schema **without `userId`** (the upstream puts the raw API key there).
+- [x] `server/utils/errors.ts`: upstream status → `{ status, code, message, fields?, retryAfter? }`.
+- [x] `GET /api/_meta/rate-limit`: local token snapshot, so the UI can show the budget (costs no
       upstream call).
 
 **AC**
@@ -70,11 +71,11 @@ of them wrong means rework in every later layer.
 
 ## Phase 3: Task 1, the client → project → task tree (≈2.5 h)
 
-- [ ] Routes: `GET /api/clients`, `/api/clients/:id/projects`, `/api/projects/:id/tasks`, with
-      catalog caching and pagination loops capped at 10 pages.
-- [ ] `useCatalog()`: per-node state (idle/loading/error/empty/loaded), lazy `expand(node)`, and a
+- [x] Routes: `GET /api/clients`, `/api/clients/:id/projects`, `/api/projects/:id/tasks`, with
+      catalog caching. Each request serves one page of 100; the tree's "Load more" fetches the next.
+- [x] `useCatalog()`: per-node state (idle/loading/error/empty/loaded), lazy `expand(node)`, and a
       lookup map `taskId → { task, project, client }` for the picker and list.
-- [ ] `ClientTree.vue` / `TreeNode.vue`: skeletons, inline retry, "Load more" past the cap,
+- [x] `ClientTree.vue` / `TreeRow.vue`: skeletons, inline retry, "Load more" past the cap,
       keyboard navigation, ARIA tree roles.
 - [ ] Enter or the "Log time" action on a task → new entry form with the task prefilled.
 - [ ] Optional: low-priority background prefetch of the first few clients' projects, only while the

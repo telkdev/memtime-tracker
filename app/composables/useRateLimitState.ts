@@ -6,7 +6,7 @@ export function useRateLimitState() {
 
   async function refreshSnapshot() {
     try {
-      const s = await $fetch<RateLimitSnapshot>('/api/_meta/rate-limit')
+      const s = await $fetch<RateLimitSnapshot>('/api/_meta/rate-limit', { retry: 0 })
       snapshot.value = { ...s, at: Date.now() }
     }
     catch {

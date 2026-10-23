@@ -113,7 +113,7 @@ export function useCatalog() {
   async function refresh() {
     for (const timer of retryTimers.values()) clearTimeout(timer)
     retryTimers.clear()
-    await $fetch('/api/catalog/refresh', { method: 'POST' })
+    await $fetch('/api/catalog/refresh', { method: 'POST', retry: 0 })
     nodes.value = {}
     expanded.value = []
     await load('root')

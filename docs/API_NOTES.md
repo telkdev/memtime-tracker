@@ -27,14 +27,15 @@ These were checked with real requests and **override anything below that disagre
 - Base URL `https://interview-api.memtime-demo.deno.net/api/v1`. The doc examples use
   `api.example.com`; ignore that.
 - Auth: `Authorization: Bearer <key>` on every `/api/v1` request.
-- Responses are pretty-printed JSON.
+- Responses are pretty-printed JSON (per the docs; not relied on).
 - `GET /health` → `200 "I'm alive!"`. **verify**: it may sit outside `/api/v1`, may need no auth,
   and may not count against the rate limit.
 
 ## Rate limit
 
 - 15 requests per 60-second window, per API key. Over the limit → `429`.
-- **No rate-limit headers and no `Retry-After` are documented.** The limiter must track its own
+- *Superseded by the verified section above: the real API sends `ratelimit-remaining` and
+  `ratelimit-reset`.* **No rate-limit headers and no `Retry-After` are documented.** The limiter must track its own
   budget. On a 429, assume the whole window is spent and wait up to 60 s (exponential backoff with
   jitter, capped at 60 s). **verify**: whether the window is fixed or sliding, and whether headers
   exist anyway.
@@ -48,7 +49,7 @@ These were checked with real requests and **override anything below that disagre
 | Task | `id: number`, `parent: number` (0 in examples), `name`, `status`, `createdAt`, `updatedAt` |
 | TimeEntry | `id: number`, `taskId: number`, `userId`, `comment`, `start`, `end`, `createdAt`, `updatedAt` |
 
-- **A Task has no `projectId`.** `parent` looks like a parent-task id (0 means top level). You can
+- *Superseded: the real API returns `projectId` and no `parent`.* **A Task has no `projectId`.** `parent` looks like a parent-task id (0 means top level). You can
   only get from a task to its project and client through the tree you've already loaded. **verify**
   what `parent` means.
 - **`TimeEntry.userId` contains the raw API key.** The BFF must strip it from every response
@@ -94,7 +95,8 @@ entry.
   - Field-level errors come from **our own** Zod validation (shared schema in the BFF and the
     form). Upstream 400s are a fallback summary. Map well-known messages to fields with a small
     lookup table, and don't build anything cleverer.
-  - A bad key shows up as `404 Unknown user` on `/time-entries`, **not as 401.** Treat it as
+  - *Superseded: a bad key is a plain-text `401 Unauthorized` on the real API. We map both.*
+    A bad key shows up as `404 Unknown user` on `/time-entries`, **not as 401.** Treat it as
     `UPSTREAM_AUTH` (502) on that route.
 
 ## Not documented: we validate ourselves (in both the BFF and the form)

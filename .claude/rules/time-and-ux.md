@@ -76,8 +76,9 @@ Users should be able to log time quickly and get it right the first time.
   The API returns no total, so the UI shows Prev/Next and "Page N", not "of M".
 - Sort newest first (`sortBy=start&order=desc`).
 - Task names: use the catalog cache first. For unknown IDs, look up `GET /tasks/:id` at background
-  priority (cached), and show `#id` until it arrives. A task has no `projectId`, so the
-  `Client › Project` path is only available for tasks already in the loaded tree.
+  priority (cached), and show `#id` until it arrives. A task carries `projectId`, but turning that into
+  project and client names would cost more calls, so the `Client › Project` path is only shown for
+  tasks already in the loaded tree.
 - Clicking a row opens edit. Every row also has an explicit Edit button, for accessibility.
 - Loading → skeleton rows. Empty → "No time entries yet" with a "Log time" button.
 

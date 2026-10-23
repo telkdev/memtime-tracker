@@ -31,8 +31,10 @@ The upstream allows 15 requests per minute and the data is shared. Tests mock at
 5. `shared/schemas`: the entry input schema (end > start, required fields, ISO format).
 6. `EntryForm.vue`: field-level errors shown, double submit prevented, the 404 offers "create as new",
    and values are kept on failure.
-7. Optional: one Playwright smoke test (tree expand → pick task → create entry → appears in list)
-   against a mocked BFF.
+7. `scripts/smoke.mjs` (`npm run smoke`): the built app against the mock API. It covers the key
+   never reaching the browser, error shapes, and a request burst never causing an upstream 429.
+   When you add a BFF route, add its checks there. Optional on top: one Playwright UI test
+   (tree expand → pick task → create entry → appears in list).
 
 ## Style
 

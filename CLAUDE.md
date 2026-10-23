@@ -36,6 +36,8 @@ npm run test                  # vitest run
 npm run test:watch
 npm run check                 # lint --fix + typecheck + test, quiet output (scripts/check.mjs)
 npm run check -- lint         # run one step: lint | typecheck | test
+npm run check -- --no-fix     # report lint errors without fixing (CI does this automatically)
+npm run smoke                 # build, then run the app against the mock API (no real calls)
 npm run build && npm run preview
 npm run mock:api              # local mock API on :4010 (set NUXT_MEMTIME_BASE_URL to use it)
 ./scripts/probe-api.sh        # MANUAL ONLY: hits the real API, spends rate-limit budget
@@ -44,7 +46,14 @@ npm run mock:api              # local mock API on :4010 (set NUXT_MEMTIME_BASE_U
 Before you say a task is done, run `npm run check` and make sure it passes. It prints one line per
 passing step and only the tail of a failure, so use it instead of running the three tools
 separately. ESLint is deliberately not a per-edit hook: half-finished edits produce noisy errors
-that cost tokens.
+that cost tokens. Run `npm run smoke` too when you touched a BFF route, the schemas or the config.
+
+## QA
+
+`.claude/agents/qa.md` is a read-only QA subagent: it runs `check --no-fix` and `smoke`, then
+reviews the change against the hard rules, the path rules and the plan's acceptance criteria and
+returns ranked findings. Run it with `/qa [scope]` after finishing a plan phase or before a
+commit that changes behaviour. Verify a finding yourself before acting on it.
 
 ## Architecture: the BFF pattern
 
@@ -61,35 +70,41 @@ goes through `server/utils/memtime.ts`.
 
 ```
 app/
-  pages/                index.vue (tree + entries), entries/new.vue, entries/[id]/edit.vue
+  pages/                index.vue (tree + entries); Task 3 adds entries/new.vue, entries/[id]/edit.vue
   components/
     tree/               ClientTree.vue, TreeRow.vue (rows built by utils/tree-rows.ts)
-    entries/            EntriesTable.vue, EntryForm.vue, TaskPicker.vue, DurationInput.vue
+    entries/            EntriesPanel.vue, EntriesTable.vue, EntriesPager.vue, EntriesStatus.vue,
+                        EntriesTaskCell.vue; Task 3 adds EntryForm, TaskPicker, DurationInput
     common/             RateLimitIndicator.vue
-  composables/          useCatalog.ts, useTimeEntries.ts, useRateLimitState.ts, useNow.ts
-  utils/                time.ts (local↔UTC, duration), api-error.ts (parseApiError), catalog.ts, tree-rows.ts
+  composables/          useCatalog, useTimeEntries, useTaskNames, useRateLimitState, useNow
+  utils/                time.ts (local↔UTC, duration), api-error.ts (parseApiError), catalog.ts,
+                        entries.ts, tree-rows.ts
 server/
   api/
-    clients/index.get.ts
-    clients/[id]/projects.get.ts
-    projects/[id]/tasks.get.ts
-    time-entries/index.get.ts
-    time-entries/index.post.ts
-    time-entries/[id].put.ts
-    time-entries/[id].get.ts       # deep-link edit
+    clients/index.get.ts, clients/[id]/projects.get.ts, projects/[id]/tasks.get.ts
+    tasks/[id].get.ts              # name lookup for the entries list (background lane)
+    catalog/refresh.post.ts        # drop the catalog cache
+    time-entries/index.get.ts      # Task 3 adds index.post.ts, [id].get.ts, [id].put.ts
     _meta/rate-limit.get.ts        # local budget snapshot, costs no upstream call
+    [...].ts                       # unknown /api/* → BFF 404 shape
+  plugins/check-config.ts          # fail at startup without a key
   utils/
-    memtime.ts            # the ONLY upstream client: auth, queue, retry, error mapping
-    rate-limiter.ts       # token bucket + priority queue (pure, unit-tested)
-    cache.ts              # TTL cache + in-flight request coalescing
-    errors.ts             # upstream error → ApiError
+    memtime.ts            # singletons: the ONLY place that reads the key
+    memtime-client.ts     # the ONLY upstream caller: auth, limiter, 429 retry, zod, redaction
+    rate-limiter.ts       # fixed window + priority lanes (pure, unit-tested)
+    cache.ts              # TTL + SWR cache, in-flight coalescing
+    errors.ts             # ApiException, anything thrown → ApiError body
+    api-handler.ts        # defineApiHandler, parseParams, parseQuery
+    catalog.ts, time-entries.ts
 shared/
-  schemas/                # zod: client, project, task, timeEntry, timeEntryInput, apiError, page
-  types/                  # z.infer exports
+  schemas/                # zod + inferred types: catalog, timeEntry, common (ApiError, Page)
 tests/
-  unit/  server/  components/  e2e/
+  unit/  server/  components/  fixtures/
+scripts/
+  check.mjs  smoke.mjs  mock-api.mjs  probe-api.sh
 docs/
   API_NOTES.md            # verified facts about the real API (shapes, headers, quirks)
+  plans/                  # per-task plans with request budgets and acceptance criteria
 ```
 
 Details are in `.claude/rules/`. Each file loads when you work on matching paths:
@@ -102,12 +117,13 @@ Details are in `.claude/rules/`. Each file loads when you work on matching paths
 ## Hard rules (non-negotiable)
 
 1. **The API key never leaves the server.** It lives in `.env` as `NUXT_MEMTIME_API_KEY` and is
-   read through `useRuntimeConfig(event).memtimeApiKey` (private, not under `public`). Never put it
+   read through `useRuntimeConfig().memtimeApiKey` (private, not under `public`). Never put it
    in `app/`, in `runtimeConfig.public`, in logs, in error messages, in tests, fixtures, docs or
-   commits. A PreToolUse hook (`.claude/hooks/guard-secrets.mjs`) blocks obvious leaks, but don't
-   rely on it.
+   commits. A PreToolUse hook (`.claude/hooks/guard-secrets.mjs`) blocks obvious leaks and ESLint
+   blocks reading the key outside `server/utils/memtime.ts`, but don't rely on either.
 2. **Respect the rate limit: 15 requests per 60s, shared by the whole app.** Every upstream call goes
-   through the limiter in `server/utils/memtime.ts`. Never `$fetch` the upstream anywhere else.
+   through `useMemtime()` (`server/utils/memtime.ts`), and so through the limiter. Never `fetch` the
+   upstream anywhere else.
    Never fetch the whole tree on page load. Load it lazily on expand.
 3. **Tests and CI never call the real API.** Mock at the `memtime.ts` boundary or with fixtures.
    `scripts/probe-api.sh` is the only thing that touches the real API, and a human runs it.
@@ -118,8 +134,8 @@ Details are in `.claude/rules/`. Each file loads when you work on matching paths
    Don't pass garbage through.
 6. **Strip `userId` from every time entry.** The upstream fills it with the raw API key. BFF
    output schemas leave it out, and a test checks for it.
-7. **Don't invent API behaviour.** If something isn't in `docs/API_NOTES.md` or
-   `API_V1_DOCUMENTATION.md`, check with the probe script or ask. Record verified facts in
+7. **Don't invent API behaviour.** If something isn't in `docs/API_NOTES.md` (which links the
+   official docs), ask a human to run the probe script, or ask. Record verified facts in
    `docs/API_NOTES.md`.
 
 ## Conventions
