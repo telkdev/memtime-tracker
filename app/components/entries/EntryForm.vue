@@ -230,7 +230,7 @@ function onKeydown(e: KeyboardEvent) {
         :label="f.pending.value ? 'Saving…' : isCreate ? 'Save entry' : 'Save changes'"
       />
       <UButton
-        v-if="isCreate"
+        v-if="isCreate && f.initialMode === 'create'"
         color="neutral"
         variant="outline"
         label="Save & log another"

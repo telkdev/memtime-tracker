@@ -59,4 +59,20 @@ describe('EntryForm', () => {
     await end.trigger('change')
     expect((duration.element as HTMLInputElement).value).toBe('2h 45m')
   })
+
+  it('offers "Save & log another" only on a form that was opened to create', async () => {
+    const entry = { id: 5, taskId: 7, comment: 'x', start: '2026-10-23T07:00:00.000Z', end: '2026-10-23T08:00:00.000Z', createdAt: '', updatedAt: '' }
+    let form!: ReturnType<typeof useEntryForm>
+    const wrapper = await mountSuspended(defineComponent({
+      setup() {
+        form = useEntryForm({ mode: 'edit', entry })
+        return () => h(UApp, () => h(EntryForm, { form, taskGroups: groups }))
+      },
+    }))
+    mounted.push(wrapper)
+    form.switchToCreate() // what "Create as new entry" does after a 404
+    await new Promise(r => setTimeout(r))
+    expect(wrapper.text()).toContain('Save entry')
+    expect(wrapper.text()).not.toContain('Save & log another')
+  })
 })

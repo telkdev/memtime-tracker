@@ -184,12 +184,24 @@ describe('useEntryForm', () => {
 
   it('warns that a failed create may still have been saved', async () => {
     fetchMock.mockImplementationOnce(async () => {
-      throw Object.assign(new Error('offline'), { statusCode: undefined })
+      // What ofetch throws when the request never got an answer.
+      throw Object.assign(new Error('fetch failed'), { name: 'FetchError', statusCode: undefined })
     })
     const form = filled()
     await form.submit()
     expect(form.summary.value).toMatch(/may not have been saved/)
     expect(form.comment.value).toBe('Design review')
+  })
+
+  it('on an update the server can\'t answer, keeps the edits and says saving again is safe', async () => {
+    fetchMock.mockRejectedValueOnce(apiError(503, { code: 'UPSTREAM_UNAVAILABLE', message: 'Couldn\'t reach the time tracking service.' }))
+    const form = useEntryForm({ mode: 'edit', entry: saved, now })
+    form.comment.value = 'Edited'
+    await form.submit()
+    expect(form.summary.value).toBe('Couldn\'t reach the server, so your changes may not be saved. Saving again is safe.')
+    expect(form.comment.value).toBe('Edited')
+    expect(form.isDirty.value).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   it('retries once by itself after a rate limit', async () => {

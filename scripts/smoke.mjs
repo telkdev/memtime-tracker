@@ -6,7 +6,6 @@
 //
 // Usage: npm run smoke                 (builds first)
 //        SMOKE_SKIP_BUILD=1 npm run smoke
-// Write checks (POST/PUT /api/time-entries) are skipped until those routes exist.
 import { spawn, spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
@@ -170,13 +169,17 @@ async function main() {
   const unknown = await call(base, '/api/nope')
   check('unknown API route → BFF 404 shape', unknown.status === 404 && isBffError(unknown))
 
-  // 6. Writes, once Task 3's routes exist.
+  // 6. Writes and reading one entry (Task 3).
   const empty = await call(base, '/api/time-entries', { method: 'POST', body: '{}' })
   if (routeMissing(empty)) {
     skip('POST /api/time-entries checks', 'route not implemented yet')
   }
   else {
     check('POST {} → 400 with field errors', empty.status === 400 && isBffError(empty) && !!empty.json.error.fields)
+    const beforeBad = await call(base, '/api/_meta/rate-limit')
+    await call(base, '/api/time-entries', { method: 'POST', body: JSON.stringify({ taskId: 1001, comment: '', start: 'yesterday', end: 'now' }) })
+    const afterBad = await call(base, '/api/_meta/rate-limit')
+    check('invalid POST costs no upstream call', afterBad.json?.remaining >= beforeBad.json?.remaining, `${beforeBad.json?.remaining} → ${afterBad.json?.remaining}`)
     const notJson = await call(base, '/api/time-entries', { method: 'POST', body: '{not json' })
     check('POST invalid JSON → 400 BFF shape', notJson.status === 400 && isBffError(notJson))
     const body = JSON.stringify({ taskId: 1001, comment: 'Smoke test', start: '2026-10-22T08:00:00.000Z', end: '2026-10-22T09:30:00.000Z' })
@@ -184,8 +187,17 @@ async function main() {
     check('POST valid entry → 2xx with id', created.status >= 200 && created.status < 300 && Number.isInteger(created.json?.id ?? created.json?.entry?.id), `status ${created.status}`)
     check('POST response has no key', !created.text.includes(KEY))
     const put = await call(base, '/api/time-entries/999999', { method: 'PUT', body })
-    if (routeMissing(put)) skip('PUT /api/time-entries/:id checks', 'route not implemented yet')
-    else check('PUT unknown entry → 404 NOT_FOUND', put.status === 404 && put.json?.error?.code === 'NOT_FOUND')
+    check('PUT unknown entry → 404 NOT_FOUND', put.status === 404 && put.json?.error?.code === 'NOT_FOUND')
+    const id = created.json?.entry?.id
+    const one = await call(base, `/api/time-entries/${id}`)
+    check('GET /api/time-entries/:id returns the entry without userId or key', one.status === 200 && one.json?.entry?.id === id
+    && !('userId' in (one.json?.entry ?? {})) && !one.text.includes(KEY), `status ${one.status}`)
+    const edited = JSON.stringify({ taskId: 1001, comment: 'Smoke test (edited)', start: '2026-10-22T08:00:00.000Z', end: '2026-10-22T10:00:00.000Z' })
+    const updated = await call(base, `/api/time-entries/${id}`, { method: 'PUT', body: edited })
+    check('PUT existing entry → 200 with the updated entry', updated.status === 200 && updated.json?.entry?.comment === 'Smoke test (edited)'
+    && updated.json.entry.end === '2026-10-22T10:00:00.000Z' && !('userId' in updated.json.entry) && !updated.text.includes(KEY), `status ${updated.status}`)
+    const gone = await call(base, '/api/time-entries/999999')
+    check('GET unknown entry → 404 NOT_FOUND', gone.status === 404 && gone.json?.error?.code === 'NOT_FOUND')
   }
 
   // 7. Burst: 20 distinct list pages at once. The BFF must answer each one with data or a 429 that

@@ -190,7 +190,8 @@ export function useEntryForm(opts: EntryFormOptions) {
     if (isConnectionError(e)) {
       return mode.value === 'create'
         ? 'Couldn\'t reach the server. The entry may not have been saved. Check the list before trying again.'
-        : 'Couldn\'t reach the server. Your changes aren\'t saved yet.'
+        // A PUT may have been applied before the connection dropped; repeating it is harmless.
+        : 'Couldn\'t reach the server, so your changes may not be saved. Saving again is safe.'
     }
     if (e.code === 'VALIDATION' && Object.keys(e.fields).length) return null
     return e.summary
@@ -288,6 +289,8 @@ export function useEntryForm(opts: EntryFormOptions) {
   }
 
   return {
+    /** How the form was opened; `mode` can change from edit to create after a 404. */
+    initialMode: opts.mode,
     mode, entryId, taskId, date, startTime, startOccurrence, startAmbiguous, durationText, durationMs, comment,
     start, end, endTime, endDayOffset, errors, isValid, warnings, isDirty, pending, error, notFound, summary, retryIn,
     setDate, setStartTime, setDurationText, onSaved, setEndTime, setEndNow, fixStartGap, submit, switchToCreate, resetForNext,

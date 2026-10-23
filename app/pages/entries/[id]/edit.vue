@@ -7,16 +7,22 @@ useHead({ title: 'Edit entry' })
 const route = useRoute()
 const id = idSchema.safeParse(route.params.id).data
 const { data, error, status, refresh } = await useTimeEntry(id)
+const mode = ref<'create' | 'edit'>('edit')
 const loadError = computed(() => error.value ? parseApiError(error.value) : null)
 </script>
 
 <template>
   <div class="mx-auto max-w-2xl space-y-6">
     <h1 class="text-xl font-semibold">
-      Edit entry<span
-        v-if="id !== undefined"
-        class="text-muted"
-      > #{{ id }}</span>
+      <template v-if="mode === 'create'">
+        Log as a new entry
+      </template>
+      <template v-else>
+        Edit entry<span
+          v-if="id !== undefined"
+          class="text-muted"
+        > #{{ id }}</span>
+      </template>
     </h1>
 
     <UEmpty
@@ -47,6 +53,7 @@ const loadError = computed(() => error.value ? parseApiError(error.value) : null
       v-else
       :key="data.entry.id"
       :entry="data.entry"
+      @mode="mode = $event"
     />
   </div>
 </template>
