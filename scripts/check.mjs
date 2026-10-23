@@ -6,7 +6,7 @@
 import { spawnSync } from 'node:child_process'
 
 const steps = {
-  lint: ['npx', ['eslint', '.', '--fix', '--format', 'unix']],
+  lint: ['npx', ['eslint', '.', '--fix']],
   typecheck: ['npx', ['nuxi', 'typecheck']],
   test: ['npx', ['vitest', 'run', '--reporter=dot']],
 }

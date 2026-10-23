@@ -1,0 +1,5 @@
+[
+  { "id": 1, "name": "Acme Corp", "description": "Main client", "status": "active", "createdAt": "2026-01-10T09:00:00.000Z", "updatedAt": "2026-01-10T09:00:00.000Z" },
+  { "id": 2, "name": "Globex", "description": "", "status": "active", "createdAt": "2026-02-01T09:00:00.000Z", "updatedAt": "2026-02-01T09:00:00.000Z" },
+  { "id": 3, "name": "Initech", "description": "Legacy", "status": "archived", "createdAt": "2026-03-01T09:00:00.000Z", "updatedAt": "2026-03-01T09:00:00.000Z" }
+]
