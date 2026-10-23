@@ -21,14 +21,17 @@ describe('rate limiter', () => {
   })
   afterEach(() => vi.useRealTimers())
 
-  it('never runs more than the budget in any window, even with 50 concurrent callers', async () => {
+  it('never runs more than the budget in any window, with 50 callers across all lanes', async () => {
     const { limiter, calls, call } = setup()
-    const jobs = Array.from({ length: 50 }, (_, i) => limiter.schedule('background', call(i)))
+    const lanes = ['write', 'interactive', 'background'] as const
+    const jobs = Array.from({ length: 50 }, (_, i) =>
+      limiter.schedule(lanes[i % 3]!, call(i), { maxWaitMs: Infinity }))
 
     await vi.advanceTimersByTimeAsync(8 * WINDOW)
     await Promise.all(jobs)
 
     expect(calls).toHaveLength(50)
+    // Sliding check: whichever call a window starts at, it never holds more than the budget.
     for (const t of calls) {
       const inWindow = calls.filter(c => c >= t && c < t + WINDOW)
       expect(inWindow.length).toBeLessThanOrEqual(14)

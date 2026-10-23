@@ -132,14 +132,43 @@ describe('memtime client', () => {
     expect(body).toMatchObject({ status: 502, code: 'UPSTREAM_AUTH' })
   })
 
-  it('gives up with RATE_LIMITED and a retryAfter when 429s persist', async () => {
+  it('gives up after maxRetries when 429s persist and the caller may wait', async () => {
     vi.useFakeTimers()
-    const { client } = setup(Array.from({ length: 5 }, () => json(429, { error: 'Too many requests' })))
+    const responses = Array.from({ length: 6 }, () => json(429, { error: 'Too many requests' }))
+    const fetch = vi.fn(async () => responses.shift()!)
+    // A long maxWait, so the loop ends through maxRetries (3) and not through the wait limit.
+    const limiter = createRateLimiter({ budget: 14, windowMs: 60_000, maxWaitMs: 120_000 })
+    const client = createMemtimeClient({ baseUrl: 'https://api.test/api/v1', apiKey: KEY, limiter, fetch: fetch as typeof globalThis.fetch })
+
+    const p = apiError(client.request({ path: '/clients', schema: z.unknown() }))
+    await vi.advanceTimersByTimeAsync(2_000 + 5_000 + 15_000)
+    const body = await p
+    expect(fetch).toHaveBeenCalledTimes(4)
+    expect(body).toMatchObject({ status: 429, code: 'RATE_LIMITED' })
+    expect(body.retryAfter).toBeGreaterThan(0)
+  })
+
+  it('stops retrying as soon as the next backoff is longer than the interactive wait', async () => {
+    vi.useFakeTimers()
+    const { client, fetch } = setup(Array.from({ length: 5 }, () => json(429, { error: 'Too many requests' })))
     const p = apiError(client.request({ path: '/clients', schema: z.unknown() }))
     await vi.advanceTimersByTimeAsync(30_000)
     const body = await p
-    expect(body).toMatchObject({ status: 429, code: 'RATE_LIMITED' })
-    expect(body.retryAfter).toBeGreaterThan(0)
+    // Pauses of 2 s and 5 s fit in the 8 s wait; the third (15 s) doesn't, so no fourth call.
+    expect(fetch).toHaveBeenCalledTimes(3)
+    expect(body).toMatchObject({ status: 429, code: 'RATE_LIMITED', retryAfter: 15 })
+  })
+
+  it('waits exactly Retry-After before retrying, then succeeds', async () => {
+    vi.useFakeTimers()
+    const { client, fetch } = setup([json(429, { error: 'Too many requests' }, { 'retry-after': '3' }), json(200, [])])
+    const p = client.list({ path: '/clients', itemSchema: clientSchema })
+
+    await vi.advanceTimersByTimeAsync(2_999)
+    expect(fetch).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    await expect(p).resolves.toEqual({ items: [], hasMore: false, nextOffset: null })
+    expect(fetch).toHaveBeenCalledTimes(2)
   })
 
   it('parses Retry-After as seconds or an HTTP date', () => {
