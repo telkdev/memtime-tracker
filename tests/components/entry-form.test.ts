@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { defineComponent, h } from 'vue'
 import { UApp } from '#components'
@@ -7,14 +7,19 @@ import { useEntryForm } from '../../app/composables/useEntryForm'
 
 const groups = { recent: [{ id: 7, label: 'Design review', path: 'Acme › Website' }], catalog: [] }
 
-function mountForm() {
-  return mountSuspended(defineComponent({
+const mounted: Array<{ unmount: () => void }> = []
+afterEach(() => mounted.splice(0).forEach(w => w.unmount()))
+
+async function mountForm() {
+  const wrapper = await mountSuspended(defineComponent({
     setup() {
       const form = useEntryForm({ mode: 'create', start: new Date(2026, 9, 23, 9, 0) })
       // UApp provides the tooltip and toast context that Nuxt UI components need.
       return () => h(UApp, () => h(EntryForm, { form, taskGroups: groups }))
     },
   }))
+  mounted.push(wrapper)
+  return wrapper
 }
 
 describe('EntryForm', () => {
