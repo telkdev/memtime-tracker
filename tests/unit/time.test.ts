@@ -24,6 +24,11 @@ describe('time display helpers', () => {
     expect(formatTime('2026-12-01T07:00:00Z', 'en-GB')).toBe('08:00')
   })
 
+  it('uses the UI locale by default, whatever the runtime locale is', () => {
+    expect(formatTime('2026-10-23T07:00:00Z')).toBe('09:00')
+    expect(formatDay('2026-10-23T07:00:00Z', undefined, new Date('2026-10-23T12:00:00Z'))).toMatch(/^Fri,? 23 Oct$/)
+  })
+
   it('follows the spring-forward jump', () => {
     expect(formatTime('2026-03-29T00:30:00Z', 'en-GB')).toBe('01:30')
     expect(formatTime('2026-03-29T01:30:00Z', 'en-GB')).toBe('03:30')

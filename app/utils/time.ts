@@ -1,6 +1,9 @@
 // Local-time display helpers. The API speaks UTC ISO 8601; the user reads their own zone.
-// Everything goes through Intl so the browser's zone and locale apply. `locale` is optional and
-// exists for deterministic tests.
+// Formatting uses the browser's time zone but a fixed locale: the UI copy is English, and dates in
+// the browser's language (say Ukrainian) next to English labels read as a bug.
+
+/** Locale for every displayed date and time. Change it together with the UI language. */
+export const UI_LOCALE = 'en-GB'
 
 const MINUTE = 60_000
 const DAY = 24 * 60 * MINUTE
@@ -30,12 +33,12 @@ export function durationMs(start: DateInput, end: DateInput): number {
 }
 
 /** "09:30" in local time. */
-export function formatTime(value: DateInput, locale?: string): string {
+export function formatTime(value: DateInput, locale: string = UI_LOCALE): string {
   return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(toDate(value))
 }
 
 /** "Thu, 23 Oct", with the year added when it isn't the current one. */
-export function formatDay(value: DateInput, locale?: string, now: Date = new Date()): string {
+export function formatDay(value: DateInput, locale: string = UI_LOCALE, now: Date = new Date()): string {
   const date = toDate(value)
   return new Intl.DateTimeFormat(locale, {
     weekday: 'short',
@@ -46,12 +49,12 @@ export function formatDay(value: DateInput, locale?: string, now: Date = new Dat
 }
 
 /** "23 Oct 2026, 09:30" in local time. */
-export function formatDateTime(value: DateInput, locale?: string): string {
+export function formatDateTime(value: DateInput, locale: string = UI_LOCALE): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(toDate(value))
 }
 
 /** "23 Oct, 18:52": compact, for secondary columns. */
-export function formatShortDateTime(value: DateInput, locale?: string): string {
+export function formatShortDateTime(value: DateInput, locale: string = UI_LOCALE): string {
   return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(toDate(value))
 }
 

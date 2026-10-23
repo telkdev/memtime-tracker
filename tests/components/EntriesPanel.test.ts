@@ -141,4 +141,15 @@ describe('EntriesPanel', () => {
     expect(taskCalls).not.toContain('7')
     useState('catalog:nodes').value = {}
   })
+
+  it('treats id 0 as a real entry and task', async () => {
+    const zero = { ...entries[0]!, id: 0, taskId: 0, comment: 'Entry zero' }
+    listResponse = () => ({ items: [zero], hasMore: false, nextOffset: null })
+    const wrapper = await mountSuspended(EntriesPanel, { route: '/?highlight=0', props: { highlightTaskId: 0 } })
+    mounted.push(wrapper)
+    await vi.waitFor(() => expect(wrapper.text()).toContain('Entry zero'))
+    expect(wrapper.find('a[aria-label="Edit entry #0"]').attributes('href')).toBe('/entries/0/edit')
+    expect(wrapper.text()).toContain('Highlighting')
+    expect(wrapper.find('[data-entry-id="0"]').classes().join(' ')).toContain('bg-primary/15')
+  })
 })

@@ -9,7 +9,11 @@ const route = useRoute()
 const router = useRouter()
 
 const groups = computed(() => groupEntriesByDay(entries.value, { hasPrev: list.hasPrev.value, hasMore: list.hasMore.value }))
-const highlightTaskName = computed(() => props.highlightTaskId ? names.label(props.highlightTaskId)?.name ?? `Task #${props.highlightTaskId}` : null)
+// Ids start at 0 upstream, so check for null rather than truthiness.
+const highlightTaskName = computed(() => {
+  const id = props.highlightTaskId
+  return id == null ? null : names.label(id)?.name ?? `Task #${id}`
+})
 
 watch(entries, items => names.resolve(items.map(e => e.taskId)), { immediate: true })
 
@@ -23,6 +27,8 @@ const countdown = computed(() => list.retryAt.value ? Math.max(1, Math.ceil((lis
 // `?highlight=<id>` is set after a save: bring that row into view, then drop it from the URL.
 const highlightId = ref<number | null>(null)
 watch([() => route.query.highlight, entries], async ([raw]) => {
+  // Number('') is 0, which is a real entry id; only a non-empty value counts.
+  if (typeof raw !== 'string' || raw === '') return
   const id = Number(raw)
   if (!Number.isInteger(id) || !entries.value.some(e => e.id === id)) return
   highlightId.value = id
