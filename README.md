@@ -4,7 +4,14 @@ A Nuxt 4 app over the Memtime demo API. It shows the client → project → task
 time entries, and creates and updates them. A Nitro backend-for-frontend holds the API key and
 keeps every request within the API's limit of 15 requests per 60 seconds.
 
-> Architecture, trade-offs and "what I'd do next" are added as the app is built. See `PLAN.md`.
+- **Tree** (Task 1): clients load on page open, projects and tasks only when you expand a node.
+  Fully keyboard-driven (arrows, Home/End, type-ahead), with "Load more" for big nodes.
+- **Entries** (Task 2): your entries newest first, grouped by local day with day totals, with
+  Prev/Next and a page size, all kept in the URL. ID, Task ID (plus the task's name), Comment,
+  Start, End, Duration and Created At. Click a row to edit it.
+- **Form** (Task 3): pick a task, type a duration (`1h30`, `90m`, `1:30`) or an End time, add a
+  comment, save. Start, Duration and End stay in sync, an end past midnight shows `+1 day`, and DST
+  gaps and repeated hours are caught instead of silently shifting. Errors sit next to their field.
 
 ## Setup
 
@@ -45,6 +52,65 @@ project quickly. Nodes past the budget show a countdown and fill in on their own
 | `npm run test` / `npm run test:watch` | Vitest only |
 | `npm run mock:api` | Local mock of the Memtime API (port 4010) |
 | `./scripts/probe-api.sh` | Manual check of the real API contract. It spends 7 requests of the 15/min budget, so never run it in CI. |
+
+## How it works
+
+```
+Browser (Vue)  ──/api/*──▶  Nitro server (BFF)  ──Bearer key──▶  Memtime API
+                            • holds the API key (never sent to the browser)
+                            • one rate limiter for the whole app (14 of 15 req/60 s)
+                            • cache + in-flight coalescing
+                            • Zod validation both ways, one error shape
+```
+
+- **The key stays on the server.** It's private runtime config, read in exactly one file
+  (`server/utils/memtime.ts`, enforced by ESLint). The upstream echoes the key back as `userId` on
+  every time entry, so the BFF strips that field; a unit test and the smoke test check it.
+- **The rate limit is a server concern.** All upstream calls go through one queue with three
+  priority lanes: writes, then user actions (expand, page change, open edit), then background work
+  (task-name lookups, cache refreshes). Background work may use at most half of each window and
+  never the last 3 requests, so a click always has budget. When a request would wait more than
+  8 s, the BFF answers 429 with `retryAfter` instead of holding the connection, and the UI shows a
+  countdown and continues by itself. The limiter also syncs from the API's `ratelimit-remaining`
+  header, so another client of the same key (curl, a second app) can't push us into a 429.
+- **Cheap by design.** Opening the page costs 1 request; each expand 1; re-expanding or paging back
+  within the cache TTL 0. Lists ask for `limit+1` to learn whether there is a next page, because
+  the API returns no totals. Editing from the list costs no read; a save costs the write plus one
+  list refresh. The per-action numbers are in `docs/plans/`.
+- **Times.** The UI shows and edits local time; everything sent upstream is UTC ISO 8601 with `Z`.
+  Conversion lives only in `app/utils/time.ts`, tested under a fixed `Europe/Berlin` zone across
+  both DST changes and midnight.
+- **Writes are honest about failure.** A 429 is retried (the upstream didn't apply it). A create
+  that fails on the network is never retried automatically, because there's no idempotency key and
+  the first attempt may have been saved; the form says so and keeps your values. A 404 on update
+  offers "Create as new entry".
+
+## Trade-offs and known limits
+
+- **Single-tenant.** One API key means one user, so there's no login. Real multi-user use needs
+  per-user auth and a token per user.
+- **In-memory limiter and cache.** Correct for one server instance. With several instances the
+  budget and cache move to Redis/Upstash (or Deno KV).
+- **Overlap warnings are advisory.** The client only knows the entries it has loaded. Enforcing
+  this belongs on the server.
+- **The tree filter searches loaded data only.** Searching the whole catalog would cost a request
+  per node; a real API would get a `GET /tasks?search=` endpoint.
+- **No Content-Security-Policy yet.** The other security headers are set; CSP needs a nonce setup
+  for Nuxt's inline hydration script.
+- **End is derived from Start + Duration**, with an editable End field kept in sync and no
+  separate end date. An End equal to Start is refused; an earlier End means the next day. Entries
+  longer than 24 h are refused (our rule; the API documents none).
+
+## What I'd do next
+
+1. Timer mode (start/stop) with a persisted running timer, which is what most people want.
+2. An offline queue for writes (IndexedDB), replayed under the rate limiter. This fits Electron.
+3. An Electron shell reusing the same Vue UI, with the BFF as the main process and the key in the
+   OS keychain.
+4. A week view with drag-to-resize entries and gaps in the day highlighted.
+5. Server side: overlap validation, task search, `ETag`/`If-Match` on PUT for concurrent edits.
+6. A Playwright test of the full flow (expand → pick task → create → see it in the list) and a
+   browser accessibility pass (contrast, screen-reader output).
 
 ## AI-assisted workflow
 
@@ -87,6 +153,10 @@ checklist built from the hard rules (key safety, rate-limit fan-out, DST and mid
 paths, accessibility, docs drift) and returns findings ranked blocker / major / minor with
 `file:line` evidence. Run it with `/qa [scope]` (`.claude/commands/qa.md`), which also tells the
 main agent to verify each finding before fixing it, since a reviewer model can be wrong too.
+
+The QA rounds themselves are committed in [`docs/qa/`](docs/qa/README.md): each reviewer report,
+the full `check`, test and smoke logs, and a [findings table](docs/qa/2026-10-23/findings.md)
+linking every finding to its fix commit and the test that proves it.
 
 **What stayed with me:** the stack, the UX trade-offs in `docs/plans/` (end time derived from
 start + duration, how DST gaps and overlaps behave, no automatic retry of a POST after a network
