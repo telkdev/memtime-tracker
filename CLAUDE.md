@@ -75,7 +75,7 @@ server/
     time-entries/index.get.ts
     time-entries/index.post.ts
     time-entries/[id].put.ts
-    time-entries/[id].get.ts       # only if the upstream supports it (check the docs)
+    time-entries/[id].get.ts       # deep-link edit
     _meta/rate-limit.get.ts        # local budget snapshot, costs no upstream call
   utils/
     memtime.ts            # the ONLY upstream client: auth, queue, retry, error mapping
@@ -115,7 +115,9 @@ Details are in `.claude/rules/`. Each file loads when you work on matching paths
 5. **Validate at both edges.** Zod-parse request bodies in BFF routes and upstream responses in
    `memtime.ts`. If an upstream shape doesn't match, log it and return a 502 with a clear message.
    Don't pass garbage through.
-6. **Don't invent API behaviour.** If something isn't in `docs/API_NOTES.md` or
+6. **Strip `userId` from every time entry.** The upstream fills it with the raw API key. BFF
+   output schemas leave it out, and a test checks for it.
+7. **Don't invent API behaviour.** If something isn't in `docs/API_NOTES.md` or
    `API_V1_DOCUMENTATION.md`, check with the probe script or ask. Record verified facts in
    `docs/API_NOTES.md`.
 

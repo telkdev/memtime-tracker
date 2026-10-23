@@ -14,13 +14,13 @@ limiter) first, so surprises show up early.
 Why first: the plan below assumes things about response shapes, pagination and errors. Getting one
 of them wrong means rework in every later layer.
 
-- [ ] Put `API_V1_DOCUMENTATION.md` in the repo root.
-- [ ] Run `./scripts/probe-api.sh` once, by hand.
-- [ ] Fill in every row of `docs/API_NOTES.md`.
-- [ ] Update `.claude/rules/api-and-rate-limit.md` wherever reality differs.
+- [x] Read the docs → `docs/API_NOTES.md` written, and the rules updated to match.
+- [ ] Run `./scripts/probe-api.sh` once, by hand, to settle the **verify** items: window type,
+      whether any rate-limit headers exist, timestamp format, what `Task.parent` means, `status`
+      values, whether `/health` counts against the limit.
 
 **AC**
-- Every `?` in `docs/API_NOTES.md` is answered or marked "not in docs, assumption: …".
+- Every **verify** item in `docs/API_NOTES.md` is resolved or kept as a stated assumption.
 - Fixtures for each endpoint, plus 400/404/429 error bodies, are saved in `tests/fixtures/` with no
   key in them.
 
@@ -50,8 +50,10 @@ of them wrong means rework in every later layer.
 - [ ] `server/utils/rate-limiter.ts`: token bucket (15/60s, configurable), three priority lanes
       (write > interactive > background), background reserve, max wait → 429, injectable clock.
 - [ ] `server/utils/cache.ts`: TTL + SWR, in-flight coalescing, prefix invalidation.
-- [ ] `server/utils/memtime.ts`: the only upstream caller. It adds auth, goes through the limiter,
-      retries on 429 using Retry-After, parses with zod, and maps errors to `ApiError`.
+- [ ] `server/utils/memtime.ts`: the only upstream caller. It adds auth, goes through the limiter
+      (budget 14 per 60 s window), retries on 429 with backoff (no Retry-After is documented),
+      parses with zod, and maps `{ error: string }` to `ApiError`.
+- [ ] Time-entry output schema **without `userId`** (the upstream puts the raw API key there).
 - [ ] `server/utils/errors.ts`: upstream status → `{ status, code, message, fields?, retryAfter? }`.
 - [ ] `GET /api/_meta/rate-limit`: local token snapshot, so the UI can show the budget (costs no
       upstream call).
@@ -62,7 +64,8 @@ of them wrong means rework in every later layer.
 - A write queued behind 10 background requests runs first.
 - Two concurrent identical GETs → exactly one upstream call.
 - A mocked upstream 429 with `Retry-After: 3` → waits 3 s and retries, and other callers wait too.
-- An upstream 401 → BFF 502 `UPSTREAM_AUTH`. The key doesn't appear in any response or log line.
+- An upstream 401, or `404 Unknown user` → BFF 502 `UPSTREAM_AUTH`.
+- **No BFF response body contains the API key.** Tested with a fixture whose `userId` is the key.
 - An upstream payload that doesn't match the schema → 502 with a clear message, not a crash.
 
 ## Phase 3: Task 1, the client → project → task tree (≈2.5 h)
@@ -87,9 +90,11 @@ of them wrong means rework in every later layer.
 
 ## Phase 4: Task 2, time entries list (≈2 h)
 
-- [ ] `GET /api/time-entries?limit&offset`, with a short cache that's invalidated on write.
-- [ ] `useTimeEntries()`: page and size from the URL query, `hasMore` (from the total or the
-      limit+1 trick), refresh.
+- [ ] `GET /api/time-entries?limit&offset`, sent upstream as `limit+1`,
+      `sortBy=start&order=desc`, with a short cache that's invalidated on write.
+- [ ] `useTimeEntries()`: page and size from the URL query, `hasMore` via limit+1 (there's no total),
+      refresh.
+- [ ] Task-name lookup for unknown IDs: `GET /api/tasks/:id`, background priority, cached.
 - [ ] `EntriesTable.vue`: ID, Task (name when known, ID otherwise), Comment, Start, End, Duration,
       Created At, shown in local time with the zone in the header.
 - [ ] Prev/next plus a page-size selector. Clicking a row and an explicit Edit button both open the
@@ -112,11 +117,12 @@ of them wrong means rework in every later layer.
 - [ ] `EntryForm.vue`: smart defaults (start = end of the last entry today, or now rounded to
       15 min), shared zod validation, field-level errors, warnings (over 12 h, in the future,
       overlap), double-submit guard, warning on leaving with unsaved changes.
-- [ ] Routes: `POST /api/time-entries`, `PUT /api/time-entries/:id` (plus `GET` by id if the
-      upstream has it). Validate the body with the shared schema, use write priority, invalidate the
-      list cache.
+- [ ] Routes: `POST /api/time-entries` (upstream 201), `PUT /api/time-entries/:id`,
+      `GET /api/time-entries/:id`. Validate the body with the shared schema (end > start, comment
+      1 to 500 chars, numeric taskId) **before** spending budget. Use write priority and
+      invalidate the list cache.
 - [ ] Pages: `/entries/new` (optional `?taskId=`), `/entries/:id/edit` (prefilled from the list
-      cache or GET by id).
+      cache, otherwise `GET /time-entries/:id`, so deep links work).
 - [ ] Results: toast "Entry #123 created" / "updated", redirect with the row highlighted.
 - [ ] Errors: 400 → field errors or a readable summary. 404 → "This entry no longer exists" plus
       "Create as new". 429 → countdown and auto-retry. Network or 5xx → values kept and a Retry
@@ -174,11 +180,21 @@ of them wrong means rework in every later layer.
    concurrent edits.
 6. Observability: structured logs, upstream latency and 429-rate metrics.
 
-## Open questions (resolve in Phase 0)
+## Settled by the docs
 
-- The pagination envelope and whether a total count exists.
-- Whether `GET /time-entries/:id` exists. If not, edit-by-URL prefills from the list cache, and a
-  cold deep link shows "Open from the list" instead.
-- Whether `/time-entries` supports filtering by task or date range. That decides whether
-  "entries per task" is server-side or a client-side highlight.
-- Number or string IDs.
+- Lists are bare arrays with no total → limit+1 and Prev/Next.
+- `GET /time-entries/:id` exists → deep-link edit works.
+- No filtering → "entries for this task" is a client-side highlight or filter over loaded pages.
+- IDs are numbers.
+- Errors are a single string → field-level errors come from our own validation.
+- `userId` leaks the key → stripped in the BFF.
+
+## Stretch (only if time is left)
+
+- Delete with confirmation, using `DELETE /time-entries/:id` (documented, not required).
+  Undo isn't possible without re-creating the entry, so a confirm dialog is the honest UX.
+
+## Still open (probe)
+
+- Fixed or sliding window. Any rate-limit headers at all.
+- What `Task.parent` means. Does `/health` count against the limit?

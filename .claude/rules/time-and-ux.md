@@ -50,7 +50,8 @@ Users should be able to log time quickly and get it right the first time.
   - create → toast "Entry #123 created", then go to the list with the new row highlighted
   - update → toast "Entry #123 updated", show the updated values, highlight the row
 - Errors:
-  - 400 → field errors if they can be mapped, otherwise "The server rejected this entry: <reason>"
+  - 400 → our own validation should catch it first. If the upstream still rejects it, show
+    "The server rejected this entry: <reason>"
   - 404 on update → "This entry no longer exists." Offer "Create as new entry" with the form
     prefilled.
   - 429 → banner "Too many requests, retrying in Ns" with a countdown. Retry automatically once.
@@ -72,6 +73,11 @@ Users should be able to log time quickly and get it right the first time.
 - Columns: ID, Task (name if known, ID as fallback and in a tooltip), Comment, Start, End, Duration,
   Created At.
 - The page and page size live in the URL query (`?page=2&size=25`), so back/forward and reload work.
+  The API returns no total, so the UI shows Prev/Next and "Page N", not "of M".
+- Sort newest first (`sortBy=start&order=desc`).
+- Task names: use the catalog cache first. For unknown IDs, look up `GET /tasks/:id` at background
+  priority (cached), and show `#id` until it arrives. A task has no `projectId`, so the
+  `Client › Project` path is only available for tasks already in the loaded tree.
 - Clicking a row opens edit. Every row also has an explicit Edit button, for accessibility.
 - Loading → skeleton rows. Empty → "No time entries yet" with a "Log time" button.
 

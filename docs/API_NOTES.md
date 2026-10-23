@@ -1,18 +1,89 @@
-# Verified API facts
+# API facts (from API_V1_DOCUMENTATION.md)
 
-Fill this in from `API_V1_DOCUMENTATION.md` and `scripts/probe-api.sh` output. Write down only what you have verified.
+Source: the API v1 documentation the user shared on 2026-10-23
+(https://lustrous-beijinho-54fcf1.netlify.app/api_v1_documentation.html). Items marked
+**verify** are not documented or the docs are ambiguous. Confirm them with
+`scripts/probe-api.sh` and update this file.
 
-| Question | Answer | Source |
-|---|---|---|
-| List response envelope (bare array or `{ data, total }`?) | ? | |
-| ID types (number or string) for client/project/task/entry | ? | |
-| Default and max `limit` | ? | |
-| Total count available? (body field or header) | ? | |
-| Rate-limit headers (`X-RateLimit-*`, `Retry-After`) | ? | |
-| Fixed or sliding window | ? | |
-| Error body shape (400/404/429) | ? | |
-| Does `GET /time-entries/:id` exist? | ? | |
-| Does `/time-entries` filter by task/date? | ? | |
-| Timestamp format returned (`Z`, offset, ms?) | ? | |
-| Comment length limit | ? | |
-| Does the API reject end ≤ start / overlaps itself? | ? | |
+## Basics
+
+- Base URL `https://interview-api.memtime-demo.deno.net/api/v1`. The doc examples use
+  `api.example.com`; ignore that.
+- Auth: `Authorization: Bearer <key>` on every `/api/v1` request.
+- Responses are pretty-printed JSON.
+- `GET /health` → `200 "I'm alive!"`. **verify**: it may sit outside `/api/v1`, may need no auth,
+  and may not count against the rate limit.
+
+## Rate limit
+
+- 15 requests per 60-second window, per API key. Over the limit → `429`.
+- **No rate-limit headers and no `Retry-After` are documented.** The limiter must track its own
+  budget. On a 429, assume the whole window is spent and wait up to 60 s (exponential backoff with
+  jitter, capped at 60 s). **verify**: whether the window is fixed or sliding, and whether headers
+  exist anyway.
+
+## Entities
+
+| Entity | Fields |
+|---|---|
+| Client | `id: number`, `name`, `description`, `status` (e.g. `"active"`), `createdAt`, `updatedAt` |
+| Project | `id: number`, `clientId: number`, `name`, `status`, `createdAt`, `updatedAt` |
+| Task | `id: number`, `parent: number` (0 in examples), `name`, `status`, `createdAt`, `updatedAt` |
+| TimeEntry | `id: number`, `taskId: number`, `userId`, `comment`, `start`, `end`, `createdAt`, `updatedAt` |
+
+- **A Task has no `projectId`.** `parent` looks like a parent-task id (0 means top level). You can
+  only get from a task to its project and client through the tree you've already loaded. **verify**
+  what `parent` means.
+- **`TimeEntry.userId` contains the raw API key.** The BFF must strip it from every response
+  before it reaches the browser. This is a hard rule.
+- Timestamps are ISO 8601. **verify**: whether they come back with `Z` and with milliseconds.
+- Use the `status` field to show or hide archived and inactive items. **verify** what values it can
+  take.
+
+## Lists: pagination and sorting
+
+- Query: `limit` (default **10**, no max documented), `offset` (default 0), `sortBy` (any valid
+  field), `order` (`asc` default | `desc`).
+- **The response is a bare JSON array with no total count.** To know whether there's a next page,
+  request `limit + 1`. Page numbers can't be shown, only Prev/Next.
+- No filtering beyond pagination and sorting. Showing "entries for one task" therefore happens on
+  the client, over loaded pages.
+
+## Endpoints
+
+| Method | Path | Success | Errors |
+|---|---|---|---|
+| GET | `/clients` | 200 array | |
+| GET | `/clients/:id` | 200 | 404 `Client not found` |
+| GET | `/clients/:id/projects` | 200 array | |
+| GET | `/projects/:id` | 200 | 404 `Project not found` |
+| GET | `/projects/:id/tasks` | 200 array | |
+| GET | `/tasks/:id` | 200 | 404 `Task not found` |
+| GET | `/time-entries` | 200 array (own entries only) | 404 `Unknown user` (bad or missing key!) |
+| GET | `/time-entries/:id` | 200 | 404 `Time entry not found` (also returned for another user's entry) |
+| POST | `/time-entries` | **201** | 400 `Invalid JSON body` / missing fields |
+| PUT | `/time-entries/:id` | 200 | 400 missing id / invalid JSON; 404 `Time entry #<id> not found` |
+| DELETE | `/time-entries/:id` | 200 `Time entry deleted successfully` | 404 |
+
+Body for POST and PUT: `{ taskId: number, comment: string, start: ISO, end: ISO }`, all required.
+PUT replaces the whole entry (all four fields are required), so the form always sends the full
+entry.
+
+## Errors
+
+- Shape: `{ "error": "<message>" }`. A **single string, with no field-level details or codes.**
+  Documented statuses: 200, 201, 400, 404, 429, 500.
+- Consequences:
+  - Field-level errors come from **our own** Zod validation (shared schema in the BFF and the
+    form). Upstream 400s are a fallback summary. Map well-known messages to fields with a small
+    lookup table, and don't build anything cleverer.
+  - A bad key shows up as `404 Unknown user` on `/time-entries`, **not as 401.** Treat it as
+    `UPSTREAM_AUTH` (502) on that route.
+
+## Not documented: we validate ourselves (in both the BFF and the form)
+
+- `end` must be after `start`. The API doesn't promise to check this.
+- No comment length limit is documented. Cap it at 500 chars on our side and **verify** whether the
+  API has its own limit.
+- No overlap detection on the server.
+- No max `limit`. Cap it at 100 ourselves.
