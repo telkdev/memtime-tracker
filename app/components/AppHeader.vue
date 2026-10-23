@@ -7,7 +7,7 @@ onMounted(() => {
 
 <template>
   <header class="border-b border-default">
-    <div class="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
+    <div class="mx-auto flex h-14 w-full max-w-screen-2xl items-center justify-between px-4">
       <NuxtLink
         to="/"
         class="flex items-center gap-2 font-semibold"
