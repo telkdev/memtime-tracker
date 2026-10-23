@@ -8,10 +8,13 @@ import { recentTaskIds } from '~/utils/entry-form'
  * All of it is data that's already in memory; nothing here triggers a request.
  */
 export function useEntrySources() {
-  // Wired to useTimeEntries().loadedEntries / getCached and useCatalog().taskIndex once they land.
+  const { taskIndex } = useCatalog()
+  // Wired to useTimeEntries().loadedEntries / getCached once the entries list lands.
   const loadedEntries = computed<readonly TimeEntry[]>(() => [])
-  const catalog = computed<readonly TaskOption[]>(() => [])
-  const nameOf = (_id: number): string | undefined => undefined
+  const catalog = computed<readonly TaskOption[]>(() =>
+    [...taskIndex.value.values()].map(({ task, project, client }) => ({ id: task.id, label: task.name, path: `${client.name} › ${project.name}` })),
+  )
+  const nameOf = (id: number): string | undefined => taskIndex.value.get(id)?.task.name
   const getCached = (_id: number): TimeEntry | undefined => undefined
 
   function taskGroups(include?: number | null): TaskOptionGroups {

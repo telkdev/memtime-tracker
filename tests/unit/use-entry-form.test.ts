@@ -37,6 +37,7 @@ describe('useEntryForm', () => {
     expect(await form.submit()).toEqual(saved)
     expect(fetchMock).toHaveBeenCalledWith('/api/time-entries', {
       method: 'POST',
+      retry: 0,
       body: { taskId: 7, comment: 'Design review', start: '2026-10-23T07:00:00.000Z', end: '2026-10-23T08:30:00.000Z' },
     })
   })
@@ -164,5 +165,20 @@ describe('useEntryForm', () => {
     const form = filled({ mode: 'create', knownEntries: () => [{ ...saved, id: 99 }] })
     expect(form.warnings.value).toContainEqual({ kind: 'overlap', entry: expect.objectContaining({ id: 99 }) })
     expect(form.isValid.value).toBe(true)
+  })
+})
+
+describe('useEntryForm with anchor "now"', () => {
+  it('keeps the end at now and moves the start back while the start is untouched', () => {
+    const form = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 17, 0), anchor: 'now' })
+    form.setDurationText('1h30')
+    expect([form.startTime.value, form.endTime.value]).toEqual(['15:30', '17:00'])
+  })
+
+  it('stops anchoring once the user sets the start', () => {
+    const form = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 17, 0), anchor: 'now' })
+    form.setStartTime('09:00')
+    form.setDurationText('1h')
+    expect([form.startTime.value, form.endTime.value]).toEqual(['09:00', '10:00'])
   })
 })

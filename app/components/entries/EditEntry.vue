@@ -21,14 +21,14 @@ async function handleSaved(entry: TimeEntry) {
 
 <template>
   <div>
-    <EntriesEntryForm
+    <EntryForm
       :form="form"
       :task-groups="taskGroups"
       @saved="handleSaved"
       @browse="browsing = true"
       @cancel="navigateTo('/')"
     />
-    <EntriesTaskBrowser
+    <TaskBrowser
       v-model:open="browsing"
       @select="form.taskId.value = $event"
     />

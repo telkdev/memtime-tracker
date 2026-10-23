@@ -21,6 +21,12 @@ export interface EntryFormOptions {
   entry?: TimeEntry
   taskId?: number | null
   start?: Date
+  /**
+   * `now`: until the user touches the date or start, typing a duration keeps the end at the
+   * current time and moves the start back. That's how people log work they just finished.
+   * `start` (default): the start stays put and the end moves.
+   */
+  anchor?: 'start' | 'now'
   /** Entries already loaded by the list, for overlap warnings. Never fetched for this. */
   knownEntries?: () => readonly TimeEntry[]
   now?: () => Date
@@ -61,11 +67,31 @@ export function useEntryForm(opts: EntryFormOptions) {
   const endDayOffset = computed(() => start.value.ok && end.value ? localDaysBetween(start.value.instant, end.value) : 0)
   const startAmbiguous = computed(() => start.value.ok ? start.value.ambiguous : undefined)
 
+  let anchorNow = opts.mode === 'create' && opts.anchor === 'now'
+
+  function setDate(value: string) {
+    anchorNow = false
+    date.value = value
+  }
+
+  function setStartTime(value: string) {
+    anchorNow = false
+    startTime.value = value
+  }
+
   function setDurationText(text: string) {
     durationText.value = text
     const ms = parseDuration(text)
     durationInvalid.value = text.trim() !== '' && ms === null
-    if (ms !== null) durationMs.value = ms
+    if (ms !== null) {
+      durationMs.value = ms
+      if (anchorNow) {
+        const startAt = new Date(now().getTime() - ms)
+        startAt.setSeconds(0, 0)
+        date.value = localDayKey(startAt)
+        startTime.value = toTimeString(startAt)
+      }
+    }
     else if (text.trim() === '') durationMs.value = null
     endError.value = null
   }
@@ -205,8 +231,8 @@ export function useEntryForm(opts: EntryFormOptions) {
     try {
       const body = timeEntryInputSchema.parse(payload.value) satisfies TimeEntryInput
       const res = mode.value === 'create'
-        ? await $fetch<{ entry: TimeEntry }>('/api/time-entries', { method: 'POST', body })
-        : await $fetch<{ entry: TimeEntry }>(`/api/time-entries/${entryId.value}`, { method: 'PUT', body })
+        ? await $fetch<{ entry: TimeEntry }>('/api/time-entries', { method: 'POST', body, retry: 0 })
+        : await $fetch<{ entry: TimeEntry }>(`/api/time-entries/${entryId.value}`, { method: 'PUT', body, retry: 0 })
       saved.value = snapshot()
       return res.entry
     }
@@ -240,6 +266,7 @@ export function useEntryForm(opts: EntryFormOptions) {
   /** "Save & log another": same task, next entry starts where this one ended. */
   function resetForNext(previous: TimeEntry) {
     const next = fromUtcIso(previous.end)
+    anchorNow = false
     date.value = next.date
     startTime.value = next.time
     startOccurrence.value = 'first'
@@ -254,7 +281,7 @@ export function useEntryForm(opts: EntryFormOptions) {
   return {
     mode, entryId, taskId, date, startTime, startOccurrence, startAmbiguous, durationText, durationMs, comment,
     start, end, endTime, endDayOffset, errors, isValid, warnings, isDirty, pending, error, notFound, summary, retryIn,
-    setDurationText, onSaved, setEndTime, setEndNow, fixStartGap, submit, switchToCreate, resetForNext,
+    setDate, setStartTime, setDurationText, onSaved, setEndTime, setEndNow, fixStartGap, submit, switchToCreate, resetForNext,
   }
 }
 

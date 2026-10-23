@@ -144,10 +144,19 @@ to a shared piece; it comes with its own limiter test.
   rounded down to 15 min. No extra request: if the list hasn't loaded, use the rounded time.
 - Duration: empty. Comment: empty.
 
+- **"Work just ended"**: when there's no earlier entry today, typing a duration keeps End at now
+  and moves Start back, until the user touches Date or Start. Without this, the default
+  (start = now) made every after-the-fact entry end in the future.
+
 ### Keyboard path for the 10-second AC
-Picker focused → type 2–3 letters → Enter → Tab to Duration → `1h30` → Tab to Comment → type →
-**Ctrl/Cmd+Enter** saves from any field. Start is skipped because the default is right in most
-cases.
+Picker focused → type 2–3 letters → Enter (focus jumps to Duration) → `1h30` → Enter (focus jumps
+to Comment) → type → **Ctrl/Cmd+Enter** saves from any field. Found in browser testing: native
+date and time inputs have one Tab stop per segment, so plain Tab from the picker lands in Date and
+typing `1h30` there corrupts the year. The Enter jumps avoid that.
+
+### Rendering
+`/entries/**` is client-rendered (`routeRules: { ssr: false }`). The server doesn't know the user's
+time zone, so SSR computed defaults in UTC and caused hydration mismatches.
 
 ### Warnings (shown, never blocking)
 - Duration over 12 h: "That's a long entry. Double-check the times."

@@ -17,6 +17,8 @@ const isCreate = computed(() => f.mode.value === 'create')
 const root = useTemplateRef<HTMLElement>('root')
 
 const durationModel = computed({ get: () => f.durationText.value, set: v => f.setDurationText(v) })
+const dateModel = computed({ get: () => f.date.value, set: v => f.setDate(v) })
+const startModel = computed({ get: () => f.startTime.value, set: v => f.setStartTime(v) })
 const endInput = ref(f.endTime.value)
 watch(f.endTime, (v) => {
   endInput.value = v
@@ -43,6 +45,24 @@ async function focusFirstError() {
   root.value?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
 }
 
+// The fast path is task → duration → comment → Ctrl+Enter. Date and time inputs have one tab stop
+// per segment, so focus jumps over them; they stay reachable with Tab and the mouse.
+function focusField(selector: string) {
+  nextTick(() => root.value?.querySelector<HTMLElement>(selector)?.focus())
+}
+const focusDuration = () => focusField('input[name="duration"]')
+
+function onDurationEnter(e: KeyboardEvent) {
+  e.preventDefault()
+  focusField('textarea')
+}
+
+onMounted(() => {
+  if (!isCreate.value) return
+  if (f.taskId.value === null) focusField('[role="combobox"]')
+  else focusDuration()
+})
+
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
     e.preventDefault()
@@ -59,7 +79,7 @@ function onKeydown(e: KeyboardEvent) {
     @submit.prevent="save()"
     @keydown="onKeydown"
   >
-    <EntriesFormAlerts
+    <FormAlerts
       :form="form"
       @retry="save()"
     />
@@ -70,10 +90,11 @@ function onKeydown(e: KeyboardEvent) {
       required
       :error="f.errors.value.taskId"
     >
-      <EntriesTaskPicker
+      <TaskPicker
         v-model="f.taskId.value"
         :groups="taskGroups"
         @browse="emit('browse')"
+        @picked="focusDuration"
       />
     </UFormField>
 
@@ -84,7 +105,7 @@ function onKeydown(e: KeyboardEvent) {
         required
       >
         <UInput
-          v-model="f.date.value"
+          v-model="dateModel"
           type="date"
           class="w-full"
         />
@@ -96,7 +117,7 @@ function onKeydown(e: KeyboardEvent) {
         :error="f.errors.value.start"
       >
         <UInput
-          v-model="f.startTime.value"
+          v-model="startModel"
           type="time"
           class="w-full"
         />
@@ -107,7 +128,10 @@ function onKeydown(e: KeyboardEvent) {
         required
         :error="f.errors.value.duration"
       >
-        <EntriesDurationInput v-model="durationModel" />
+        <DurationInput
+          v-model="durationModel"
+          @keydown.enter.exact="onDurationEnter"
+        />
       </UFormField>
       <UFormField
         label="End"

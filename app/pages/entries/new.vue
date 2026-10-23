@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TimeEntry } from '#shared/schemas/timeEntry'
 import { defaultStart } from '~/utils/entry-form'
+import { roundDownToMinutes } from '~/utils/time'
 
 useHead({ title: 'Log time' })
 
@@ -8,10 +9,14 @@ const route = useRoute()
 const sources = useEntrySources()
 const queryTask = Number(route.query.taskId)
 
+const now = new Date()
+const start = defaultStart(sources.loadedEntries.value, now)
 const form = useEntryForm({
   mode: 'create',
   taskId: Number.isInteger(queryTask) && queryTask > 0 ? queryTask : null,
-  start: defaultStart(sources.loadedEntries.value, new Date()),
+  start,
+  // Continuing after today's last entry: keep that start. Otherwise assume the work just ended.
+  anchor: start.getTime() === roundDownToMinutes(now, 15).getTime() ? 'now' : 'start',
   knownEntries: () => sources.loadedEntries.value,
 })
 const taskGroups = computed(() => sources.taskGroups(form.taskId.value))
@@ -32,14 +37,14 @@ async function handleSaved(entry: TimeEntry, { another }: { another: boolean }) 
     <h1 class="text-xl font-semibold">
       Log time
     </h1>
-    <EntriesEntryForm
+    <EntryForm
       :form="form"
       :task-groups="taskGroups"
       @saved="handleSaved"
       @browse="browsing = true"
       @cancel="navigateTo('/')"
     />
-    <EntriesTaskBrowser
+    <TaskBrowser
       v-model:open="browsing"
       @select="form.taskId.value = $event"
     />

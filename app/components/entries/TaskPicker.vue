@@ -4,7 +4,7 @@ import type { TaskOption, TaskOptionGroups } from '~/utils/task-options'
 // Label, error text and aria wiring come from the surrounding UFormField.
 const props = defineProps<{ groups: TaskOptionGroups }>()
 const model = defineModel<number | null>({ required: true })
-const emit = defineEmits<{ browse: [] }>()
+const emit = defineEmits<{ browse: [], picked: [] }>()
 
 type Item = TaskOption | { type: 'label', label: string, path?: undefined }
 
@@ -19,6 +19,7 @@ const selected = computed({
   get: () => [...props.groups.recent, ...props.groups.catalog].find(o => o.id === model.value),
   set: (o: TaskOption | undefined) => {
     model.value = o?.id ?? null
+    if (o) emit('picked')
   },
 })
 </script>

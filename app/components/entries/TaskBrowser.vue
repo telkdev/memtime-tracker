@@ -7,7 +7,6 @@ function pick(taskId: number) {
   emit('select', taskId)
   open.value = false
 }
-defineExpose({ pick })
 </script>
 
 <template>
@@ -17,10 +16,10 @@ defineExpose({ pick })
     description="Expand a client and a project, then pick a task."
   >
     <template #body>
-      <!-- Task 1's <ClientTree mode="pick" @select="pick($event.id)" /> goes here once it lands. -->
-      <p class="text-sm text-muted">
-        The client list is loading…
-      </p>
+      <ClientTree
+        mode="pick"
+        @select="task => pick(task.id)"
+      />
     </template>
   </USlideover>
 </template>

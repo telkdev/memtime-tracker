@@ -13,7 +13,7 @@ const id = idSchema.safeParse(route.params.id).data
 const cached = id ? sources.getCached(id) : undefined
 const { data, error, status, refresh } = await useAsyncData(
   `time-entry:${id}`,
-  () => cached ? Promise.resolve({ entry: cached }) : $fetch<{ entry: TimeEntry }>(`/api/time-entries/${id}`),
+  () => cached ? Promise.resolve({ entry: cached }) : $fetch<{ entry: TimeEntry }>(`/api/time-entries/${id}`, { retry: 0 }),
   { immediate: !!id },
 )
 const loadError = computed(() => error.value ? parseApiError(error.value) : null)
@@ -52,7 +52,7 @@ const loadError = computed(() => error.value ? parseApiError(error.value) : null
       <USkeleton class="h-10 w-full" />
       <USkeleton class="h-24 w-full" />
     </div>
-    <EntriesEditEntry
+    <EditEntry
       v-else
       :key="data.entry.id"
       :entry="data.entry"
