@@ -7,8 +7,13 @@ const at = { status: 'active', createdAt: '', updatedAt: '' }
 const page = <T>(items: T[]) => ({ items, hasMore: false, nextOffset: null })
 let calls: string[] = []
 
-registerEndpoint('/api/clients', () => {
+let authFails = false
+registerEndpoint('/api/clients', (event) => {
   calls.push('clients')
+  if (authFails) {
+    event.node.res.statusCode = 502
+    return { error: { status: 502, code: 'UPSTREAM_AUTH', message: 'The server is misconfigured: its API credentials were rejected.' } }
+  }
   return page([{ id: 1, name: 'Acme', description: '', ...at }, { id: 2, name: 'Globex', description: '', ...at }, { id: 5, name: 'Stark', description: '', ...at }])
 })
 registerEndpoint('/api/clients/1/projects', () => {
@@ -151,6 +156,21 @@ describe('ClientTree', () => {
     await w.find('button[aria-label="Refresh"]').trigger('click')
     await vi.waitFor(() => expect(w.find('[role=alert]').text()).toContain('Couldn\'t reach the time tracking service.'))
     refreshResponse = () => ({ ok: true })
+    w.unmount()
+  })
+
+  it('shows no Retry for a misconfigured server key, and Enter does not retry it', async () => {
+    useState('catalog:nodes').value = {}
+    useState('catalog:expanded').value = []
+    authFails = true
+    const w = await mountSuspended(ClientTree, { attachTo: document.body })
+    await vi.waitFor(() => expect(w.text()).toContain('credentials were rejected'))
+    expect(w.findAll('button').map(b => b.text())).not.toContain('Retry')
+    const before = calls.length
+    await w.find('[role=tree]').trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+    expect(calls.length).toBe(before)
+    authFails = false
     w.unmount()
   })
 })

@@ -19,7 +19,6 @@ const emit = defineEmits<{
 const selectedTaskId = defineModel<number | null>('selectedTaskId', { default: null })
 
 const catalog = useCatalog()
-const now = useNow()
 const filter = ref('')
 const activeKey = ref<string | null>(null)
 const treeEl = ref<HTMLElement | null>(null)
@@ -96,7 +95,7 @@ function taskEvent(row: TreeRow, name: 'select' | 'log') {
 
 function activate(row: TreeRow, via: 'pointer' | 'enter' | 'space') {
   if (row.kind === 'status') {
-    if (row.status === 'error' || row.status === 'waiting') catalog.retry(row.ownerKey)
+    if ((row.status === 'error' && row.retryable) || row.status === 'waiting') catalog.retry(row.ownerKey)
     else if (row.status === 'more') catalog.loadMore(row.ownerKey)
     return
   }
@@ -167,7 +166,6 @@ const rootNode = computed(() => catalog.node('root'))
         :active="row.key === focusKey"
         :selected="row.kind === 'task' && row.entity.id === selectedTaskId"
         :mode="props.mode"
-        :now="now"
         @focus="activeKey = row.key"
         @activate="activate(row, 'pointer')"
         @log="taskEvent(row, 'log')"

@@ -6,7 +6,6 @@ const props = defineProps<{
   active: boolean
   selected?: boolean
   mode: 'browse' | 'pick'
-  now: number
 }>()
 
 const emit = defineEmits<{
@@ -22,11 +21,6 @@ const ICONS = {
 } as const
 
 const indent = computed(() => ({ paddingInlineStart: `${(props.row.level - 1) * 1.25 + 0.5}rem` }))
-
-const secondsLeft = computed(() => {
-  if (props.row.kind !== 'status' || !props.row.retryAt) return 0
-  return Math.max(0, Math.ceil((props.row.retryAt - props.now) / 1000))
-})
 
 const inactiveStatus = computed(() =>
   props.row.kind !== 'status' && props.row.entity.status !== 'active' ? props.row.entity.status : null,
@@ -117,7 +111,10 @@ const inactiveStatus = computed(() =>
           class="size-4"
           aria-hidden="true"
         />
-        {{ row.label }}<template v-if="secondsLeft"> · {{ secondsLeft }}s</template>
+        {{ row.label }}<RetryCountdown
+          v-if="row.retryAt"
+          :at="row.retryAt"
+        />
       </span>
       <span
         v-else-if="row.status === 'error'"
@@ -131,6 +128,7 @@ const inactiveStatus = computed(() =>
         />
         <span class="truncate">{{ row.label }}</span>
         <UButton
+          v-if="row.retryable"
           label="Retry"
           size="xs"
           variant="link"

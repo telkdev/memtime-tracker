@@ -64,4 +64,11 @@ describe('buildTreeRows', () => {
     expect(summary(build(catalog, [], 'glob'))).toEqual(['Globex'])
     expect(build(catalog, [], 'nothing')).toEqual([])
   })
+
+  it('offers Retry on an error row, except when the server key was rejected', () => {
+    const failed = (code: 'UPSTREAM_UNAVAILABLE' | 'UPSTREAM_AUTH') =>
+      build({ root: { status: 'error', items: [], hasMore: false, nextOffset: null, error: { status: 502, code, message: 'x' } } })[0]
+    expect(failed('UPSTREAM_UNAVAILABLE')).toMatchObject({ kind: 'status', status: 'error', retryable: true })
+    expect(failed('UPSTREAM_AUTH')).toMatchObject({ kind: 'status', status: 'error', retryable: false })
+  })
 })

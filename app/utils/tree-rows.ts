@@ -19,7 +19,7 @@ interface RowBase {
 
 export type TreeRow = RowBase & (
   | (EntityRow & { label: string, expandable: boolean, expanded: boolean, count?: string, loadKey?: NodeKey })
-  | { kind: 'status', status: StatusKind, label: string, ownerKey: NodeKey, retryAt?: number }
+  | { kind: 'status', status: StatusKind, label: string, ownerKey: NodeKey, retryAt?: number, retryable?: boolean }
 )
 
 export interface TreeInput {
@@ -59,7 +59,8 @@ export function buildTreeRows(input: TreeInput): TreeRow[] {
       case 'waiting':
         return [{ ...base, key: `${key}#waiting`, status: 'waiting', label: 'Waiting for rate limit', retryAt: n.retryAt }]
       case 'error':
-        return [{ ...base, key: `${key}#error`, status: 'error', label: n.error?.message ?? 'Couldn\'t load.' }]
+        // A rejected server key won't fix itself, so offering Retry would only spend budget.
+        return [{ ...base, key: `${key}#error`, status: 'error', label: n.error?.message ?? 'Couldn\'t load.', retryable: n.error?.code !== 'UPSTREAM_AUTH' }]
       case 'loadingMore':
         return [{ ...base, key: `${key}#more`, status: 'loadingMore', label: 'Loading more…' }]
       case 'loaded':

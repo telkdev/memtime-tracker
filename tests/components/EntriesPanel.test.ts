@@ -196,4 +196,14 @@ describe('EntriesPanel', () => {
     expect(wrapper.text()).toContain('Highlighting')
     expect(wrapper.find('[data-entry-id="0"]').classes().join(' ')).toContain('bg-primary/15')
   })
+
+  it('drops the post-save highlight after a few seconds, but not after the panel is gone', async () => {
+    const wrapper = await mountAt('/?highlight=103')
+    await vi.waitFor(() => expect(wrapper.find('[data-entry-id="103"]').classes().join(' ')).toContain('bg-primary/15'))
+    const replace = vi.spyOn(useRouter(), 'replace')
+    mounted.pop()!.unmount()
+    await new Promise(r => setTimeout(r, 4200))
+    expect(replace).not.toHaveBeenCalled()
+    replace.mockRestore()
+  }, 8000)
 })

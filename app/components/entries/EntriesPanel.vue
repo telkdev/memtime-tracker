@@ -24,8 +24,11 @@ const isEmpty = computed(() => status.value === 'ready' && list.isCurrent.value 
 const now = useNow()
 const countdown = computed(() => list.retryAt.value ? Math.max(1, Math.ceil((list.retryAt.value - now.value) / 1000)) : 0)
 
+const HIGHLIGHT_MS = 4000
+
 // `?highlight=<id>` is set after a save: bring that row into view, then drop it from the URL.
 const highlightId = ref<number | null>(null)
+let highlightTimer: ReturnType<typeof setTimeout> | undefined
 watch([() => route.query.highlight, entries], async ([raw]) => {
   // Number('') is 0, which is a real entry id; only a non-empty value counts.
   if (typeof raw !== 'string' || raw === '') return
@@ -35,10 +38,11 @@ watch([() => route.query.highlight, entries], async ([raw]) => {
   await nextTick()
   const rows = document.querySelectorAll<HTMLElement>(`[data-entry-id="${id}"]`)
   ;[...rows].find(el => el.offsetParent !== null)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  setTimeout(() => {
+  clearTimeout(highlightTimer)
+  highlightTimer = setTimeout(() => {
     highlightId.value = null
     router.replace({ query: { ...route.query, highlight: undefined } })
-  }, 4000)
+  }, HIGHLIGHT_MS)
 })
 
 function onKeydown(event: KeyboardEvent) {
@@ -49,7 +53,11 @@ function onKeydown(event: KeyboardEvent) {
   else if (event.key === ']') list.next()
 }
 onMounted(() => window.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown)
+  // Otherwise it fires after the user left and rewrites the URL of whatever page they're on.
+  clearTimeout(highlightTimer)
+})
 </script>
 
 <template>

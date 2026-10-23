@@ -75,7 +75,7 @@ app/
     tree/               ClientTree.vue, TreeRow.vue, TreeToolbar.vue (rows built by utils/tree-rows.ts)
     entries/            EntriesPanel.vue, EntriesTable.vue, EntriesCards.vue, EntriesPager.vue, EntriesStatus.vue,
                         EntriesTaskCell.vue; Task 3 adds EntryForm, TaskPicker, DurationInput
-    common/             RateLimitIndicator.vue
+    common/             RateLimitIndicator.vue, RetryCountdown.vue
   composables/          useCatalog, useTimeEntries, useTaskNames, useRateLimitState, useNow
   utils/                time.ts (local↔UTC, duration), api-error.ts (parseApiError), catalog.ts,
                         entries.ts, tree-rows.ts
