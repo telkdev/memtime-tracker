@@ -1,0 +1,44 @@
+import { describe, expect, it } from 'vitest'
+import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { defineComponent, h } from 'vue'
+import { UApp } from '#components'
+import EntryForm from '../../app/components/entries/EntryForm.vue'
+import { useEntryForm } from '../../app/composables/useEntryForm'
+
+const groups = { recent: [{ id: 7, label: 'Design review', path: 'Acme › Website' }], catalog: [] }
+
+function mountForm() {
+  return mountSuspended(defineComponent({
+    setup() {
+      const form = useEntryForm({ mode: 'create', start: new Date(2026, 9, 23, 9, 0) })
+      // UApp provides the tooltip and toast context that Nuxt UI components need.
+      return () => h(UApp, () => h(EntryForm, { form, taskGroups: groups }))
+    },
+  }))
+}
+
+describe('EntryForm', () => {
+  it('shows each error under its field and links it with aria-describedby', async () => {
+    const wrapper = await mountForm()
+    await wrapper.find('form').trigger('submit')
+    await new Promise(r => setTimeout(r))
+
+    const comment = wrapper.find('textarea')
+    expect(comment.attributes('aria-invalid')).toBe('true')
+    const described = comment.attributes('aria-describedby')!.split(' ').map(id => wrapper.find(`[id="${id}"]`).text()).join(' ')
+    expect(described).toContain('Add a short comment')
+  })
+
+  it('marks an end on the next day', async () => {
+    const wrapper = await mountForm()
+    await wrapper.find('input[name="duration"]').setValue('16h')
+    expect(wrapper.text()).toContain('+1 day')
+  })
+
+  it('offers a one-click fix for a time skipped by DST', async () => {
+    const wrapper = await mountForm()
+    await wrapper.find('input[name="date"]').setValue('2026-03-29')
+    await wrapper.find('input[name="start"]').setValue('02:30')
+    expect(wrapper.text()).toContain('Use 03:30 instead')
+  })
+})
