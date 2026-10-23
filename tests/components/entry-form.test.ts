@@ -8,7 +8,11 @@ import { useEntryForm } from '../../app/composables/useEntryForm'
 const groups = { recent: [{ id: 7, label: 'Design review', path: 'Acme › Website' }], catalog: [] }
 
 const mounted: Array<{ unmount: () => void }> = []
-afterEach(() => mounted.splice(0).forEach(w => w.unmount()))
+afterEach(async () => {
+  mounted.splice(0).forEach(w => w.unmount())
+  // Let Nuxt UI's post-unmount work (focus, tooltips) run before the worker tears down.
+  await new Promise(r => setTimeout(r, 20))
+})
 
 async function mountForm() {
   const wrapper = await mountSuspended(defineComponent({
