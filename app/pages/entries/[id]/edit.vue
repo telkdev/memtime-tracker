@@ -2,12 +2,11 @@
 import { idSchema } from '#shared/schemas/common'
 import { parseApiError } from '~/utils/api-error'
 
-useHead({ title: 'Edit entry' })
-
 const route = useRoute()
 const id = idSchema.safeParse(route.params.id).data
 const { data, error, status, refresh } = await useTimeEntry(id)
 const mode = ref<'create' | 'edit'>('edit')
+useHead({ title: () => mode.value === 'create' ? 'Log new entry' : 'Edit entry' })
 const loadError = computed(() => error.value ? parseApiError(error.value) : null)
 </script>
 
