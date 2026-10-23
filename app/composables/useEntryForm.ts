@@ -103,12 +103,18 @@ export function useEntryForm(opts: EntryFormOptions) {
     endError.value = null
   }
 
+  function repeatsLaterTonight(startAt: Date, text: string) {
+    const r = resolveLocal(localDayKey(startAt), text)
+    return r.ok && !!r.ambiguous && r.ambiguous.second.getTime() > startAt.getTime()
+  }
+
   /** Called when the user commits a typed end time: recompute the duration from it. */
   function setEndTime(text: string) {
     endError.value = null
     if (!start.value.ok || !text) return
     // Same as the start is almost always a slip, not a 24-hour entry: ask instead of guessing.
-    if (text === toTimeString(start.value.instant)) {
+    // The one exception is the repeated fall-back hour: 02:15 (first) → 02:15 (second) is one hour.
+    if (text === toTimeString(start.value.instant) && !repeatsLaterTonight(start.value.instant, text)) {
       endError.value = 'End must be after the start time.'
       return
     }

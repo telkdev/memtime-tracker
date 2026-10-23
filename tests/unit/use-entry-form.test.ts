@@ -82,6 +82,15 @@ describe('useEntryForm', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it('accepts an End equal to Start in the repeated fall-back hour as one hour later', () => {
+    const form = filled()
+    form.setDate('2026-10-25')
+    form.setStartTime('02:15') // first occurrence, CEST (00:15Z)
+    form.setEndTime('02:15') // the second 02:15, CET (01:15Z)
+    expect(form.errors.value.end).toBeUndefined()
+    expect(form.durationMs.value).toBe(60 * 60_000)
+  })
+
   it('drops a stale End error when Start or Date changes, so a valid entry can be saved', async () => {
     fetchMock.mockResolvedValue({ entry: saved })
     const form = filled()
