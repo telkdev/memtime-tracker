@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import type { z } from 'zod'
-import { toApiError } from './errors'
+import { ApiException, toApiError } from './errors'
 
 /** Event handler that always answers errors in the shared `{ error: ApiErrorBody }` shape. */
 export function defineApiHandler<T>(handler: (event: H3Event) => Promise<T>) {
@@ -24,4 +24,14 @@ export function parseParams<S extends z.ZodType>(event: H3Event, schema: S): z.i
 
 export function parseQuery<S extends z.ZodType>(event: H3Event, schema: S): z.infer<S> {
   return schema.parse(getQuery(event))
+}
+
+/** The JSON body, or a 400 in the BFF shape. h3's own parse error would surface as a 500. */
+export async function readJsonBody(event: H3Event): Promise<unknown> {
+  try {
+    return await readBody(event)
+  }
+  catch {
+    throw new ApiException(400, 'BAD_REQUEST', 'The request body isn\'t valid JSON.')
+  }
 }
