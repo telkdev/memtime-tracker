@@ -4,11 +4,14 @@ import { CATALOG_STALE_MS, CATALOG_TTL_MS, useMemtime, useServerCache } from './
 
 export const CATALOG_CACHE_PREFIX = 'catalog:'
 
-/** Cached, coalesced page of a catalog list endpoint. */
+/**
+ * Cached, coalesced page of a catalog list endpoint. A cold load is a user waiting on an expand
+ * (interactive lane); the refresh behind a stale value nobody waits for runs in the background lane.
+ */
 export function catalogPage<T>(path: string, itemSchema: z.ZodType<T>, offset: number): Promise<Page<T>> {
   return useServerCache().cached(
     `${CATALOG_CACHE_PREFIX}${path}?offset=${offset}`,
-    () => useMemtime().list({ path, itemSchema, offset }),
+    ({ revalidating }) => useMemtime().list({ path, itemSchema, offset, lane: revalidating ? 'background' : 'interactive' }),
     { ttlMs: CATALOG_TTL_MS, staleMs: CATALOG_STALE_MS },
   )
 }
