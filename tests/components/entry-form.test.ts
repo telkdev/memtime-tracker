@@ -64,6 +64,20 @@ describe('EntryForm', () => {
     expect((duration.element as HTMLInputElement).value).toBe('2h 45m')
   })
 
+  it('shows the End that will be saved once a Date change clears a refused End', async () => {
+    const wrapper = await mountForm()
+    const duration = wrapper.find('input[name="duration"]')
+    const end = wrapper.find('input[name="end"]')
+    await duration.setValue('1h30')
+    await duration.trigger('change')
+    await end.setValue('09:00') // same as Start: refused, the typed text stays
+    await end.trigger('change')
+    expect((end.element as HTMLInputElement).value).toBe('09:00')
+
+    await wrapper.find('input[name="date"]').setValue('2026-10-22')
+    expect((end.element as HTMLInputElement).value).toBe('10:30')
+  })
+
   it('offers "Save & log another" only on a form that was opened to create', async () => {
     const entry = { id: 5, taskId: 7, comment: 'x', start: '2026-10-23T07:00:00.000Z', end: '2026-10-23T08:00:00.000Z', createdAt: '', updatedAt: '' }
     let form!: ReturnType<typeof useEntryForm>

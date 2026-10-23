@@ -11,9 +11,11 @@ const durationModel = computed({ get: () => f.durationText.value, set: v => f.se
 const dateModel = computed({ get: () => f.date.value, set: v => f.setDate(v) })
 const startModel = computed({ get: () => f.startTime.value, set: v => f.setStartTime(v) })
 // End is committed on change (not per keystroke), so a half-typed time doesn't move the duration.
+// A refused End stays in the box next to its error. Once Date, Start or the duration moves, End is
+// derived again, so the box must show that derived time even when its text didn't change.
 const endInput = ref(f.endTime.value)
-watch(f.endTime, (v) => {
-  endInput.value = v
+watch([f.endTime, f.date, f.startTime, f.startOccurrence, f.durationMs], () => {
+  endInput.value = f.endTime.value
 })
 
 const occurrenceItems = computed(() => {
