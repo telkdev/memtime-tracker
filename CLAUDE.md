@@ -34,12 +34,16 @@ npm run lint:fix
 npm run typecheck             # nuxi typecheck
 npm run test                  # vitest run
 npm run test:watch
+npm run check                 # lint --fix + typecheck + test, quiet output (scripts/check.mjs)
+npm run check -- lint         # run one step: lint | typecheck | test
 npm run build && npm run preview
 ./scripts/probe-api.sh        # MANUAL ONLY: hits the real API, spends rate-limit budget
 ```
 
-Before you say a task is done, run `npm run lint && npm run typecheck && npm run test` and make
-sure all three pass.
+Before you say a task is done, run `npm run check` and make sure it passes. It prints one line per
+passing step and only the tail of a failure, so use it instead of running the three tools
+separately. ESLint is deliberately not a per-edit hook: half-finished edits produce noisy errors
+that cost tokens.
 
 ## Architecture: the BFF pattern
 
@@ -99,7 +103,8 @@ Details are in `.claude/rules/`. Each file loads when you work on matching paths
 1. **The API key never leaves the server.** It lives in `.env` as `NUXT_MEMTIME_API_KEY` and is
    read through `useRuntimeConfig(event).memtimeApiKey` (private, not under `public`). Never put it
    in `app/`, in `runtimeConfig.public`, in logs, in error messages, in tests, fixtures, docs or
-   commits. A PreToolUse hook blocks obvious leaks, but don't rely on it.
+   commits. A PreToolUse hook (`.claude/hooks/guard-secrets.mjs`) blocks obvious leaks, but don't
+   rely on it.
 2. **Respect the rate limit: 15 requests per 60s, shared by the whole app.** Every upstream call goes
    through the limiter in `server/utils/memtime.ts`. Never `$fetch` the upstream anywhere else.
    Never fetch the whole tree on page load. Load it lazily on expand.

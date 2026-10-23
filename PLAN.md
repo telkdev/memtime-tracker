@@ -2,8 +2,7 @@
 
 The goal is a time tracker I'd put my name on: correct under a 15 requests/60s limit, never
 leaking the key, and quick to log time in without mistakes. The plan has seven phases, each with
-acceptance criteria (AC). A phase is done when every AC is ticked and `lint`, `typecheck` and `test`
-pass.
+acceptance criteria (AC). A phase is done when every AC is ticked and `npm run check` passes.
 
 Estimated total: about 1.5 to 2 focused days. The order puts the risky parts (API contract, rate
 limiter) first, so surprises show up early.
@@ -30,13 +29,13 @@ of them wrong means rework in every later layer.
 - [ ] `npx nuxi@latest init` (Nuxt 4), add `@nuxt/ui`, `@nuxt/eslint`, `@nuxt/test-utils`, `zod`,
       `vitest`, `@vue/test-utils`, `happy-dom`.
 - [ ] Add npm scripts: `dev`, `build`, `preview`, `lint`, `lint:fix`, `typecheck`, `test`,
-      `test:watch`.
+      `test:watch`, and `"check": "node scripts/check.mjs"`.
 - [ ] `nuxt.config.ts`: `runtimeConfig.memtimeApiKey` (private) and `memtimeBaseUrl`, with nothing
       under `public`.
 - [ ] Nitro plugin that fails startup with a clear message if the key is missing.
 - [ ] Vitest config with `TZ=Europe/Berlin` (it has DST, so the DST tests mean something).
 - [ ] App shell: header (app name, the user's time zone), main layout, toasts.
-- [ ] GitHub Actions: install → lint → typecheck → test. CI gets no key.
+- [ ] GitHub Actions: install → `npm run check`. CI gets no key.
 
 **AC**
 - `npm run dev` starts. Without the key it fails at startup with an actionable message.
