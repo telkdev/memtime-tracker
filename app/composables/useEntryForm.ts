@@ -69,13 +69,17 @@ export function useEntryForm(opts: EntryFormOptions) {
 
   let anchorNow = opts.mode === 'create' && opts.anchor === 'now'
 
+  // An End error was about the old start; once the start moves, End is recomputed from the
+  // duration and the message would be stale (and block saving a valid entry).
   function setDate(value: string) {
     anchorNow = false
+    endError.value = null
     date.value = value
   }
 
   function setStartTime(value: string) {
     anchorNow = false
+    endError.value = null
     startTime.value = value
   }
 
@@ -120,7 +124,7 @@ export function useEntryForm(opts: EntryFormOptions) {
   }
 
   function fixStartGap() {
-    if (!start.value.ok && start.value.reason === 'gap') startTime.value = start.value.suggestion
+    if (!start.value.ok && start.value.reason === 'gap') setStartTime(start.value.suggestion)
   }
 
   // --- validation ----------------------------------------------------------------------------

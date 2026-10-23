@@ -82,6 +82,22 @@ describe('useEntryForm', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it('drops a stale End error when Start or Date changes, so a valid entry can be saved', async () => {
+    fetchMock.mockResolvedValue({ entry: saved })
+    const form = filled()
+    form.setEndTime('09:00')
+    await form.submit()
+    expect(form.errors.value.end).toBeDefined()
+
+    form.setStartTime('08:00')
+    expect(form.errors.value.end).toBeUndefined()
+    expect(await form.submit()).toEqual(saved)
+
+    form.setEndTime('08:00')
+    form.setDate('2026-10-22')
+    expect(form.isValid.value).toBe(true)
+  })
+
   it('blocks saving a start time inside the DST gap and offers the fix', async () => {
     const form = filled()
     form.date.value = '2026-03-29'
