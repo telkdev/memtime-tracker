@@ -3,14 +3,19 @@
 // only the tail of the output for a failing one, to keep logs and Claude's context small.
 // Usage: npm run check            (all steps)
 //        npm run check -- lint    (subset: lint | typecheck | test)
+//        npm run check -- --no-fix  (report lint errors without fixing; the default in CI and for
+//                                    the QA agent, so a green run means the committed code is clean)
 import { spawnSync } from 'node:child_process'
 
+const args = process.argv.slice(2)
+const fix = !args.includes('--no-fix') && !process.env.CI
+
 const steps = {
-  lint: ['npx', ['eslint', '.', '--fix']],
+  lint: ['npx', ['eslint', '.', ...(fix ? ['--fix'] : [])]],
   typecheck: ['npx', ['nuxi', 'typecheck']],
   test: ['npx', ['vitest', 'run', '--reporter=dot']],
 }
-const wanted = process.argv.slice(2).filter(s => s in steps)
+const wanted = args.filter(s => s in steps)
 let failed = false
 
 for (const name of wanted.length ? wanted : Object.keys(steps)) {

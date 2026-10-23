@@ -11,12 +11,13 @@ if (input.stop_hook_active) process.exit(0)
 if (!existsSync(join(root, 'node_modules'))) process.exit(0)
 
 const changed = spawnSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).stdout ?? ''
-if (!/\.(ts|vue)$/m.test(changed)) process.exit(0)
+if (!/\.(ts|vue|mjs)$/m.test(changed)) process.exit(0)
 
-for (const script of ['typecheck', 'test']) {
-  const res = spawnSync('npm', ['run', '--silent', script], { cwd: root, encoding: 'utf8' })
-  if (res.status !== 0) {
-    console.error(`npm run ${script} failed; fix before finishing:\n${(res.stdout + res.stderr).slice(-4000)}`)
-    process.exit(2)
-  }
+// scripts/check.mjs keeps the output to one line per passing step and the tail of a failure.
+// Lint isn't run here on purpose: it's part of `npm run check`, which CLAUDE.md requires before
+// a task is called done.
+const res = spawnSync('node', ['scripts/check.mjs', 'typecheck', 'test'], { cwd: root, encoding: 'utf8' })
+if (res.status !== 0) {
+  console.error(`Typecheck or tests failed; fix before finishing:\n${(res.stdout + res.stderr).slice(-4000)}`)
+  process.exit(2)
 }

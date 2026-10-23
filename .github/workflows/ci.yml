@@ -13,4 +13,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # CI is set on GitHub runners, so check.mjs lints without --fix and fails on any error.
       - run: npm run check
+      # Builds the app and runs it against the local mock API. No key, no real API calls.
+      - run: npm run smoke

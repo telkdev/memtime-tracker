@@ -40,7 +40,9 @@ export function assertMemtimeConfig() {
   if (!config.memtimeApiKey) {
     throw new Error('NUXT_MEMTIME_API_KEY is not set. Copy .env.example to .env and add your API key.')
   }
-  if (!/^https:\/\//.test(config.memtimeBaseUrl) && !import.meta.dev) {
-    throw new Error('NUXT_MEMTIME_BASE_URL must use https in production.')
+  // Plain http is only fine for a local stand-in (npm run mock:api, npm run smoke).
+  const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(config.memtimeBaseUrl)
+  if (!/^https:\/\//.test(config.memtimeBaseUrl) && !local && !import.meta.dev) {
+    throw new Error('NUXT_MEMTIME_BASE_URL must use https outside localhost.')
   }
 }
