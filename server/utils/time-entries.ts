@@ -59,6 +59,8 @@ export function mapWriteError(err: unknown, op: 'create' | 'update'): unknown {
     if (op === 'update' && /time entry/i.test(message)) {
       return new ApiException(404, 'NOT_FOUND', 'This entry no longer exists. It may have been deleted.')
     }
+    // Unverified: API_NOTES records no write that answers 404 for an unknown task. If one ever
+    // does, point at the Task field instead of saying the entry is gone. Harmless otherwise.
     if (/task/i.test(message)) {
       return new ApiException(400, 'BAD_REQUEST', 'The selected task no longer exists.', {
         fields: { taskId: 'This task no longer exists. Pick another one.' },
