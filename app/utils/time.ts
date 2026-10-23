@@ -50,6 +50,11 @@ export function formatDateTime(value: DateInput, locale?: string): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(toDate(value))
 }
 
+/** "23 Oct, 18:52": compact, for secondary columns. */
+export function formatShortDateTime(value: DateInput, locale?: string): string {
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(toDate(value))
+}
+
 /** Local calendar day as "YYYY-MM-DD", used to group entries by day. */
 export function localDayKey(value: DateInput): string {
   const d = toDate(value)

@@ -159,17 +159,17 @@ form. This is the only small change to a Task 1 file.
 
 ## Acceptance criteria
 
-- [ ] `?page=3&size=25` survives reload and back/forward. Invalid values are corrected in the URL.
-- [ ] Times show in local time and match the UTC values (tested with a fixed TZ, including a DST
+- [x] `?page=3&size=25` survives reload and back/forward. Invalid values are corrected in the URL.
+- [x] Times show in local time and match the UTC values (tested with a fixed TZ, including a DST
       day and a midnight crossing).
-- [ ] Opening the list makes exactly 1 upstream call. Going back to a page seen within 15 s makes 0.
-- [ ] Task names fill in from the tree with no extra calls. Unknown tasks cost at most one
+- [x] Opening the list makes exactly 1 upstream call. Going back to a page seen within 15 s makes 0.
+- [x] Task names fill in from the tree with no extra calls. Unknown tasks cost at most one
       background call each and never block paging.
-- [ ] The list never triggers catalog (tree) fetches on its own.
-- [ ] No BFF response contains `userId` or the key (tested).
-- [ ] Every row opens edit by click and by keyboard (Edit button). Empty, past-the-end, loading,
+- [x] The list never triggers catalog (tree) fetches on its own.
+- [x] No BFF response contains `userId` or the key (tested).
+- [x] Every row opens edit by click and by keyboard (Edit button). Empty, past-the-end, loading,
       waiting and error states all render and make sense.
-- [ ] `npm run check` passes.
+- [x] `npm run check` passes.
 
 ## Out of scope (on purpose)
 
@@ -187,6 +187,23 @@ form. This is the only small change to a Task 1 file.
 - The exact timestamp format (`Z` or offset, milliseconds or not). The schema accepts both for now.
 - Whether `sortBy=start` is accepted, or the API wants a different field name. If it fails, fall
   back to the default order and sort the page on the BFF (correct within a page only, so note it).
+
+## As built (differences from the plan above)
+
+- **The list fetches in the browser only.** Times depend on the viewer's zone, which the server
+  doesn't know, so SSR renders the skeleton instead of times that would be wrong and then change.
+- **Every client `$fetch` passes `retry: 0`.** ofetch otherwise retries 429 and 5xx at once, which
+  doubles calls under exactly the conditions where the budget is tight.
+- **Task-name lookups run at most two at a time.** They can sit in the server's background lane for
+  a while, and unlimited parallel requests would use up the browser's connections and delay paging.
+- **Table or cards depends on the panel's width (container query), not the window's.** The panel
+  sits next to the tree, so at 1440 px it's only about 700 px wide.
+- **The Start, End and Created columns show time only.** The date is in the day header. Created shows
+  "23 Oct, 18:52", with the full value in a tooltip. An end on a later day shows "+1d".
+- **A missing task shows "Task #99 (unavailable)".** A 404 could mean deleted or not visible to us,
+  so the label doesn't claim which.
+- `useTimeEntryCache()` (`getCached`, `loadedEntries`, `invalidate`) is separate from
+  `useTimeEntries()`, so the edit form can use the cache without starting a list fetch.
 
 ## Estimate
 

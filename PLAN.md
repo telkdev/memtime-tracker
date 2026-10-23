@@ -90,16 +90,16 @@ of them wrong means rework in every later layer.
 
 ## Phase 4: Task 2, time entries list (≈2 h)
 
-- [ ] `GET /api/time-entries?limit&offset`, sent upstream as `limit+1`,
+- [x] `GET /api/time-entries?limit&offset`, sent upstream as `limit+1`,
       `sortBy=start&order=desc`, with a short cache that's invalidated on write.
-- [ ] `useTimeEntries()`: page and size from the URL query, `hasMore` via limit+1 (there's no total),
+- [x] `useTimeEntries()`: page and size from the URL query, `hasMore` via limit+1 (there's no total),
       refresh.
-- [ ] Task-name lookup for unknown IDs: `GET /api/tasks/:id`, background priority, cached.
-- [ ] `EntriesTable.vue`: ID, Task (name when known, ID otherwise), Comment, Start, End, Duration,
+- [x] Task-name lookup for unknown IDs: `GET /api/tasks/:id`, background priority, cached.
+- [x] `EntriesTable.vue`: ID, Task (name when known, ID otherwise), Comment, Start, End, Duration,
       Created At, shown in local time with the zone in the header.
-- [ ] Prev/next plus a page-size selector. Clicking a row and an explicit Edit button both open the
+- [x] Prev/next plus a page-size selector. Clicking a row and an explicit Edit button both open the
       edit form.
-- [ ] Skeleton, empty state with a "Log time" call to action, and error state with retry.
+- [x] Skeleton, empty state with a "Log time" call to action, and error state with retry.
 
 **AC**
 - `?page=3&size=25` survives a reload and back/forward.

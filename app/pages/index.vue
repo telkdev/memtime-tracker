@@ -30,6 +30,9 @@ function logTime(task: Task) {
         @log="logTime"
       />
     </section>
-    <!-- Task 2 mounts <EntriesPanel :highlight-task-id="selectedTaskId" /> here. -->
+    <EntriesPanel
+      :highlight-task-id="selectedTaskId"
+      @clear-task-highlight="selectedTaskId = null"
+    />
   </div>
 </template>
