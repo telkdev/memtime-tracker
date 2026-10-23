@@ -75,10 +75,10 @@ Adds `TimeEntryInput` next to Task 2's `TimeEntry` output schema (it doesn't rep
 
 ```ts
 TimeEntryInput = z.object({
-  taskId: z.number().int().positive(),
+  taskId: z.number().int().nonnegative(),  // task #0 exists upstream
   comment: z.string().trim().min(1, 'Add a short comment').max(500),
-  start: z.iso.datetime(),  // UTC with Z
-  end: z.iso.datetime(),
+  start: utcTimestampSchema,  // z.iso.datetime(): UTC with Z only
+  end: utcTimestampSchema,
 }).superRefine(...)  // end > start → path ['end']; end - start ≤ 24 h → path ['end']
 ```
 

@@ -1,7 +1,16 @@
 import { z } from 'zod'
 
-/** ISO 8601 timestamp. Lenient on precision and offset style until the probe pins the exact format. */
-export const isoTimestampSchema = z.string().refine(s => !Number.isNaN(Date.parse(s)), 'Expected an ISO 8601 timestamp')
+/**
+ * ISO 8601 timestamp from the upstream, with `Z` or an explicit offset. One without an offset
+ * would be read as the server's (or browser's) local time, so it is rejected, not guessed at.
+ */
+export const isoTimestampSchema = z.iso.datetime({ offset: true, error: 'Expected an ISO 8601 timestamp with a time zone' })
+
+/**
+ * What we send upstream: UTC with `Z` only (hard rule 4). Task 3's input schema must use this,
+ * not isoTimestampSchema, so a local or offset time can't reach the API.
+ */
+export const utcTimestampSchema = z.iso.datetime({ error: 'Expected a UTC ISO 8601 timestamp ending in Z' })
 
 /**
  * The upstream shape. Server-only: `userId` holds the raw API key, so this schema must never be
