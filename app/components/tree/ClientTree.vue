@@ -39,7 +39,16 @@ const rowIndex = computed(() => new Map(rows.value.map((r, i) => [r.key, i])))
 const focusKey = computed(() => {
   let key = activeKey.value
   const all = new Map(rows.value.map(r => [r.key, r]))
-  while (key && !all.has(key)) key = key.includes('#') ? key.split('#')[0]! : parentOf(key)
+  while (key && !all.has(key)) {
+    if (key.includes('#')) {
+      // A loading/waiting/error row resolved: land on its first child, or on the node itself.
+      const owner = key.split('#')[0]!
+      key = rows.value.find(r => r.parentKey === owner)?.key ?? owner
+    }
+    else {
+      key = parentOf(key)
+    }
+  }
   return key ?? rows.value[0]?.key ?? null
 })
 
@@ -49,6 +58,21 @@ watchEffect(() => {
 })
 function parentOf(key: string) {
   return lastParents.get(key) ?? null
+}
+
+// When the focused row disappears (e.g. a loading row resolves), move DOM focus with it so keyboard
+// users aren't dropped onto <body>.
+const treeHasFocus = ref(false)
+watch(focusKey, (key) => {
+  const el = document.activeElement
+  const lost = !el || el === document.body || !treeEl.value?.contains(el)
+  if (treeHasFocus.value && lost && key) focusRow(key)
+}, { flush: 'post' })
+
+function onFocusOut(e: FocusEvent) {
+  // A row removed from the DOM also fires focusout; that is not the user leaving the tree.
+  const removed = !(e.target as Node).isConnected
+  treeHasFocus.value = removed || (treeEl.value?.contains(e.relatedTarget as Node | null) ?? false)
 }
 
 function focusRow(key: string | null | undefined) {
@@ -184,6 +208,8 @@ const rootNode = computed(() => catalog.node('root'))
       aria-label="Clients, projects and tasks"
       class="flex flex-col"
       @keydown="onKeydown"
+      @focusin="treeHasFocus = true"
+      @focusout="onFocusOut"
     >
       <TreeRow
         v-for="row in rows"

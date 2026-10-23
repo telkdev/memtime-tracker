@@ -9,7 +9,7 @@ let calls: string[] = []
 
 registerEndpoint('/api/clients', () => {
   calls.push('clients')
-  return page([{ id: 1, name: 'Acme', description: '', ...at }, { id: 2, name: 'Globex', description: '', ...at }])
+  return page([{ id: 1, name: 'Acme', description: '', ...at }, { id: 2, name: 'Globex', description: '', ...at }, { id: 5, name: 'Stark', description: '', ...at }])
 })
 registerEndpoint('/api/clients/1/projects', () => {
   calls.push('projects:1')
@@ -27,6 +27,11 @@ registerEndpoint('/api/clients/2/projects', (event) => {
     return { error: { status: 429, code: 'RATE_LIMITED', message: 'Too many requests', retryAfter: 1 } }
   }
   return page([])
+})
+let releaseStark: () => void = () => {}
+registerEndpoint('/api/clients/5/projects', async () => {
+  await new Promise<void>(r => (releaseStark = r))
+  return page([{ id: 50, clientId: 5, name: 'Arc reactor', ...at }])
 })
 registerEndpoint('/api/_meta/rate-limit', () => ({ budget: 14, remaining: 10, resetsInMs: 1000, queued: 0, blockedForMs: 0 }))
 
@@ -48,7 +53,7 @@ describe('ClientTree', () => {
   it('loads only clients on mount, then one level per expand, and nothing on re-expand', async () => {
     const w = await mountTree()
     expect(calls).toEqual(['clients'])
-    expect(labels(w)).toEqual(['Acme', 'Globex'])
+    expect(labels(w)).toEqual(['Acme', 'Globex', 'Stark'])
 
     const tree = w.find('[role=tree]')
     await tree.trigger('keydown', { key: 'ArrowRight' })
@@ -100,6 +105,24 @@ describe('ClientTree', () => {
 
     await vi.waitFor(() => expect(w.text()).toContain('No projects'), { timeout: 3000 })
     expect(calls.filter(c => c === 'projects:2')).toHaveLength(2)
+    w.unmount()
+  })
+
+  it('keeps keyboard focus when the loading row it sits on resolves', async () => {
+    const w = await mountTree()
+    const tree = w.find('[role=tree]')
+    const press = async (key: string) => {
+      await tree.trigger('keydown', { key })
+      await flushPromises()
+    }
+    await press('End') // Stark
+    ;(w.find('[data-key="client:5"]').element as HTMLElement).focus()
+    await press('ArrowRight') // expand: projects are pending
+    await press('ArrowDown') // onto the loading row
+    expect(document.activeElement?.getAttribute('data-key')).toBe('client:5#loading')
+
+    releaseStark()
+    await vi.waitFor(() => expect(document.activeElement?.getAttribute('data-key')).toBe('project:50'))
     w.unmount()
   })
 })
