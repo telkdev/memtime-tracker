@@ -10,7 +10,7 @@ const input = JSON.parse(readFileSync(0, 'utf8') || '{}')
 if (input.stop_hook_active) process.exit(0)
 if (!existsSync(join(root, 'node_modules'))) process.exit(0)
 
-const changed = spawnSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).stdout ?? ''
+const changed = spawnSync('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: root, encoding: 'utf8' }).stdout ?? ''
 if (!/\.(ts|vue|mjs)$/m.test(changed)) process.exit(0)
 
 // scripts/check.mjs keeps the output to one line per passing step and the tail of a failure.

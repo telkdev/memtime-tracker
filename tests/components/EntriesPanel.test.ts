@@ -90,6 +90,40 @@ describe('EntriesPanel', () => {
     expect(listCalls.map(q => q.offset)).toEqual(['0', '25'])
   })
 
+  it('keeps a cached page on screen when a slower request for another page answers late', async () => {
+    const wrapper = await mountAt('/')
+    let answer!: (value: unknown) => void
+    listResponse = () => new Promise((resolve) => {
+      answer = resolve
+    })
+    const router = useRouter()
+    await router.push('/?page=2')
+    await vi.waitFor(() => expect(listCalls).toHaveLength(2))
+    await router.push('/?page=1')
+    await flushPromises()
+    answer({ items: [{ ...entries[0]!, id: 999, comment: 'From page two' }], hasMore: false, nextOffset: null })
+    await flushPromises()
+    await new Promise(r => setTimeout(r, 20))
+    expect(wrapper.text()).toContain('Sprint planning')
+    expect(wrapper.text()).not.toContain('From page two')
+  })
+
+  it('schedules no retry for a rate limit that answers after the panel is gone', async () => {
+    let answer!: (value: unknown) => void
+    listResponse = (event) => {
+      setResponseStatus(event, 429)
+      return new Promise((resolve) => {
+        answer = resolve
+      })
+    }
+    await mount('/')
+    await vi.waitFor(() => expect(listCalls).toHaveLength(1))
+    mounted.pop()!.unmount()
+    answer({ error: { status: 429, code: 'RATE_LIMITED', message: 'Too many requests', retryAfter: 1 } })
+    await new Promise(r => setTimeout(r, 1500))
+    expect(listCalls).toHaveLength(1)
+  })
+
   it('follows back and forward through pages via the URL', async () => {
     const wrapper = await mountAt('/')
     const router = useRouter()

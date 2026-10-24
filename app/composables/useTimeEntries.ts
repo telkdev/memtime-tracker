@@ -99,6 +99,8 @@ export function useTimeEntries() {
     const cached = pages.value[key]
     if (cached) shown.value = cached
     if (cached && !force && Date.now() - cached.loadedAt < CLIENT_FRESH_MS) {
+      // A request still in flight for another page must not replace this one when it answers.
+      requestSeq++
       status.value = 'ready'
       return
     }
@@ -164,7 +166,12 @@ export function useTimeEntries() {
       const { page: n, size } = position.value
       if (!page && before && before.key === pageKey(n, size)) load()
     })
-    onScopeDispose(clearRetry)
+    // Bumping the sequence also drops a response that lands after unmount, so a late 429 can't
+    // schedule a retry nobody will cancel.
+    onScopeDispose(() => {
+      requestSeq++
+      clearRetry()
+    })
   }
 
   return {

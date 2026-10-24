@@ -15,12 +15,15 @@ const f = props.form
 const isCreate = computed(() => f.mode.value === 'create')
 const root = useTemplateRef<HTMLElement>('root')
 
+// The automatic retry after a 429 saves on its own; it must keep the button the user chose.
+let lastAnother = false
 async function save(another = false) {
+  lastAnother = another
   const entry = await f.submit()
   if (entry) emit('saved', entry, { another })
   else await focusFirstError()
 }
-f.onSaved(entry => emit('saved', entry, { another: false }))
+f.onSaved(entry => emit('saved', entry, { another: lastAnother }))
 
 async function focusFirstError() {
   await nextTick()

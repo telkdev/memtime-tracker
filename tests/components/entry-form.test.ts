@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
+import { setResponseStatus } from 'h3'
 import { defineComponent, h } from 'vue'
 import { UApp } from '#components'
 import EntryForm from '../../app/components/entries/EntryForm.vue'
@@ -92,5 +93,36 @@ describe('EntryForm', () => {
     await new Promise(r => setTimeout(r))
     expect(wrapper.text()).toContain('Save entry')
     expect(wrapper.text()).not.toContain('Save & log another')
+  })
+
+  it('keeps "Save & log another" when the save is retried after a rate limit', async () => {
+    let posts = 0
+    const saved = { id: 41, taskId: 7, comment: 'Review', start: '2026-10-23T07:00:00.000Z', end: '2026-10-23T08:00:00.000Z', createdAt: '2026-10-23T08:00:00.000Z', updatedAt: '2026-10-23T08:00:00.000Z' }
+    registerEndpoint('/api/time-entries', {
+      method: 'POST',
+      handler: (event) => {
+        posts++
+        if (posts === 1) {
+          setResponseStatus(event, 429)
+          return { error: { status: 429, code: 'RATE_LIMITED', message: 'Too many requests', retryAfter: 1 } }
+        }
+        setResponseStatus(event, 201)
+        return { entry: saved }
+      },
+    })
+    const wrapper = await mountSuspended(defineComponent({
+      setup() {
+        const form = useEntryForm({ mode: 'create', taskId: 7, start: new Date(2026, 9, 23, 9, 0) })
+        form.setDurationText('1h')
+        form.comment.value = 'Review'
+        return () => h(UApp, () => h(EntryForm, { form, taskGroups: groups }))
+      },
+    }))
+    mounted.push(wrapper)
+    await wrapper.findAll('button').find(b => b.text().includes('Save & log another'))!.trigger('click')
+    const form = wrapper.findComponent(EntryForm)
+    await vi.waitFor(() => expect(form.emitted('saved')).toHaveLength(1), { timeout: 3000 })
+    expect(posts).toBe(2)
+    expect(form.emitted('saved')![0]![1]).toEqual({ another: true })
   })
 })
