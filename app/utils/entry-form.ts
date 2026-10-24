@@ -14,7 +14,15 @@ export function defaultStart(entries: readonly TimeEntry[], now: Date): Date {
     const end = Date.parse(e.end)
     if (end >= startOfDay && end <= now.getTime() && (latest === undefined || end > latest)) latest = end
   }
-  return latest === undefined ? roundDownToMinutes(now, 15) : new Date(latest)
+  return latest === undefined ? roundDownToMinutes(now, 15) : ceilToMinute(new Date(latest))
+}
+
+/**
+ * The form edits whole minutes. An end like 10:00:35 continues at 10:01, not 10:00, which would
+ * overlap the previous entry by 35 seconds and always show an overlap warning.
+ */
+export function ceilToMinute(d: Date): Date {
+  return new Date(Math.ceil(d.getTime() / 60_000) * 60_000)
 }
 
 /** Distinct task ids, most recently used first. */
