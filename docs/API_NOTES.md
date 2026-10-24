@@ -12,8 +12,14 @@ These were checked with real requests and **override anything below that disagre
 - **Rate-limit headers exist** on every response: `ratelimit-limit: 15`,
   `ratelimit-policy: 15;w=60`, `ratelimit-remaining: N`, `ratelimit-reset: <seconds>`. No
   `Retry-After` was seen. The BFF syncs its limiter from `ratelimit-remaining` (keeping one spare)
-  and uses `ratelimit-reset` as the pause after a 429. The budget is per key, so curl or a second
-  app instance spends it too.
+  and uses `ratelimit-reset` both to end its own window when the upstream's ends and as the pause
+  after a 429. The budget is per key, so curl or a second app instance spends it too.
+  (2026-10-24: a burst of 20 gave 13 answers, 7 BFF 429s and zero upstream 429s;
+  `resetsInMs` matched `ratelimit-reset`. See docs/qa/2026-10-24/real-api-check.md.)
+- **New entries are not kept (2026-10-24, seen twice).** `POST /time-entries` answers 201 with a
+  new id (#11 both times), but about a minute later `GET`, `PUT` and `DELETE` on that id return
+  404 and the list never shows it. Seeded entries (#0, #2, #4, #6, #8) stay. The app can't fix
+  this; after a save the list says when the saved entry isn't on the page.
 - **A bad key gives `401` with a plain-text body `Unauthorized`**, not `404 Unknown user`.
 - **Tasks have `projectId` and no `parent`.** `parent` stays optional in our schema (default 0).
 - **IDs start at 0.** Time entry `#0` exists, so id params are validated as non-negative.
