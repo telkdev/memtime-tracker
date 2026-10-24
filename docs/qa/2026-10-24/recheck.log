@@ -1,0 +1,88 @@
+=== npm run check ===
+exit=0
+
+> check
+> node scripts/check.mjs
+
+✓ lint (2.7s)
+✓ typecheck (4.3s)
+✓ test (9.8s)
+=== npm run smoke ===
+exit=0
+✓ GET /api/projects/:id/tasks returns a page
+✓ GET /api/time-entries returns seeded entries
+✓ time entries contain no key
+✓ time entries have no userId field
+✓ time entries are Cache-Control: no-store
+✓ bad id → 400 VALIDATION
+✓ unknown task → 404 NOT_FOUND
+✓ oversized page → 400 VALIDATION
+✓ oversized page costs no upstream call
+✓ unknown API route → BFF 404 shape
+✓ POST {} → 400 with field errors
+✓ invalid POST costs no upstream call
+✓ POST invalid JSON → 400 BFF shape
+✓ POST valid entry → 2xx with id
+✓ POST response has no key
+✓ PUT unknown entry → 404 NOT_FOUND
+✓ GET /api/time-entries/:id returns the entry without userId or key
+✓ PUT existing entry → 200 with the updated entry
+✓ GET unknown entry → 404 NOT_FOUND
+✓ burst: every reply is data or 429 with retryAfter
+✓ burst: some requests were held back
+✓ upstream never answered 429
+✓ server log never contains the key
+
+29 of 29 smoke checks passed or skipped
+=== npm run build ===
+exit=0
+  ├─ .output/server/chunks/build/error-500-styles.BipnMLxW.mjs (2.38 kB) (937 B gzip)
+  ├─ .output/server/chunks/build/pages-BKRP7bwy.mjs (291 kB) (51.5 kB gzip)
+  ├─ .output/server/chunks/build/Toast-Cw8j8Gkk.mjs (60.9 kB) (11.1 kB gzip)
+  ├─ .output/server/chunks/nitro/nitro.mjs (207 kB) (53.5 kB gzip)
+  ├─ .output/server/chunks/routes/api/_..._.mjs (661 B) (351 B gzip)
+  ├─ .output/server/chunks/routes/api/_meta/rate-limit.get.mjs (704 B) (341 B gzip)
+  ├─ .output/server/chunks/routes/api/catalog/refresh.post.mjs (726 B) (348 B gzip)
+  ├─ .output/server/chunks/routes/api/clients/_id/projects.get.mjs (1.04 kB) (413 B gzip)
+  ├─ .output/server/chunks/routes/api/index.get.mjs (882 B) (369 B gzip)
+  ├─ .output/server/chunks/routes/api/index.post.mjs (959 B) (405 B gzip)
+  ├─ .output/server/chunks/routes/api/index2.get.mjs (949 B) (417 B gzip)
+  ├─ .output/server/chunks/routes/api/projects/_id/tasks.get.mjs (1.02 kB) (413 B gzip)
+  ├─ .output/server/chunks/routes/api/tasks/_id_.get.mjs (1.98 kB) (870 B gzip)
+  ├─ .output/server/chunks/routes/api/time-entries/_id_.get.mjs (944 B) (419 B gzip)
+  ├─ .output/server/chunks/routes/api/time-entries/_id_.put.mjs (1.03 kB) (425 B gzip)
+  ├─ .output/server/chunks/routes/renderer.mjs (24.3 kB) (8.14 kB gzip)
+  ├─ .output/server/chunks/virtual/entry.mjs (193 kB) (49.4 kB gzip)
+  ├─ .output/server/chunks/virtual/precomputed.mjs (10.5 kB) (1.42 kB gzip)
+  ├─ .output/server/chunks/virtual/styles.mjs (617 B) (301 B gzip)
+  ├─ .output/server/index.mjs (498 B) (258 B gzip)
+  └─ .output/server/package.json (1.14 kB) (452 B gzip)
+Σ Total size: 5.07 MB (1.19 MB gzip)
+[nitro] ✔ You can preview this build using node .output/server/index.mjs
+config 111ms · modules 131ms · app 307ms · types 223ms · client 1.44s · server 831ms · nitro 2.58s
+◆ ✨ Build complete in 5.62s!
+
+=== server log (real API run) ===
+Listening on http://[::]:3000
+[memtime] GET /time-entries/999999 → 404 (Time entry not found)
+=== burst (20 parallel GET /api/projects/102..121/tasks) ===
+102 200 0.296792
+103 200 0.196925
+104 200 0.198081
+105 200 0.304101
+106 200 0.303139
+107 200 0.306744
+108 200 0.198347
+109 200 0.249823
+110 200 0.246290
+111 200 0.249341
+112 200 0.196915
+113 200 0.245172
+114 429 0.003476
+115 429 0.003907
+116 429 0.003472
+117 200 0.241312
+118 429 0.003313
+119 429 0.004009
+120 429 0.003555
+121 429 0.003380

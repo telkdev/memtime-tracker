@@ -50,6 +50,12 @@ describe('buildTreeRows', () => {
     expect(rows[0]).toMatchObject({ label: 'Acme', count: '1+' })
   })
 
+  it('reads counts aloud with the right word and number', () => {
+    expect(build(catalog)[0]).toMatchObject({ countLabel: '1 project' })
+    const more = build({ ...catalog, 'client:1': loaded(catalog['client:1'].items, true) })
+    expect(more[0]).toMatchObject({ countLabel: '1 or more projects' })
+  })
+
   it('sets aria positions within each sibling group', () => {
     const rows = build(catalog, ['client:1'])
     expect(rows.map(r => [r.label, r.level, r.posinset, r.setsize])).toEqual([

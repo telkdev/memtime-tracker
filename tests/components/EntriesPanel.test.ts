@@ -118,6 +118,11 @@ describe('EntriesPanel', () => {
     expect(useTimeEntryCache().getCached(stale.id)?.comment).toBe(entries[0]!.comment)
   })
 
+  it('says so when a just-saved entry is not on the page it returned to', async () => {
+    const wrapper = await mountAt('/?highlight=999')
+    expect(wrapper.text()).toContain('Entry #999 was saved, but it isn\'t on this page')
+  })
+
   it('shows an already-seen page again without asking the server (within the cache TTL)', async () => {
     await mountAt('/')
     const router = useRouter()

@@ -47,13 +47,38 @@ export function useTimeEntryCache() {
     return undefined
   }
 
+  const newestLoading = useState('time-entries:newest-loading', () => false)
+
+  /**
+   * The newest page, when nothing is loaded yet (the form opened by a link or a reload). One
+   * request at most; it is stored like a list page, so going back to the list reuses it.
+   */
+  async function ensureNewest() {
+    if (Object.keys(pages.value).length || newestLoading.value) return
+    newestLoading.value = true
+    const gen = generation.value
+    const { size } = useLastListPosition().value
+    try {
+      const data = entryPageSchema.parse(await fetchTimeEntries({ limit: size, offset: 0 }))
+      if (gen !== generation.value) return
+      const key = pageKey(1, size)
+      pages.value = { ...pages.value, [key]: { key, items: data.items, hasMore: data.hasMore, loadedAt: Date.now() } }
+    }
+    catch {
+      // Recent tasks are a convenience; the form works without them.
+    }
+    finally {
+      newestLoading.value = false
+    }
+  }
+
   /** Forget every loaded page; the list refetches the one on screen. */
   function invalidate() {
     generation.value++
     pages.value = {}
   }
 
-  return { pages, generation, loadedEntries, getCached, invalidate }
+  return { pages, generation, loadedEntries, getCached, ensureNewest, invalidate }
 }
 
 /** The list page the user last looked at, so the form can send them back to it. */

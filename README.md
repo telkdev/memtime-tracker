@@ -95,6 +95,9 @@ the dependency graph: [app/features/README.md](app/features/README.md).
 
 ## Trade-offs and known limits
 
+- **The demo API doesn't keep new entries.** A create succeeds and returns an id, but the entry is
+  gone about a minute later (checked twice on the real API, see `docs/API_NOTES.md`). The list
+  then says the saved entry isn't on the page instead of failing silently.
 - **Single-tenant.** One API key means one user, so there's no login. Real multi-user use needs
   per-user auth and a token per user.
 - **In-memory limiter and cache.** Correct for one server instance. With several instances the

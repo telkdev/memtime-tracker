@@ -17,9 +17,37 @@ registerEndpoint('/api/tasks/77', (event) => {
   return { error: { status: 503, code: 'UPSTREAM_UNAVAILABLE', message: 'Try again.' } }
 })
 
+const listCalls: string[] = []
+let listItems: unknown[] = []
+registerEndpoint('/api/time-entries', () => {
+  listCalls.push('list')
+  return { items: listItems, hasMore: false, nextOffset: null }
+})
+
 describe('useEntrySources', () => {
+  it('loads the newest entries once when the form is opened directly, so Recent is not empty', async () => {
+    useState('time-entries:pages').value = {}
+    useState('catalog:nodes').value = {}
+    useState('task-names').value = {}
+    listCalls.length = 0
+    listItems = [{ id: 1, taskId: 42, comment: 'x', start: '2026-10-23T09:00:00.000Z', end: '2026-10-23T10:00:00.000Z', createdAt: '2026-10-23T10:00:00.000Z', updatedAt: '2026-10-23T10:00:00.000Z' }]
+    let groups!: () => { recent: Array<{ id: number }> }
+    const wrapper = await mountSuspended(defineComponent({
+      setup() {
+        const sources = useEntrySources()
+        groups = () => sources.taskGroups()
+        return () => h('div')
+      },
+    }), { route: '/entries/new' })
+    await vi.waitFor(() => expect(groups().recent.map(o => o.id)).toEqual([42]))
+    expect(listCalls).toEqual(['list'])
+    listItems = []
+    wrapper.unmount()
+  })
+
   it('looks up the name of a deep-linked task that nothing else has loaded', async () => {
     useState('time-entries:pages').value = {}
+    lookups.length = 0
     useState('catalog:nodes').value = {}
     useState('task-names').value = {}
     const taskId = ref<number | null>(42)

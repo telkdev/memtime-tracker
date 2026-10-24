@@ -18,7 +18,7 @@ interface RowBase {
 }
 
 export type TreeRow = RowBase & (
-  | (EntityRow & { label: string, expandable: boolean, expanded: boolean, count?: string, loadKey?: NodeKey })
+  | (EntityRow & { label: string, expandable: boolean, expanded: boolean, count?: string, countLabel?: string, loadKey?: NodeKey })
   | { kind: 'status', status: StatusKind, label: string, ownerKey: NodeKey, retryAt?: number, retryable?: boolean }
 )
 
@@ -36,6 +36,13 @@ function emptyLabel(key: NodeKey) {
 function countLabel(n: CatalogNode): string | undefined {
   if (n.status !== 'loaded' && n.status !== 'loadingMore') return undefined
   return `${n.items.length}${n.hasMore ? '+' : ''}`
+}
+
+/** The count read aloud: "1 project", "25 or more tasks". "+" means more pages exist. */
+function countAria(n: CatalogNode, noun: 'project' | 'task'): string | undefined {
+  if (n.status !== 'loaded' && n.status !== 'loadingMore') return undefined
+  const one = n.items.length === 1 && !n.hasMore
+  return `${n.items.length}${n.hasMore ? ' or more' : ''} ${noun}${one ? '' : 's'}`
 }
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
@@ -97,7 +104,7 @@ export function buildTreeRows(input: TreeInput): TreeRow[] {
       if (query && !self && !children.hit) continue
       anyHit = true
       const expanded = query ? children.hit : input.isExpanded(key)
-      rows.push({ kind: 'project', entity: project, key, level, parentKey: clientKey, label: project.name, expandable: true, expanded, count: countLabel(tasks), loadKey: key })
+      rows.push({ kind: 'project', entity: project, key, level, parentKey: clientKey, label: project.name, expandable: true, expanded, count: countLabel(tasks), countLabel: countAria(tasks, 'task'), loadKey: key })
       if (expanded) {
         rows.push(...children.rows)
         if (!query) rows.push(...statusRows(key, tasks, level + 1, key))
@@ -114,7 +121,7 @@ export function buildTreeRows(input: TreeInput): TreeRow[] {
     const self = !query || matches(client.name)
     if (query && !self && !children.hit) continue
     const expanded = query ? children.hit : input.isExpanded(key)
-    drafts.push({ kind: 'client', entity: client, key, level: 1, parentKey: null, label: client.name, expandable: true, expanded, count: countLabel(input.node(key)), loadKey: key })
+    drafts.push({ kind: 'client', entity: client, key, level: 1, parentKey: null, label: client.name, expandable: true, expanded, count: countLabel(input.node(key)), countLabel: countAria(input.node(key), 'project'), loadKey: key })
     if (expanded) {
       drafts.push(...children.rows)
       if (!query) drafts.push(...statusRows(key, input.node(key), 2, key))

@@ -53,6 +53,20 @@ watch([() => route.query.highlight, entries], async ([raw]) => {
   }, HIGHLIGHT_MS)
 })
 
+// After a save the list opens with `?highlight=<id>`. When that entry isn't on the page, say so
+// instead of showing nothing: it may sit on another page (sorted by start), and the demo API has
+// been seen dropping new entries a minute after creating them (docs/API_NOTES.md).
+const missingSavedId = computed(() => {
+  const raw = route.query.highlight
+  if (typeof raw !== 'string' || raw === '' || status.value !== 'ready' || !list.isCurrent.value) return null
+  const id = Number(raw)
+  return Number.isInteger(id) && !entries.value.some(e => e.id === id) ? id : null
+})
+
+function dismissMissingSaved() {
+  router.replace({ query: { ...route.query, highlight: undefined } })
+}
+
 function onKeydown(event: KeyboardEvent) {
   const target = event.target as HTMLElement | null
   if (event.metaKey || event.ctrlKey || event.altKey) return
@@ -121,6 +135,17 @@ onBeforeUnmount(() => {
         Clear
       </UButton>
     </div>
+
+    <UAlert
+      v-if="missingSavedId !== null"
+      icon="i-lucide-info"
+      color="info"
+      variant="subtle"
+      :title="`Entry #${missingSavedId} was saved, but it isn't on this page`"
+      description="The list is sorted by start time, so it may be on another page. If it never shows up, the server didn't keep it."
+      close
+      @update:open="dismissMissingSaved"
+    />
 
     <UAlert
       v-if="status === 'waiting'"

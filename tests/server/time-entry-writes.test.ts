@@ -109,7 +109,14 @@ describe('time entry writes', () => {
   it('maps an update 404 to a plain "no longer exists" message', async () => {
     setup([json(errors.entryNotFoundPut.status, errors.entryNotFoundPut.body)])
     const body = await apiError(updateTimeEntry(5, input))
-    expect(body).toMatchObject({ status: 404, code: 'NOT_FOUND', message: 'This entry no longer exists. It may have been deleted.' })
+    expect(body).toMatchObject({ status: 404, code: 'NOT_FOUND', message: 'This entry doesn\'t exist. It may have been deleted.' })
+  })
+
+  it('says the same thing for a missing entry on read and on update', async () => {
+    setup([json(404, { error: 'Time entry not found' }), json(404, { error: 'Time entry not found' })])
+    const onRead = await apiError(getTimeEntry(9))
+    const onUpdate = await apiError(updateTimeEntry(9, input))
+    expect(onRead.message).toBe(onUpdate.message)
   })
 
   it('maps "Unknown user" to a server misconfiguration, not a missing entry', async () => {
