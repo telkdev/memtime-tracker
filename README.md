@@ -114,13 +114,17 @@ the dependency graph: [app/features/README.md](app/features/README.md).
 
 ## What I'd do next
 
-1. Timer mode (start/stop) with a persisted running timer, which is what most people want.
-2. An offline queue for writes (IndexedDB), replayed under the rate limiter. This fits Electron.
-3. An Electron shell reusing the same Vue UI, with the BFF as the main process and the key in the
+1. Data fetching: in a larger app I would use TanStack Query (`@tanstack/vue-query`) for caching,
+   cancelling and retrying requests. For this scope I decided to go with a smaller substitute,
+   `useRequestGuard` in `app/common`, which drops stale answers and cancels old requests in the
+   catalog, the entries list and the form. Moving to TanStack later only touches the composables.
+2. Timer mode (start/stop) with a persisted running timer, which is what most people want.
+3. An offline queue for writes (IndexedDB), replayed under the rate limiter. This fits Electron.
+4. An Electron shell reusing the same Vue UI, with the BFF as the main process and the key in the
    OS keychain.
-4. A week view with drag-to-resize entries and gaps in the day highlighted.
-5. Server side: overlap validation, task search, `ETag`/`If-Match` on PUT for concurrent edits.
-6. A Playwright test of the full flow (expand → pick task → create → see it in the list) and a
+5. A week view with drag-to-resize entries and gaps in the day highlighted.
+6. Server side: overlap validation, task search, `ETag`/`If-Match` on PUT for concurrent edits.
+7. A Playwright test of the full flow (expand → pick task → create → see it in the list) and a
    browser accessibility pass (contrast, screen-reader output).
 
 ## AI-assisted workflow

@@ -2,7 +2,7 @@ import type { Client, Project, Task } from '#shared/schemas/catalog'
 
 import { fetchCatalogPage, refreshCatalog } from '../api/catalog'
 import type { NodeKey, CatalogNode, TaskContext } from '../model/types'
-import { parseApiError, retryAfterMs, useRateLimitState } from '~/common'
+import { parseApiError, retryAfterMs, useRateLimitState, useRequestGuard } from '~/common'
 
 function emptyNode<T>(): CatalogNode<T> {
   return { status: 'idle', items: [], hasMore: false, nextOffset: null }
@@ -18,9 +18,9 @@ const retryTimers = new Map<NodeKey, ReturnType<typeof setTimeout>>()
 export function useCatalog() {
   const nodes = useState<Partial<Record<NodeKey, CatalogNode>>>('catalog:nodes', () => ({}))
   const expanded = useState<string[]>('catalog:expanded', () => [])
-  // Bumped by refresh(). A load started under an older generation belongs to a catalog that no
-  // longer exists, so its result (and any retry it would schedule) is dropped.
-  const generation = useState<number>('catalog:generation', () => 0)
+  // refresh() invalidates it: a load started before belongs to a catalog that no longer exists, so
+  // it is cancelled and its result (and any retry it would schedule) is dropped.
+  const requests = useRequestGuard('catalog')
   const { refreshSnapshot } = useRateLimitState()
 
   function node<T>(key: NodeKey): CatalogNode<T> {
@@ -34,15 +34,15 @@ export function useCatalog() {
   async function load(key: NodeKey, { append = false } = {}) {
     const current = node(key)
     if (current.status === 'loading' || current.status === 'loadingMore') return
-    const gen = generation.value
     clearTimeout(retryTimers.get(key))
     retryTimers.delete(key)
 
     const offset = append ? current.nextOffset ?? 0 : 0
     patch(key, { status: append ? 'loadingMore' : 'loading', error: undefined, retryAt: undefined })
+    const ticket = requests.start()
     try {
-      const page = await fetchCatalogPage(key, offset)
-      if (gen !== generation.value) return
+      const page = await fetchCatalogPage(key, offset, ticket.signal)
+      if (!ticket.isCurrent()) return
       patch(key, {
         status: 'loaded',
         items: append ? [...current.items, ...page.items] : page.items,
@@ -51,7 +51,7 @@ export function useCatalog() {
       })
     }
     catch (err) {
-      if (gen !== generation.value) return
+      if (!ticket.isCurrent()) return
       const error = parseApiError(err)
       if (error.code === 'RATE_LIMITED') {
         const delay = retryAfterMs(error)
@@ -59,7 +59,7 @@ export function useCatalog() {
         if (import.meta.client) {
           retryTimers.set(key, setTimeout(() => {
             retryTimers.delete(key)
-            if (gen === generation.value) load(key, { append })
+            if (ticket.isCurrent()) load(key, { append })
           }, delay))
         }
       }
@@ -68,6 +68,7 @@ export function useCatalog() {
       }
     }
     finally {
+      ticket.done()
       if (import.meta.client) refreshSnapshot()
     }
   }
@@ -116,7 +117,7 @@ export function useCatalog() {
     await refreshCatalog()
     for (const timer of retryTimers.values()) clearTimeout(timer)
     retryTimers.clear()
-    generation.value++
+    requests.invalidate()
     nodes.value = {}
     expanded.value = []
     await load('root')
