@@ -48,6 +48,12 @@ passing step and only the tail of a failure, so use it instead of running the th
 separately. ESLint is deliberately not a per-edit hook: half-finished edits produce noisy errors
 that cost tokens. Run `npm run smoke` too when you touched a BFF route, the schemas or the config.
 
+## Frontend structure
+
+The app is split by feature. Before adding or moving anything under `app/`, follow the
+`feature-structure` skill (`.claude/skills/feature-structure/SKILL.md`); the full rules are in
+`app/features/README.md`.
+
 ## QA
 
 `.claude/agents/qa.md` is a read-only QA subagent: it runs `check --no-fix` and `smoke`, then
