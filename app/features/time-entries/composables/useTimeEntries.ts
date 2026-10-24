@@ -27,6 +27,9 @@ function pageKey(page: number, size: number) {
  */
 export function useTimeEntryCache() {
   const pages = useState<Record<string, LoadedPage>>('time-entries:pages', () => ({}))
+  // Bumped by invalidate(). A request that started under an older generation may hold data from
+  // before a save, so its answer must not go back into the cache (same rule as the catalog).
+  const generation = useState('time-entries:generation', () => 0)
 
   const loadedEntries = computed<readonly TimeEntry[]>(() => {
     const byId = new Map<number, TimeEntry>()
@@ -46,10 +49,11 @@ export function useTimeEntryCache() {
 
   /** Forget every loaded page; the list refetches the one on screen. */
   function invalidate() {
+    generation.value++
     pages.value = {}
   }
 
-  return { pages, loadedEntries, getCached, invalidate }
+  return { pages, generation, loadedEntries, getCached, invalidate }
 }
 
 /** The list page the user last looked at, so the form can send them back to it. */
@@ -71,7 +75,7 @@ export function useReturnToList() {
 export function useTimeEntries() {
   const route = useRoute()
   const router = useRouter()
-  const { pages, invalidate } = useTimeEntryCache()
+  const { pages, generation, invalidate } = useTimeEntryCache()
   const { refreshSnapshot } = useRateLimitState()
 
   const position = computed(() => readListPosition(route.query))
@@ -108,8 +112,14 @@ export function useTimeEntries() {
 
     status.value = 'loading'
     error.value = null
+    const gen = generation.value
     try {
       const raw = await fetchTimeEntries({ limit: size, offset: (page - 1) * size, refresh: force ? '1' : undefined })
+      if (gen !== generation.value) {
+        // A save cleared the cache meanwhile: this answer may predate it. Ask again if it's still wanted.
+        if (seq === requestSeq) await load(force)
+        return
+      }
       const data = entryPageSchema.parse(raw)
       const loaded: LoadedPage = { key, items: data.items, hasMore: data.hasMore, loadedAt: Date.now() }
       // A late answer is still good data for its own page, just not for the screen.
