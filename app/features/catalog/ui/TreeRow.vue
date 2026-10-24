@@ -78,7 +78,7 @@ const inactiveStatus = computed(() =>
       <span
         v-if="row.count"
         class="text-xs text-dimmed tabular-nums"
-        :aria-label="`${row.count} items`"
+        :aria-label="row.countLabel"
       >{{ row.count }}</span>
       <UButton
         v-if="row.kind === 'task' && mode === 'browse'"
