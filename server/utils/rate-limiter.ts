@@ -204,7 +204,8 @@ export function createRateLimiter(opts: RateLimiterOptions) {
   /**
    * Call with the upstream `ratelimit-remaining` header. Other clients of the same key (a second
    * tab of another app, curl) spend the same budget, so our own count can be too optimistic. We keep
-   * one request of headroom below what the upstream reports. At 0 we pause until its reset.
+   * one request of headroom below what the upstream reports, and our window ends when theirs does.
+   * At 0 we pause until its reset.
    */
   function sync(upstreamRemaining: number, resetMs?: number) {
     const t = now()
@@ -217,6 +218,12 @@ export function createRateLimiter(opts: RateLimiterOptions) {
       return
     }
     used = Math.min(opts.budget, Math.max(used, opts.budget - (upstreamRemaining - 1)))
+    // Follow the upstream's window. If ours reset first, we'd send a full budget into an upstream
+    // window that is almost spent, and only the 429 penalty would catch it.
+    if (resetMs !== undefined && resetMs > 0 && resetMs <= opts.windowMs) {
+      windowStart = t + resetMs - opts.windowMs
+      armTimer()
+    }
   }
 
   /** Call after a successful upstream response. */
