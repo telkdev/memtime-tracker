@@ -71,6 +71,28 @@ describe('EntriesPanel', () => {
     expect(listCalls.map(q => q.offset)).toEqual(['0', '25'])
   })
 
+  it('keeps the cached page on screen when an older request lands late', async () => {
+    let release: (v: unknown) => void = () => {}
+    listResponse = (event) => {
+      const offset = new URL(event.node.req.url ?? '', 'http://x').searchParams.get('offset')
+      if (offset !== '75') return { items: entries, hasMore: true, nextOffset: 25 }
+      return new Promise((resolve) => {
+        release = () => resolve({ items: [{ ...entries[0]!, id: 999, comment: 'Late page four' }], hasMore: false, nextOffset: null })
+      })
+    }
+    const wrapper = await mountAt('/')
+    await useRouter().push('/?page=4')
+    await vi.waitFor(() => expect(listCalls.at(-1)).toMatchObject({ offset: '75' }))
+    // Back to page 1 before page 2 answers: served from the fresh cache.
+    await useRouter().push('/?page=1')
+    await flushPromises()
+    release(undefined)
+    await flushPromises()
+    await new Promise(r => setTimeout(r, 20))
+    expect(wrapper.text()).not.toContain('Late page four')
+    expect(wrapper.text()).toContain(entries[0]!.comment)
+  })
+
   it('reloads the page on screen once when a write clears the cache', async () => {
     await mountAt('/')
     useTimeEntryCache().invalidate()

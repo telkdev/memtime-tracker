@@ -85,6 +85,17 @@ export function useCatalog() {
     }
   }
 
+  /**
+   * Manual retry from an error or waiting row. A node that already shows items failed on "Load
+   * more", so continue from there instead of reloading page 1. A node waiting out a rate limit
+   * already has a timed retry; asking early would only be refused again and spend budget.
+   */
+  function retry(key: NodeKey) {
+    const current = node(key)
+    if (current.status === 'waiting' && current.retryAt && Date.now() < current.retryAt) return
+    return load(key, { append: current.items.length > 0 })
+  }
+
   /** Loads a node if it has never loaded or last failed. Loaded nodes cost nothing. */
   function ensureLoaded(key: NodeKey) {
     const { status } = node(key)
@@ -145,7 +156,7 @@ export function useCatalog() {
     load,
     ensureLoaded,
     loadMore: (key: NodeKey) => load(key, { append: true }),
-    retry: (key: NodeKey) => load(key),
+    retry,
     isExpanded,
     expand,
     collapse,

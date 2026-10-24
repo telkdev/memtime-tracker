@@ -1,6 +1,6 @@
 import type { TimeEntry } from '#shared/schemas/timeEntry'
 import { timeEntryInputSchema, type TimeEntryInput } from '#shared/schemas/timeEntryInput'
-import { entryWarnings, type EntryWarning } from '~/utils/entry-form'
+import { ceilToMinute, entryWarnings, type EntryWarning } from '~/utils/entry-form'
 import { isConnectionError, toUiError, type UiError } from '~/utils/errors'
 import {
   formatDuration,
@@ -64,7 +64,15 @@ export function useEntryForm(opts: EntryFormOptions) {
     if (r.ok && r.ambiguous && sameInstant(r.instant, opts.entry.start)) startOccurrence.value = 'second'
   }
 
-  const start = computed(() => resolveLocal(date.value, startTime.value, startOccurrence.value))
+  const initialOccurrence = startOccurrence.value
+  const start = computed(() => {
+    const r = resolveLocal(date.value, startTime.value, startOccurrence.value)
+    // The form shows whole minutes. While the user leaves the start alone, keep the entry's exact
+    // instant (seconds included), so saving a comment change doesn't move its times.
+    const untouched = opts.entry && date.value === initialStart.date && startTime.value === initialStart.time
+      && startOccurrence.value === initialOccurrence
+    return r.ok && untouched ? { ...r, instant: new Date(opts.entry!.start) } : r
+  })
   const end = computed(() => start.value.ok && durationMs.value ? new Date(start.value.instant.getTime() + durationMs.value) : null)
   const endTime = computed(() => end.value ? toTimeString(end.value) : '')
   const endDayOffset = computed(() => start.value.ok && end.value ? localDaysBetween(start.value.instant, end.value) : 0)
@@ -131,8 +139,21 @@ export function useEntryForm(opts: EntryFormOptions) {
     durationInvalid.value = false
   }
 
+  /** Ends the entry now: duration = now − start, on whatever day the start is. */
   function setEndNow() {
-    setEndTime(toTimeString(now()))
+    endError.value = null
+    if (!start.value.ok) return
+    // Passing only the clock time would land on the start's day: "End now" on Monday's entry,
+    // pressed on Wednesday at 14:00, would end it on Monday at 14:00.
+    const endAt = new Date(Math.floor(now().getTime() / 60_000) * 60_000)
+    const ms = endAt.getTime() - start.value.instant.getTime()
+    if (ms <= 0) {
+      endError.value = 'The start is in the future, so the entry can\'t end now.'
+      return
+    }
+    durationMs.value = ms
+    durationText.value = formatDuration(ms)
+    durationInvalid.value = false
   }
 
   function fixStartGap() {
@@ -206,7 +227,8 @@ export function useEntryForm(opts: EntryFormOptions) {
         // A PUT may have been applied before the connection dropped; repeating it is harmless.
         : 'Couldn\'t reach the server, so your changes may not be saved. Saving again is safe.'
     }
-    if (e.code === 'VALIDATION' && Object.keys(e.fields).length) return null
+    // Field messages already explain it, unless none of them maps to a field the form shows.
+    if (Object.keys(serverFields.value).length) return null
     return e.summary
   })
 
@@ -290,7 +312,7 @@ export function useEntryForm(opts: EntryFormOptions) {
 
   /** "Save & log another": same task, next entry starts where this one ended. */
   function resetForNext(previous: TimeEntry) {
-    const next = fromUtcIso(previous.end)
+    const next = fromUtcIso(ceilToMinute(new Date(previous.end)).toISOString())
     anchorNow = false
     date.value = next.date
     startTime.value = next.time

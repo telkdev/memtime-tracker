@@ -2,7 +2,6 @@
 import type { TimeEntry } from '#shared/schemas/timeEntry'
 import { idSchema } from '#shared/schemas/common'
 import { defaultStart } from '~/utils/entry-form'
-import { roundDownToMinutes } from '~/utils/time'
 
 useHead({ title: 'Log time' })
 
@@ -13,13 +12,15 @@ const rawTask = route.query.taskId
 const queryTask = typeof rawTask === 'string' && rawTask !== '' ? idSchema.safeParse(rawTask).data : undefined
 
 const now = new Date()
-const start = defaultStart(sources.loadedEntries.value, now)
+const { start, from } = defaultStart(sources.loadedEntries.value, now)
 const form = useEntryForm({
   mode: 'create',
   taskId: queryTask ?? null,
   start,
   // Continuing after today's last entry: keep that start. Otherwise assume the work just ended.
-  anchor: start.getTime() === roundDownToMinutes(now, 15).getTime() ? 'now' : 'start',
+  // Asked of defaultStart, not guessed by comparing times: a last entry ending on a quarter hour
+  // looks exactly like "now, rounded".
+  anchor: from === 'now' ? 'now' : 'start',
   knownEntries: () => sources.loadedEntries.value,
 })
 sources.watchTaskName(() => form.taskId.value)

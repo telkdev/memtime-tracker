@@ -31,6 +31,41 @@ describe('useEntryForm', () => {
   beforeEach(() => fetchMock.mockReset())
   afterEach(() => vi.useRealTimers())
 
+  it('keeps an edited entry\'s exact seconds when only the comment changes', async () => {
+    const withSeconds = { ...saved, start: '2026-10-23T07:00:40.000Z', end: '2026-10-23T08:30:40.000Z' }
+    fetchMock.mockResolvedValueOnce({ entry: withSeconds })
+    const form = useEntryForm({ mode: 'edit', entry: withSeconds, now })
+    form.comment.value = 'Design review, round 2'
+    await form.submit()
+    expect(fetchMock.mock.calls[0]![1].body).toMatchObject({ start: withSeconds.start, end: withSeconds.end })
+  })
+
+  it('shows the server message when its field errors match no form field', async () => {
+    fetchMock.mockRejectedValueOnce(apiError(400, { code: 'VALIDATION', message: 'The entry was rejected.', fields: { userId: 'Unexpected field.' } }))
+    const form = filled()
+    await form.submit()
+    expect(form.summary.value).toBe('The entry was rejected.')
+  })
+
+  it('starts the next entry on the minute after a previous end with seconds', () => {
+    const form = filled()
+    form.resetForNext({ ...saved, end: '2026-10-23T08:30:35.000Z' })
+    expect(form.startTime.value).toBe(new Date('2026-10-23T08:31:00.000Z').toTimeString().slice(0, 5))
+  })
+
+  it('"End now" on an entry from two days ago ends it now, not on its own day', () => {
+    const form = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 21, 9, 0) })
+    form.setEndNow()
+    expect(form.end.value?.getTime()).toBe(NOW.getTime())
+  })
+
+  it('"End now" refuses a start in the future', () => {
+    const form = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 18, 0) })
+    form.setEndNow()
+    expect(form.end.value).toBeNull()
+    expect(form.isValid.value).toBe(false)
+  })
+
   it('sends UTC timestamps derived from local start and duration', async () => {
     fetchMock.mockResolvedValueOnce({ entry: saved })
     const form = filled()

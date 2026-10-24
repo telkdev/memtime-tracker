@@ -1,7 +1,9 @@
 import { taskSchema } from '#shared/schemas/catalog'
 
 export interface TaskLabel {
-  status: 'loading' | 'loaded' | 'missing'
+  status: 'loading' | 'loaded' | 'missing' | 'failed'
+  /** For `failed`: epoch ms after which a new lookup may be tried. */
+  retryAt?: number
   name?: string
   /** "Client › Project", only known for tasks loaded through the tree. */
   path?: string
@@ -12,6 +14,12 @@ export interface TaskLabel {
  * keeps them from using up the browser's connections, so paging never queues behind them.
  */
 const MAX_PARALLEL_LOOKUPS = 2
+
+/** After a temporary failure, wait this long before asking for the same task again. */
+const FAILED_LOOKUP_BACKOFF_MS = 30_000
+
+/** Answers that won't change by asking again (a shape we can't parse, a rejected id). */
+const PERMANENT_CODES = new Set(['UPSTREAM_INVALID', 'BAD_REQUEST', 'VALIDATION'])
 
 /**
  * Task names for the entries list. The tree's catalog is used first, at no cost. Unknown ids are
@@ -35,6 +43,13 @@ export function useTaskNames() {
 
   function label(id: number): TaskLabel | undefined {
     return fromCatalog(id) ?? labels.value[id]
+  }
+
+  /** Known, or failed recently enough that asking again would only spend budget. */
+  function settled(id: number) {
+    const known = label(id)
+    if (!known) return false
+    return known.status !== 'failed' || Date.now() < (known.retryAt ?? 0)
   }
 
   function forget(id: number) {
@@ -62,12 +77,15 @@ export function useTaskNames() {
       labels.value[id] = { status: 'loaded', name: task.name }
     }
     catch (err) {
-      if (parseApiError(err).code === 'NOT_FOUND') {
+      const code = parseApiError(err).code
+      if (code === 'NOT_FOUND') {
         labels.value[id] = { status: 'missing' }
       }
       else {
-        // Transient: forget it, so the next page view tries again. The row keeps showing the id.
-        forget(id)
+        // Keep a failed marker instead of forgetting: forgetting re-triggers whoever asked, and
+        // a failing lookup then repeats in a tight loop. The row keeps showing the id.
+        const retryAt = PERMANENT_CODES.has(code) ? Number.POSITIVE_INFINITY : Date.now() + FAILED_LOOKUP_BACKOFF_MS
+        labels.value[id] = { status: 'failed', retryAt }
       }
     }
   }
@@ -76,7 +94,7 @@ export function useTaskNames() {
   function resolve(ids: Iterable<number>) {
     if (import.meta.server) return
     for (const id of new Set(ids)) {
-      if (label(id)) continue
+      if (settled(id)) continue
       labels.value[id] = { status: 'loading' }
       queue.value.push(id)
     }

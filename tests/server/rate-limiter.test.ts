@@ -180,6 +180,34 @@ describe('rate limiter', () => {
     expect(calls).toHaveLength(1)
   })
 
+  it('rejects a queued call at its own deadline, not when a later pause ends', async () => {
+    const { limiter, call } = setup({ budget: 1 })
+    await limiter.schedule('interactive', call())
+    await vi.advanceTimersByTimeAsync(55_000)
+    // 5 s to the next window: within the 8 s cap, so it queues.
+    let settled: unknown = null
+    limiter.schedule('interactive', call()).then(() => (settled = 'ran'), (e: unknown) => (settled = e))
+    // Then an upstream 429 pauses everything for 45 s.
+    limiter.penalize(45_000)
+    await vi.advanceTimersByTimeAsync(8_001)
+    expect(settled).toBeInstanceOf(RateLimitedError)
+  })
+
+  it('runs a queued call whose deadline falls exactly when a slot frees', async () => {
+    const { limiter, calls, call } = setup({ budget: 1 })
+    await limiter.schedule('interactive', call())
+    const job = limiter.schedule('interactive', call(), { maxWaitMs: WINDOW })
+    await vi.advanceTimersByTimeAsync(WINDOW)
+    await expect(job).resolves.toBe(0)
+    expect(calls).toHaveLength(2)
+  })
+
+  it('never pauses for less than the backoff step, even if the header says 0', () => {
+    const { limiter } = setup()
+    limiter.penalize(0)
+    expect(limiter.snapshot().blockedForMs).toBe(2_000)
+  })
+
   it('reports a snapshot of the budget', async () => {
     const { limiter, call } = setup()
     await limiter.schedule('interactive', call())

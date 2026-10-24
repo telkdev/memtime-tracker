@@ -39,6 +39,7 @@ export function timeEntriesPage(limit: number, offset: number, refresh: boolean)
 
 /** Identical creates inside this window are treated as one (double click, second tab). */
 const CREATE_DEDUPE_MS = 5_000
+const CREATE_DEDUPE_PREFIX = 'time-entry-create:'
 
 const FIELD_HINTS: Array<[RegExp, keyof TimeEntryInput]> = [
   [/task/i, 'taskId'],
@@ -82,7 +83,7 @@ export function mapWriteError(err: unknown, op: 'create' | 'update'): unknown {
 }
 
 export async function createTimeEntry(input: TimeEntryInput): Promise<TimeEntry> {
-  const key = `time-entry-create:${createHash('sha256').update(JSON.stringify(input)).digest('hex')}`
+  const key = `${CREATE_DEDUPE_PREFIX}${createHash('sha256').update(JSON.stringify(input)).digest('hex')}`
   const entry = await useServerCache().cached(
     key,
     () => useMemtime().request({ method: 'POST', path: '/time-entries', body: input, schema: upstreamTimeEntrySchema }).then(toPublicTimeEntry),
@@ -102,6 +103,9 @@ export async function updateTimeEntry(id: number, input: TimeEntryInput): Promis
       throw mapWriteError(err, 'update')
     })
   useServerCache().invalidatePrefix(TIME_ENTRIES_CACHE_PREFIX)
+  // A remembered create may now describe an entry that was edited since. Creating the same body
+  // again after an edit is a new entry, not a double click.
+  useServerCache().invalidatePrefix(CREATE_DEDUPE_PREFIX)
   return entry
 }
 

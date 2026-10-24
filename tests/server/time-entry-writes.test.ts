@@ -79,6 +79,16 @@ describe('time entry writes', () => {
     expect([a.id, b.id, c.id]).toEqual([123, 123, 123])
   })
 
+  it('creates again after an edit, instead of returning the edited entry from the dedupe memo', async () => {
+    const edited = { ...upstreamEntry, comment: 'Edited' }
+    setup([json(201, upstreamEntry), json(200, edited), json(201, { ...upstreamEntry, id: 124 })])
+    await createTimeEntry(input)
+    await updateTimeEntry(123, { ...input, comment: 'Edited' })
+    const again = await createTimeEntry(input)
+    expect(again.id).toBe(124)
+    expect(state.fetch).toHaveBeenCalledTimes(3)
+  })
+
   it('does not retry a create after a network failure, because it might have been saved', async () => {
     setup([new Error('socket hang up'), json(201, upstreamEntry)])
     const body = await apiError(createTimeEntry(input))

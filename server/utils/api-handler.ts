@@ -1,4 +1,4 @@
-import type { H3Event } from 'h3'
+import { getRequestHeader, readRawBody, type H3Event } from 'h3'
 import type { z } from 'zod'
 import { ApiException, toApiError } from './errors'
 
@@ -26,10 +26,19 @@ export function parseQuery<S extends z.ZodType>(event: H3Event, schema: S): z.in
   return schema.parse(getQuery(event))
 }
 
-/** The JSON body, or a 400 in the BFF shape. h3's own parse error would surface as a 500. */
+/**
+ * The JSON body, or an error in the BFF shape. Only `application/json` is accepted: a form post or a
+ * `no-cors` fetch from another site can send a body without a CORS preflight, and h3 would happily
+ * parse it as JSON, so any web page could create entries through a running BFF.
+ */
 export async function readJsonBody(event: H3Event): Promise<unknown> {
+  const type = getRequestHeader(event, 'content-type') ?? ''
+  if (!/^application\/json\s*(;|$)/i.test(type)) {
+    throw new ApiException(415, 'BAD_REQUEST', 'Send the request body as application/json.')
+  }
+  const raw = await readRawBody(event, 'utf8')
   try {
-    return await readBody(event)
+    return JSON.parse(raw ?? '')
   }
   catch {
     throw new ApiException(400, 'BAD_REQUEST', 'The request body isn\'t valid JSON.')
