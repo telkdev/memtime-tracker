@@ -94,6 +94,8 @@ export function useTimeEntries() {
 
   async function load(force = false) {
     clearRetry()
+    // Every load, cached or not, makes older in-flight requests stale.
+    const seq = ++requestSeq
     const { page, size } = position.value
     const key = pageKey(page, size)
     const cached = pages.value[key]
@@ -105,7 +107,6 @@ export function useTimeEntries() {
       return
     }
 
-    const seq = ++requestSeq
     status.value = 'loading'
     error.value = null
     try {
@@ -115,9 +116,10 @@ export function useTimeEntries() {
         retry: 0,
       })
       const data = entryPageSchema.parse(raw)
-      if (seq !== requestSeq) return
       const loaded: LoadedPage = { key, items: data.items, hasMore: data.hasMore, loadedAt: Date.now() }
+      // A late answer is still good data for its own page, just not for the screen.
       pages.value = { ...pages.value, [key]: loaded }
+      if (seq !== requestSeq) return
       shown.value = loaded
       status.value = 'ready'
       refreshSnapshot()
