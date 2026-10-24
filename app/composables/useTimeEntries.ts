@@ -101,8 +101,6 @@ export function useTimeEntries() {
     const cached = pages.value[key]
     if (cached) shown.value = cached
     if (cached && !force && Date.now() - cached.loadedAt < CLIENT_FRESH_MS) {
-      // A request still in flight for another page must not replace this one when it answers.
-      requestSeq++
       status.value = 'ready'
       return
     }
