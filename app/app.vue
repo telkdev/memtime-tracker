@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import { AppHeader } from '~/common'
+</script>
+
 <template>
   <UApp>
     <NuxtRouteAnnouncer />

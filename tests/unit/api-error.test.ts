@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { parseApiError } from '../../app/utils/api-error'
+import { parseApiError } from '../../app/common/lib/api-error'
 
 describe('parseApiError', () => {
   it('passes a BFF error body through', () => {

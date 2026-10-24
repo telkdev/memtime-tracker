@@ -20,7 +20,7 @@ The upstream allows 15 requests per minute and the data is shared. Tests mock at
 
 ## What must be tested (priority order)
 
-1. `app/utils/time.ts`: local↔UTC round trip, duration parse/format (`1h 30m`, `1:30`, `90m`,
+1. `app/common/lib/time.ts`: local↔UTC round trip, duration parse/format (`1h 30m`, `1:30`, `90m`,
    `1.5h`, junk input), midnight crossing, and both DST transitions under a fixed `TZ`.
 2. `server/utils/rate-limiter.ts` with fake timers: never more than 15 calls in any 60 s window,
    write > interactive > background ordering, the background reserve, Retry-After handling

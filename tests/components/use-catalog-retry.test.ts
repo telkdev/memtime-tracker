@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { registerEndpoint } from '@nuxt/test-utils/runtime'
 import { setResponseStatus } from 'h3'
+import { useCatalog } from '../../app/features/catalog/composables/useCatalog'
 
 const client = (id: number) => ({ id, name: `Client ${id}`, description: '', status: 'active', createdAt: '', updatedAt: '' })
 
@@ -14,10 +15,34 @@ registerEndpoint('/api/clients', (event) => {
   return body
 })
 
+const project = (id: number) => ({ id, clientId: 1, name: `Project ${id}`, description: '', status: 'active', createdAt: '', updatedAt: '' })
+
+// Held open until the test resolves it, to finish a load after a refresh.
+let releaseProjects: (() => void) | undefined
+registerEndpoint('/api/clients/1/projects', () => new Promise((resolve) => {
+  releaseProjects = () => resolve({ items: [project(10)], hasMore: false, nextOffset: null })
+}))
+
+let refreshFails = false
+registerEndpoint('/api/catalog/refresh', {
+  method: 'POST',
+  handler: (event) => {
+    if (!refreshFails) return { ok: true }
+    setResponseStatus(event, 503)
+    return { error: { status: 503, code: 'UPSTREAM_UNAVAILABLE', message: 'Try again.' } }
+  },
+})
+
 describe('useCatalog retry', () => {
   beforeEach(() => {
     calls.length = 0
     useState('catalog:nodes').value = {}
+    useState('catalog:expanded').value = []
+    refreshFails = false
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('retries a failed "Load more" from where it stopped, keeping the loaded page', async () => {
@@ -44,5 +69,37 @@ describe('useCatalog retry', () => {
     expect(catalog.node('root').status).toBe('waiting')
     await catalog.retry('root')
     expect(calls).toEqual(['0'])
+  })
+
+  it('drops a load that was in flight when the catalog was refreshed', async () => {
+    answer = () => ({ status: 200, body: { items: [client(1)], hasMore: false, nextOffset: null } })
+    const catalog = useCatalog()
+    await catalog.load('root')
+    const stale = catalog.load('client:1')
+    await vi.waitFor(() => expect(releaseProjects).toBeDefined())
+
+    await catalog.refresh()
+    releaseProjects!()
+    await stale
+
+    expect(catalog.node('client:1').items).toEqual([])
+    expect(catalog.node('client:1').status).toBe('idle')
+  })
+
+  it('keeps the rate-limit retry of a waiting node when the refresh request fails', async () => {
+    // shouldAdvanceTime keeps $fetch working; advanceTimersByTime then skips the retry delay.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    answer = () => ({ status: 429, body: { error: { status: 429, code: 'RATE_LIMITED', message: 'Too many requests.', retryAfter: 30 } } })
+    const catalog = useCatalog()
+    await catalog.load('root')
+    expect(catalog.node('root').status).toBe('waiting')
+
+    refreshFails = true
+    await expect(catalog.refresh()).rejects.toThrow()
+    answer = () => ({ status: 200, body: { items: [client(1)], hasMore: false, nextOffset: null } })
+    await vi.advanceTimersByTimeAsync(30_000)
+
+    await vi.waitFor(() => expect(catalog.node('root').status).toBe('loaded'))
+    expect(calls).toEqual(['0', '0'])
   })
 })

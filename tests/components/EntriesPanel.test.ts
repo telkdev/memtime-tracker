@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { setResponseStatus } from 'h3'
-import EntriesPanel from '../../app/components/entries/EntriesPanel.vue'
+import EntriesPanel from '../../app/features/time-entries/ui/EntriesPanel.vue'
 import fixture from '../fixtures/time-entries.json'
+import { useLastListPosition, useTimeEntryCache } from '../../app/features/time-entries/composables/useTimeEntries'
 
 // The BFF strips userId; the browser-side fixture mirrors that.
 const entries = fixture.map(({ userId: _userId, ...rest }) => rest)
@@ -99,6 +100,22 @@ describe('EntriesPanel', () => {
     await vi.waitFor(() => expect(listCalls).toHaveLength(2))
     await flushPromises()
     expect(listCalls.map(q => q.offset)).toEqual(['0', '0'])
+  })
+
+  it('does not put a list answer that started before a save back into the cache', async () => {
+    let answer!: (value: unknown) => void
+    listResponse = () => new Promise((resolve) => {
+      answer = resolve
+    })
+    await mount('/')
+    await vi.waitFor(() => expect(listCalls).toHaveLength(1))
+    const stale = { ...entries[0]!, comment: 'before the save' }
+    useTimeEntryCache().invalidate() // a save finished while the list request was in flight
+    listResponse = () => ({ items: entries, hasMore: true, nextOffset: 25 })
+    answer({ items: [stale], hasMore: false, nextOffset: null })
+    await vi.waitFor(() => expect(listCalls).toHaveLength(2))
+    await flushPromises()
+    expect(useTimeEntryCache().getCached(stale.id)?.comment).toBe(entries[0]!.comment)
   })
 
   it('shows an already-seen page again without asking the server (within the cache TTL)', async () => {

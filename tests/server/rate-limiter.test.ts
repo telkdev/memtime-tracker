@@ -38,6 +38,21 @@ describe('rate limiter', () => {
     }
   })
 
+  it('waits for the upstream reset when the upstream window ends later than ours', async () => {
+    const { limiter, calls, call } = setup()
+    await vi.advanceTimersByTimeAsync(50_000)
+    // Upstream: 1 left, resets in 40 s (at 90 s). Our own window would reset at 60 s.
+    limiter.sync(1, 40_000)
+    const jobs = Array.from({ length: 5 }, () => limiter.schedule('interactive', call(), { maxWaitMs: Infinity }))
+
+    await vi.advanceTimersByTimeAsync(15_000) // 65 s: past our old reset, before the upstream's
+    expect(calls).toHaveLength(0)
+
+    await vi.advanceTimersByTimeAsync(30_000) // 95 s
+    await Promise.all(jobs)
+    expect(calls).toHaveLength(5)
+  })
+
   it('runs interactive work before queued background work', async () => {
     const { limiter, call } = setup({ budget: 4, backgroundReserve: 0 })
     const order: string[] = []

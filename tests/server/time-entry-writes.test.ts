@@ -131,6 +131,16 @@ describe('time entry writes', () => {
     expect(body.fields).toEqual({ comment: 'Missing required field: comment' })
   })
 
+  it.each([
+    ['End must be after start', 'end'],
+    ['Entry is pending review', undefined],
+    ['The extended comment is too long', 'comment'],
+  ])('puts the upstream 400 "%s" under the field it names first, matching whole words', async (message, field) => {
+    setup([json(400, { error: message })])
+    const body = await apiError(createTimeEntry(input))
+    expect(body.fields).toEqual(field ? { [field]: message } : undefined)
+  })
+
   it('accepts id 0 and task 0, which exist upstream', async () => {
     setup([json(200, { ...upstreamEntry, id: 0, taskId: 0 })])
     const entry = await updateTimeEntry(0, { ...input, taskId: timeEntryInputSchema.parse({ ...input, taskId: 0 }).taskId })

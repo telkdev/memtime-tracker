@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TimeEntry } from '../../shared/schemas/timeEntry'
-import { groupEntriesByDay, listPositionQuery, needsQueryFix, readListPosition } from '../../app/utils/entries'
+import { groupEntriesByDay, listPositionQuery, needsQueryFix, readListPosition } from '../../app/features/time-entries/lib/entries'
 
 function entry(id: number, start: string, end: string): TimeEntry {
   return { id, taskId: 1, comment: 'x', start, end, createdAt: end, updatedAt: end }

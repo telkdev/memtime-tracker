@@ -3,8 +3,8 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { setResponseStatus } from 'h3'
 import { defineComponent, h } from 'vue'
 import { UApp } from '#components'
-import EntryForm from '../../app/components/entries/EntryForm.vue'
-import { useEntryForm } from '../../app/composables/useEntryForm'
+import EntryForm from '../../app/features/entry-form/ui/EntryForm.vue'
+import { useEntryForm } from '../../app/features/entry-form/composables/useEntryForm'
 
 const groups = { recent: [{ id: 7, label: 'Design review', path: 'Acme › Website' }], catalog: [] }
 

@@ -1,8 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxt/eslint', '@nuxt/test-utils/module'],
-  // Components are named by file name only (ClientTree, not TreeClientTree).
-  components: [{ path: '~/components', pathPrefix: false }],
+  // Our own code is imported explicitly, through each feature's index.ts (app/features/README.md).
+  // Auto-importing it would let any file reach a feature's internals and make the index pointless.
+  // Vue, Nuxt and Nuxt UI (UButton, ...) are still auto-imported.
+  components: [],
+  imports: { scan: false },
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
   // System font stack: no third-party font requests (privacy, offline, desktop app).

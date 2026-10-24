@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import type { TimeEntry } from '../../shared/schemas/timeEntry'
-import { useEntryForm } from '../../app/composables/useEntryForm'
+import { useEntryForm } from '../../app/features/entry-form/composables/useEntryForm'
+import { formatDuration } from '../../app/common/lib/time'
 
 const { fetchMock } = vi.hoisted(() => ({ fetchMock: vi.fn() }))
 mockNuxtImport('$fetch', () => fetchMock)
@@ -194,6 +195,57 @@ describe('useEntryForm', () => {
     form.setDurationText('soon')
     await form.submit()
     expect(form.errors.value.duration).toMatch(/1h 30m/)
+  })
+
+  it.each(['0', '0m', '0:00'])('explains a zero duration "%s" under Duration, not as an ISO error under End', async (text) => {
+    const form = filled()
+    form.setDurationText(text)
+    await form.submit()
+    expect(form.errors.value.duration).toBe('Enter a duration longer than 0 minutes.')
+    expect(form.errors.value.end).toBeUndefined()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('shows "0m" again when an entry of zero length is opened', () => {
+    const form = useEntryForm({ mode: 'edit', entry: { ...saved, end: saved.start }, now })
+    expect(form.durationText.value).toBe(formatDuration(0))
+  })
+
+  it('marks the form unsaved when only the DST "first / second" choice changes', () => {
+    const form = filled()
+    form.setDate('2026-10-25')
+    form.setStartTime('02:30')
+    form.resetForNext({ ...saved, end: '2026-10-25T00:30:00.000Z' }) // 02:30 first pass, saved
+    expect(form.isDirty.value).toBe(false)
+    form.startOccurrence.value = 'second'
+    expect(form.isDirty.value).toBe(true)
+  })
+
+  it('tracks every editable field for "leave without saving?"', () => {
+    const changes: Record<string, (f: ReturnType<typeof useEntryForm>) => void> = {
+      taskId: f => (f.taskId.value = 8),
+      date: f => f.setDate('2026-10-22'),
+      startTime: f => f.setStartTime('10:00'),
+      startOccurrence: (f) => {
+        f.setDate('2026-10-25')
+        f.setStartTime('02:30')
+        f.resetForNext({ ...saved, end: '2026-10-25T00:30:00.000Z' })
+        f.startOccurrence.value = 'second'
+      },
+      duration: f => f.setDurationText('2h'),
+      comment: f => (f.comment.value = 'Other'),
+    }
+    expect(Object.keys(changes).sort()).toEqual(Object.keys(filled().fields).sort())
+    for (const [name, change] of Object.entries(changes)) {
+      const form = filled()
+      form.resetForNext({ ...saved, end: '2026-10-23T07:00:00.000Z' })
+      form.setDurationText('1h')
+      form.comment.value = 'x'
+      form.fields.taskId.value = 7
+      form.markSaved()
+      change(form)
+      expect(form.isDirty.value, name).toBe(true)
+    }
   })
 
   it('sends exactly one request when save is clicked twice', async () => {

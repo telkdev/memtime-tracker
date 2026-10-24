@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ClientTree } from '~/features/catalog'
+import { EntriesPanel } from '~/features/time-entries'
 import type { Task } from '#shared/schemas/catalog'
 
 useHead({ title: 'Time Tracker' })

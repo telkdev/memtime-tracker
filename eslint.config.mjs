@@ -21,13 +21,45 @@ export default withNuxt(
     },
   },
   {
-    // Components render and emit; data fetching lives in composables (.claude/rules/vue-conventions.md).
-    files: ['app/components/**', 'app/pages/**'],
+    // Requests live in api/ folders only, so every one passes `retry: 0` and is easy to find and mock.
+    files: ['app/**'],
+    ignores: ['app/**/api/**'],
     rules: {
       'no-restricted-syntax': ['error', keyAccess, upstreamUrl, {
         selector: 'CallExpression[callee.name=\'$fetch\']',
-        message: 'Components and pages don\'t call $fetch. Put the request in a composable.',
+        message: 'Only files in an api/ folder call $fetch. Add a function there and call it.',
       }],
+    },
+  },
+  {
+    // Feature boundaries (app/features/README.md): another feature is used only through its index.ts.
+    files: ['app/**'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [
+        { regex: '^[~@]/features/[^/]+/.', message: 'Import a feature through its index: \'~/features/<name>\'.' },
+        { regex: '^[~@]/common/.', message: 'Import common code through its index: \'~/common\'.' },
+      ] }],
+    },
+  },
+  {
+    // Inside a feature, a path that climbs out of it (../../) reaches into another feature or common.
+    files: ['app/features/**', 'app/common/**'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [
+        { regex: '^[~@]/features/[^/]+/.', message: 'Import a feature through its index: \'~/features/<name>\'.' },
+        { regex: '^[~@]/common/.', message: 'Import common code through its index: \'~/common\'.' },
+        { regex: '^(\\.\\./){2,}(?!\\.\\./)', message: 'Don\'t reach out of this folder with ../../. Use \'~/features/<name>\' or \'~/common\'.' },
+      ] }],
+    },
+  },
+  {
+    // common/ is the bottom layer: if it imported a feature, features could import each other in a circle.
+    files: ['app/common/**'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [
+        { regex: '^[~@]/features', message: 'common/ never imports a feature.' },
+        { regex: '^(\\.\\./){2,}(?!\\.\\./)', message: 'Don\'t reach out of common/ with ../../.' },
+      ] }],
     },
   },
   {

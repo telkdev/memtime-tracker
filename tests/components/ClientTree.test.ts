@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { flushPromises } from '@vue/test-utils'
-import ClientTree from '../../app/components/tree/ClientTree.vue'
+import ClientTree from '../../app/features/catalog/ui/ClientTree.vue'
 
 const at = { status: 'active', createdAt: '', updatedAt: '' }
 const page = <T>(items: T[]) => ({ items, hasMore: false, nextOffset: null })

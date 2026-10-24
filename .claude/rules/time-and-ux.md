@@ -9,7 +9,7 @@ paths:
 ## Time zones
 
 - The user thinks in **local time**. The API speaks **UTC ISO 8601**. Convert only in
-  `app/utils/time.ts`.
+  `app/common/lib/time.ts`.
 - Send `new Date(...).toISOString()` (always ends in `Z`, with milliseconds). Never send a string
   without an offset.
 - Display dates with `Intl.DateTimeFormat` in the browser's zone. Show the zone name once, in the

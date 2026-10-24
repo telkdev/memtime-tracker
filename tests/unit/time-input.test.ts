@@ -6,7 +6,7 @@ import {
   resolveEndTime,
   resolveLocal,
   roundDownToMinutes,
-} from '../../app/utils/time'
+} from '../../app/common/lib/time'
 
 // vitest.config.ts pins TZ=Europe/Berlin: CET (UTC+1) in winter, CEST (UTC+2) in summer.
 

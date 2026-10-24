@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import type { Task } from '../../shared/schemas/catalog'
-import { nestTasks } from '../../app/utils/catalog'
+import { nestTasks } from '../../app/features/catalog/lib/catalog'
 
 const task = (id: number, parent = 0): Task => ({ id, parent, name: `T${id}`, status: 'active', createdAt: '', updatedAt: '' })
 const shape = (nodes: ReturnType<typeof nestTasks>): unknown => nodes.map(n => [n.task.id, shape(n.children)])

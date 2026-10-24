@@ -11,7 +11,7 @@ export const TIME_ENTRIES_CACHE_PREFIX = 'time-entries:'
 /** Short: entries change whenever the user logs time, possibly from another device. */
 export const TIME_ENTRIES_TTL_MS = 15_000
 
-/** Parses with the upstream schema, then re-parses with the public one so `userId` is dropped. */
+/** Parses with the public schema, which has no `userId`, so the key the upstream echoes is dropped. */
 export function toPublicTimeEntry(raw: unknown): TimeEntry {
   return timeEntrySchema.parse(raw)
 }
@@ -41,12 +41,23 @@ export function timeEntriesPage(limit: number, offset: number, refresh: boolean)
 const CREATE_DEDUPE_MS = 5_000
 const CREATE_DEDUPE_PREFIX = 'time-entry-create:'
 
+// Whole words only: /end/ alone matched "pending" and "extended".
 const FIELD_HINTS: Array<[RegExp, keyof TimeEntryInput]> = [
-  [/task/i, 'taskId'],
-  [/comment/i, 'comment'],
-  [/start/i, 'start'],
-  [/end/i, 'end'],
+  [/\btask(?:id)?\b/i, 'taskId'],
+  [/\bcomment\b/i, 'comment'],
+  [/\bstart\b/i, 'start'],
+  [/\bend\b/i, 'end'],
 ]
+
+/** The field the message names first: "End must be after start" is about End, not Start. */
+function fieldNamedIn(message: string): keyof TimeEntryInput | undefined {
+  let best: { at: number, field: keyof TimeEntryInput } | undefined
+  for (const [re, field] of FIELD_HINTS) {
+    const at = message.search(re)
+    if (at >= 0 && (!best || at < best.at)) best = { at, field }
+  }
+  return best?.field
+}
 
 /**
  * Upstream errors are a single string. Turn the ones a user can act on into field errors or
@@ -75,7 +86,7 @@ export function mapWriteError(err: unknown, op: 'create' | 'update'): unknown {
     if (/invalid (json|request) body/i.test(message)) {
       return new ApiException(400, 'BAD_REQUEST', 'The server rejected this entry. Nothing was saved.')
     }
-    const field = FIELD_HINTS.find(([re]) => re.test(message))?.[1]
+    const field = fieldNamedIn(message)
     const text = `The server rejected this entry: ${message}`
     return new ApiException(400, 'BAD_REQUEST', text, field ? { fields: { [field]: message } } : {})
   }

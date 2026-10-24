@@ -2,7 +2,8 @@
 paths:
   - "server/**"
   - "shared/**"
-  - "app/composables/**"
+  - "app/**/api/**"
+  - "app/**/composables/**"
   - "scripts/**"
 ---
 
