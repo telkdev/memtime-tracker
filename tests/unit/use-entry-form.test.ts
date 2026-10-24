@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import type { TimeEntry } from '../../shared/schemas/timeEntry'
-import { useEntryForm } from '../../app/composables/useEntryForm'
-import { formatDuration } from '../../app/utils/time'
+import { useEntryForm } from '../../app/features/entry-form/composables/useEntryForm'
+import { formatDuration } from '../../app/common/lib/time'
 
 const { fetchMock } = vi.hoisted(() => ({ fetchMock: vi.fn() }))
 mockNuxtImport('$fetch', () => fetchMock)

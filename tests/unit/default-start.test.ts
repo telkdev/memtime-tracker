@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TimeEntry } from '../../shared/schemas/timeEntry'
-import { defaultStart, findOverlaps } from '../../app/utils/entry-form'
+import { defaultStart, findOverlaps } from '../../app/features/entry-form/model/rules'
 
 const entry = (end: string): TimeEntry => ({
   id: 1, taskId: 7, comment: 'x', start: '2026-10-23T07:00:00.000Z', end,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
-import RetryCountdown from '../../app/components/common/RetryCountdown.vue'
+import RetryCountdown from '../../app/common/ui/RetryCountdown.vue'
 
 describe('RetryCountdown', () => {
   it('shows the whole seconds left and hides itself at zero', async () => {

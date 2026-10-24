@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { entryEditPath, entryEndDays, entryRowClass, endsLaterLabel, listReturnQuery } from '../../app/utils/entries'
+import { entryEditPath, entryEndDays, entryRowClass, endsLaterLabel, listReturnQuery } from '../../app/features/time-entries/lib/entries'
 
 const entry = { id: 0, taskId: 7, comment: '', start: '2026-10-22T21:00:00.000Z', end: '2026-10-22T23:30:00.000Z', createdAt: '', updatedAt: '' }
 

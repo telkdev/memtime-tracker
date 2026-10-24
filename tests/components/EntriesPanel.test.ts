@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { setResponseStatus } from 'h3'
-import EntriesPanel from '../../app/components/entries/EntriesPanel.vue'
+import EntriesPanel from '../../app/features/time-entries/ui/EntriesPanel.vue'
 import fixture from '../fixtures/time-entries.json'
+import { useLastListPosition, useTimeEntryCache } from '../../app/features/time-entries/composables/useTimeEntries'
 
 // The BFF strips userId; the browser-side fixture mirrors that.
 const entries = fixture.map(({ userId: _userId, ...rest }) => rest)

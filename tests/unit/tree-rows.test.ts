@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import type { CatalogNode, NodeKey } from '../../app/composables/useCatalog'
-import { buildTreeRows } from '../../app/utils/tree-rows'
+import type { CatalogNode, NodeKey } from '../../app/features/catalog/composables/useCatalog'
+import { buildTreeRows } from '../../app/features/catalog/lib/tree-rows'
 
 const at = { status: 'active', createdAt: '', updatedAt: '' }
 const loaded = <T>(items: T[], hasMore = false): CatalogNode<T> => ({ status: 'loaded', items, hasMore, nextOffset: hasMore ? items.length : null })

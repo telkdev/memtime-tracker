@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { useDirtyGuard } from '../../app/composables/useDirtyGuard'
-import { useDurationInput } from '../../app/composables/useDurationInput'
-import { mergeFieldErrors } from '../../app/utils/entry-form'
+import { useDirtyGuard } from '../../app/common/composables/useDirtyGuard'
+import { useDurationInput } from '../../app/features/entry-form/composables/useDurationInput'
+import { mergeFieldErrors } from '../../app/features/entry-form/model/rules'
 
 describe('useDurationInput', () => {
   it('treats 0 as a value with its own message, not as empty', () => {

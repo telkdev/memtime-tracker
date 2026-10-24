@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { setResponseStatus } from 'h3'
 import { defineComponent, h, ref } from 'vue'
+import { useEntrySources } from '../../app/features/entry-form/composables/useEntrySources'
 
 const lookups: string[] = []
 registerEndpoint('/api/tasks/42', () => {

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { registerEndpoint } from '@nuxt/test-utils/runtime'
 import { setResponseStatus } from 'h3'
+import { useCatalog } from '../../app/features/catalog/composables/useCatalog'
 
 const client = (id: number) => ({ id, name: `Client ${id}`, description: '', status: 'active', createdAt: '', updatedAt: '' })
 
