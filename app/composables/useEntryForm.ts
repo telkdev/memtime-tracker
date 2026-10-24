@@ -139,8 +139,21 @@ export function useEntryForm(opts: EntryFormOptions) {
     durationInvalid.value = false
   }
 
+  /** Ends the entry now: duration = now − start, on whatever day the start is. */
   function setEndNow() {
-    setEndTime(toTimeString(now()))
+    endError.value = null
+    if (!start.value.ok) return
+    // Passing only the clock time would land on the start's day: "End now" on Monday's entry,
+    // pressed on Wednesday at 14:00, would end it on Monday at 14:00.
+    const endAt = new Date(Math.floor(now().getTime() / 60_000) * 60_000)
+    const ms = endAt.getTime() - start.value.instant.getTime()
+    if (ms <= 0) {
+      endError.value = 'The start is in the future, so the entry can\'t end now.'
+      return
+    }
+    durationMs.value = ms
+    durationText.value = formatDuration(ms)
+    durationInvalid.value = false
   }
 
   function fixStartGap() {

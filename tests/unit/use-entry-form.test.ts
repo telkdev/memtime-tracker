@@ -53,6 +53,19 @@ describe('useEntryForm', () => {
     expect(form.startTime.value).toBe(new Date('2026-10-23T08:31:00.000Z').toTimeString().slice(0, 5))
   })
 
+  it('"End now" on an entry from two days ago ends it now, not on its own day', () => {
+    const form = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 21, 9, 0) })
+    form.setEndNow()
+    expect(form.end.value?.getTime()).toBe(NOW.getTime())
+  })
+
+  it('"End now" refuses a start in the future', () => {
+    const form = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 18, 0) })
+    form.setEndNow()
+    expect(form.end.value).toBeNull()
+    expect(form.isValid.value).toBe(false)
+  })
+
   it('sends UTC timestamps derived from local start and duration', async () => {
     fetchMock.mockResolvedValueOnce({ entry: saved })
     const form = filled()

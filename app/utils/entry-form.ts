@@ -7,14 +7,16 @@ const FIVE_MIN_MS = 5 * 60_000
 export const LONG_ENTRY_MS = 12 * 60 * 60_000
 
 /** End of the latest entry that ended earlier today, else now rounded down to 15 minutes. */
-export function defaultStart(entries: readonly TimeEntry[], now: Date): Date {
+export function defaultStart(entries: readonly TimeEntry[], now: Date): { start: Date, from: 'previous' | 'now' } {
   const startOfDay = startOfLocalDay(now).getTime()
   let latest: number | undefined
   for (const e of entries) {
     const end = Date.parse(e.end)
     if (end >= startOfDay && end <= now.getTime() && (latest === undefined || end > latest)) latest = end
   }
-  return latest === undefined ? roundDownToMinutes(now, 15) : ceilToMinute(new Date(latest))
+  return latest === undefined
+    ? { start: roundDownToMinutes(now, 15), from: 'now' }
+    : { start: ceilToMinute(new Date(latest)), from: 'previous' }
 }
 
 /**
