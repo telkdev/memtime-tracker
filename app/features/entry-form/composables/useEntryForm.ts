@@ -84,6 +84,8 @@ export function useEntryForm(opts: EntryFormOptions) {
     return e.summary
   })
 
+  // Saves are never cancelled (no useRequestGuard here): once sent, the server may already have
+  // applied them, so the answer always counts.
   function send(): Promise<TimeEntry> {
     const body = timeEntryInputSchema.parse(payload.value)
     const req = mode.value === 'create' || entryId.value === undefined

@@ -43,6 +43,9 @@ derive them in `model/types.ts`; never redeclare `TimeEntry`, `Task` and so on.
 
 `$fetch` only in an `api/` file, one thin function per BFF route, always with `retry: 0`.
 Composables call those functions. Tests mock `$fetch` with `mockNuxtImport`, which still works.
+A read whose answer can go stale (a refresh, a new page, a save elsewhere) takes a ticket from
+`useRequestGuard(key)` in `~/common` and passes `ticket.signal` to the api function. Writes don't:
+a sent save may already be applied.
 
 ## Adding a feature
 

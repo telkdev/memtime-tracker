@@ -2,8 +2,8 @@ import type { TimeEntry } from '#shared/schemas/timeEntry'
 import type { TimeEntryInput } from '#shared/schemas/timeEntryInput'
 
 /** One page of the user's entries. Unparsed; the caller validates it. */
-export function fetchTimeEntries(query: { limit: number, offset: number, refresh?: '1' }): Promise<unknown> {
-  return $fetch('/api/time-entries', { query, retry: 0 })
+export function fetchTimeEntries(query: { limit: number, offset: number, refresh?: '1' }, signal?: AbortSignal): Promise<unknown> {
+  return $fetch('/api/time-entries', { query, retry: 0, signal })
 }
 
 export function fetchTimeEntry(id: number) {

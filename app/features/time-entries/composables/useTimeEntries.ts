@@ -3,7 +3,7 @@ import { DEFAULT_TIME_ENTRY_PAGE_SIZE, timeEntrySchema, type TimeEntry } from '#
 import { listPositionQuery, listReturnQuery, needsQueryFix, readListPosition } from '../lib/entries'
 import type { ListPosition, EntriesStatus } from '../model/types'
 import { fetchTimeEntries } from '../api/time-entries'
-import { parseApiError, retryAfterMs, useRateLimitState } from '~/common'
+import { parseApiError, retryAfterMs, useRateLimitState, useRequestGuard } from '~/common'
 
 /** Matches the BFF cache: within this window a page is shown from memory without asking again. */
 const CLIENT_FRESH_MS = 15_000
@@ -27,9 +27,9 @@ function pageKey(page: number, size: number) {
  */
 export function useTimeEntryCache() {
   const pages = useState<Record<string, LoadedPage>>('time-entries:pages', () => ({}))
-  // Bumped by invalidate(). A request that started under an older generation may hold data from
-  // before a save, so its answer must not go back into the cache (same rule as the catalog).
-  const generation = useState('time-entries:generation', () => 0)
+  // invalidate() cancels requests that started before it: their answers may hold data from
+  // before a save, so they must not go back into the cache (same guard as the catalog).
+  const requests = useRequestGuard('time-entries:cache')
 
   const loadedEntries = computed<readonly TimeEntry[]>(() => {
     const byId = new Map<number, TimeEntry>()
@@ -56,11 +56,11 @@ export function useTimeEntryCache() {
   async function ensureNewest() {
     if (Object.keys(pages.value).length || newestLoading.value) return
     newestLoading.value = true
-    const gen = generation.value
+    const ticket = requests.start()
     const { size } = useLastListPosition().value
     try {
-      const data = entryPageSchema.parse(await fetchTimeEntries({ limit: size, offset: 0 }))
-      if (gen !== generation.value) return
+      const data = entryPageSchema.parse(await fetchTimeEntries({ limit: size, offset: 0 }, ticket.signal))
+      if (!ticket.isCurrent()) return
       const key = pageKey(1, size)
       pages.value = { ...pages.value, [key]: { key, items: data.items, hasMore: data.hasMore, loadedAt: Date.now() } }
     }
@@ -68,17 +68,18 @@ export function useTimeEntryCache() {
       // Recent tasks are a convenience; the form works without them.
     }
     finally {
+      ticket.done()
       newestLoading.value = false
     }
   }
 
   /** Forget every loaded page; the list refetches the one on screen. */
   function invalidate() {
-    generation.value++
+    requests.invalidate()
     pages.value = {}
   }
 
-  return { pages, generation, loadedEntries, getCached, ensureNewest, invalidate }
+  return { pages, requests, loadedEntries, getCached, ensureNewest, invalidate }
 }
 
 /** The list page the user last looked at, so the form can send them back to it. */
@@ -100,7 +101,9 @@ export function useReturnToList() {
 export function useTimeEntries() {
   const route = useRoute()
   const router = useRouter()
-  const { pages, generation, invalidate } = useTimeEntryCache()
+  const { pages, requests: cacheRequests, invalidate } = useTimeEntryCache()
+  // One list on screen: a new page load replaces the one before it.
+  const listRequests = useRequestGuard('time-entries:list')
   const { refreshSnapshot } = useRateLimitState()
 
   const position = computed(() => readListPosition(route.query))
@@ -113,7 +116,6 @@ export function useTimeEntries() {
   const error = ref<ApiErrorBody | null>(null)
   const retryAt = ref<number | null>(null)
 
-  let requestSeq = 0
   let retryTimer: ReturnType<typeof setTimeout> | undefined
 
   function clearRetry() {
@@ -124,38 +126,33 @@ export function useTimeEntries() {
 
   async function load(force = false) {
     clearRetry()
-    // Every load, cached or not, makes older in-flight requests stale.
-    const seq = ++requestSeq
+    // Every load, cached or not, cancels the one before it. A save elsewhere (cache invalidate)
+    // cancels it too; the watcher below then loads the page again.
+    const ticket = listRequests.startLatest({ also: [cacheRequests] })
     const { page, size } = position.value
     const key = pageKey(page, size)
     const cached = pages.value[key]
     if (cached) shown.value = cached
     if (cached && !force && Date.now() - cached.loadedAt < CLIENT_FRESH_MS) {
+      ticket.done()
       status.value = 'ready'
       return
     }
 
     status.value = 'loading'
     error.value = null
-    const gen = generation.value
     try {
-      const raw = await fetchTimeEntries({ limit: size, offset: (page - 1) * size, refresh: force ? '1' : undefined })
-      if (gen !== generation.value) {
-        // A save cleared the cache meanwhile: this answer may predate it. Ask again if it's still wanted.
-        if (seq === requestSeq) await load(force)
-        return
-      }
+      const raw = await fetchTimeEntries({ limit: size, offset: (page - 1) * size, refresh: force ? '1' : undefined }, ticket.signal)
+      if (!ticket.isCurrent()) return
       const data = entryPageSchema.parse(raw)
       const loaded: LoadedPage = { key, items: data.items, hasMore: data.hasMore, loadedAt: Date.now() }
-      // A late answer is still good data for its own page, just not for the screen.
       pages.value = { ...pages.value, [key]: loaded }
-      if (seq !== requestSeq) return
       shown.value = loaded
       status.value = 'ready'
       refreshSnapshot()
     }
     catch (err) {
-      if (seq !== requestSeq) return
+      if (!ticket.isCurrent()) return
       const apiError = parseApiError(err)
       refreshSnapshot()
       error.value = apiError
@@ -169,6 +166,9 @@ export function useTimeEntries() {
       else {
         status.value = 'error'
       }
+    }
+    finally {
+      ticket.done()
     }
   }
 
@@ -192,16 +192,12 @@ export function useTimeEntries() {
       lastPosition.value = position.value
       load()
     }, { immediate: true })
-    // A write elsewhere cleared the cache: reload what's on screen. A page change also turns
-    // `current` empty for a moment, but the key watcher above already loads that one.
-    watch(current, (page, before) => {
-      const { page: n, size } = position.value
-      if (!page && before && before.key === pageKey(n, size)) load()
-    })
-    // Bumping the sequence also drops a response that lands after unmount, so a late 429 can't
-    // schedule a retry nobody will cancel.
+    // A write elsewhere cleared the cache (and cancelled a load in flight): reload what's on screen.
+    watch(cacheRequests.generation, () => load())
+    // Cancelling also drops a response that lands after unmount, so a late 429 can't schedule a
+    // retry nobody will cancel.
     onScopeDispose(() => {
-      requestSeq++
+      listRequests.invalidate()
       clearRetry()
     })
   }

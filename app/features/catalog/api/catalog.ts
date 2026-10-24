@@ -8,8 +8,8 @@ function endpointFor(key: NodeKey): string {
 }
 
 /** One page of clients, of a client's projects, or of a project's tasks. */
-export function fetchCatalogPage(key: NodeKey, offset: number) {
-  return $fetch<Page<unknown>>(endpointFor(key), { query: { offset }, retry: 0 })
+export function fetchCatalogPage(key: NodeKey, offset: number, signal?: AbortSignal) {
+  return $fetch<Page<unknown>>(endpointFor(key), { query: { offset }, retry: 0, signal })
 }
 
 /** Drops the BFF's catalog cache. */
