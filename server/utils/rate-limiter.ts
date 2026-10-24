@@ -120,12 +120,24 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     }
   }
 
+  /** Wake at the next free slot, or earlier when a queued job's deadline comes first. */
+  function armTimer() {
+    if (timer !== null) clearTimer(timer)
+    timer = null
+    if (queuedCount() === 0) return
+    const t = now()
+    const deadlines = LANE_ORDER.flatMap(lane => queues[lane].map(job => job.deadline))
+    const firstDeadline = Math.min(...deadlines)
+    const wait = Math.min(msUntilNextSlot(t), Number.isFinite(firstDeadline) ? firstDeadline - t + 1 : Infinity)
+    timer = setTimer(pump, Math.max(1, wait))
+  }
+
   function pump() {
     timer = null
     const t = now()
     if (t >= blockedUntil) rollWindow(t)
-    expireOverdue(t)
 
+    // Dispatch before expiring: a job whose deadline passes just as a slot frees should take it.
     if (t >= blockedUntil) {
       let job = nextJob()
       while (job) {
@@ -136,9 +148,8 @@ export function createRateLimiter(opts: RateLimiterOptions) {
       }
     }
 
-    if (queuedCount() > 0 && timer === null) {
-      timer = setTimer(pump, Math.max(1, msUntilNextSlot(now())))
-    }
+    expireOverdue(t)
+    armTimer()
   }
 
   /** Estimated ms until a new job in `lane` would start, given who is already queued ahead. */
@@ -183,11 +194,11 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     const step = PENALTY_STEPS_MS[Math.min(consecutivePenalties, PENALTY_STEPS_MS.length - 1)]!
     consecutivePenalties++
     const t = now()
-    blockedUntil = Math.max(blockedUntil, t + (retryAfterMs ?? step))
+    // A header of 0 (seen near a window edge) must not turn into an instant retry loop.
+    blockedUntil = Math.max(blockedUntil, t + Math.max(retryAfterMs ?? 0, step))
     // When the pause ends, start a fresh window rather than trusting our stale count.
     restartWindowAt(blockedUntil)
-    if (timer !== null) clearTimer(timer)
-    timer = setTimer(pump, blockedUntil - t)
+    armTimer()
   }
 
   /**
@@ -202,8 +213,7 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     if (upstreamRemaining <= 0) {
       blockedUntil = t + (resetMs ?? opts.windowMs)
       restartWindowAt(blockedUntil)
-      if (timer !== null) clearTimer(timer)
-      timer = setTimer(pump, blockedUntil - t)
+      armTimer()
       return
     }
     used = Math.min(opts.budget, Math.max(used, opts.budget - (upstreamRemaining - 1)))
