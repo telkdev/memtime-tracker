@@ -17,6 +17,8 @@ registerEndpoint('/api/time-entries/5', (event) => {
   return { error: { status: 404, code: 'NOT_FOUND', message: 'Time entry #5 not found.' } }
 })
 registerEndpoint('/api/tasks/7', () => ({ id: 7, parent: 0, name: 'Design review', status: 'active', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }))
+// The form loads the newest entries for Recent tasks when none are loaded.
+registerEndpoint('/api/time-entries', () => ({ items: [], hasMore: false, nextOffset: null }))
 
 const mounted: Array<{ unmount: () => void }> = []
 afterEach(() => mounted.splice(0).forEach(w => w.unmount()))
