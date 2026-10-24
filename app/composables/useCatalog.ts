@@ -41,6 +41,9 @@ const retryTimers = new Map<NodeKey, ReturnType<typeof setTimeout>>()
 export function useCatalog() {
   const nodes = useState<Partial<Record<NodeKey, CatalogNode>>>('catalog:nodes', () => ({}))
   const expanded = useState<string[]>('catalog:expanded', () => [])
+  // Bumped by refresh(). A load started under an older generation belongs to a catalog that no
+  // longer exists, so its result (and any retry it would schedule) is dropped.
+  const generation = useState<number>('catalog:generation', () => 0)
   const { refreshSnapshot } = useRateLimitState()
 
   function node<T>(key: NodeKey): CatalogNode<T> {
@@ -54,6 +57,7 @@ export function useCatalog() {
   async function load(key: NodeKey, { append = false } = {}) {
     const current = node(key)
     if (current.status === 'loading' || current.status === 'loadingMore') return
+    const gen = generation.value
     clearTimeout(retryTimers.get(key))
     retryTimers.delete(key)
 
@@ -62,6 +66,7 @@ export function useCatalog() {
     try {
       // retry: 0 — ofetch retries 429/5xx immediately by default, which would only burn budget.
       const page = await $fetch<Page<unknown>>(endpointFor(key), { query: { offset }, retry: 0 })
+      if (gen !== generation.value) return
       patch(key, {
         status: 'loaded',
         items: append ? [...current.items, ...page.items] : page.items,
@@ -70,11 +75,17 @@ export function useCatalog() {
       })
     }
     catch (err) {
+      if (gen !== generation.value) return
       const error = parseApiError(err)
       if (error.code === 'RATE_LIMITED') {
         const delay = retryAfterMs(error)
         patch(key, { status: 'waiting', error, retryAt: Date.now() + delay })
-        if (import.meta.client) retryTimers.set(key, setTimeout(() => load(key, { append }), delay))
+        if (import.meta.client) {
+          retryTimers.set(key, setTimeout(() => {
+            retryTimers.delete(key)
+            if (gen === generation.value) load(key, { append })
+          }, delay))
+        }
       }
       else {
         patch(key, { status: 'error', error })
@@ -120,11 +131,16 @@ export function useCatalog() {
     setExpanded(key, false)
   }
 
-  /** Drops server and client caches and reloads the client list (one upstream request). */
+  /**
+   * Drops server and client caches and reloads the client list (one upstream request). The POST
+   * goes first: if it fails, it rethrows and the tree, including pending rate-limit retries, is
+   * left exactly as it was.
+   */
   async function refresh() {
+    await $fetch('/api/catalog/refresh', { method: 'POST', retry: 0 })
     for (const timer of retryTimers.values()) clearTimeout(timer)
     retryTimers.clear()
-    await $fetch('/api/catalog/refresh', { method: 'POST', retry: 0 })
+    generation.value++
     nodes.value = {}
     expanded.value = []
     await load('root')
