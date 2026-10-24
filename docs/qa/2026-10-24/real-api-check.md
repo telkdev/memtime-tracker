@@ -50,3 +50,44 @@ Created id: **#11**. Deleted: not needed, because the API never kept it.
 The structure README (`app/features/README.md`) and the Claude skill
 (`.claude/skills/feature-structure/SKILL.md`, linked from `CLAUDE.md`) are already on this branch.
 The folders they describe match the real `app/features/*` and `app/common/*` folders.
+
+## Re-check after fixes (commit 05a2871)
+
+- Fixes under test: the limiter window follows the upstream reset (`ratelimit-reset`), an upstream 400
+  is mapped to the field it names, and the entries list no longer caches an answer that started before a save.
+- Setup: `npm ci`, `npm run build`, then the built server on port 3000 with `.env`, against the real
+  Memtime API. Browser: Playwright (Chromium), headless. No entries were created or changed.
+- Log: `recheck.log` (check, smoke and build output, the server log and the burst replies).
+
+| # | Check | Result | Evidence |
+|---|-------|--------|----------|
+| 1 | `npm run check` (lint, typecheck, unit tests) | Pass | `recheck.log` |
+| 2 | `npm run smoke` (mock API) | Pass, 29 of 29 | includes "upstream never answered 429" |
+| 3 | `npm run build` | Pass | `recheck.log` |
+| 4a | Tree: load, expand a client and a project | Pass | 100 clients. "Client 1" → "Project 1 for Client 1", "Project 2 for Client 1". "Project 1" → "Task 1 for Project 101". |
+| 4b | Entries list | Pass | 5 rows (#0, #2, #4, #6, #8) with task names, under the "Wed, 26 Nov 2025 · 2h 30m" day header. |
+| 4c | Duration "0m" | Pass | "Enter a duration longer than 0 minutes." shown. No POST or PUT sent. |
+| 4d | `/entries/999999/edit` | Pass | "This entry doesn't exist" page. Server log: upstream `GET /time-entries/999999 → 404`. |
+| 4e | API key not exposed | Pass, not found | 90 browser responses, `.output/public`, the server log and `recheck.log`: key not found. |
+| 5 | Limiter burst against the real API | Pass | 20 parallel BFF requests: 13 got data, 7 got a BFF 429 with `retryAfter: 49`. Upstream 429s: **0**. |
+| 6 | Recovery after the reset | Pass | After waiting about 47 s, `GET /api/projects/114/tasks` (one of the requests that got a 429) → 200. |
+| 7 | `resetsInMs` vs. upstream reset | Pass, matches | BFF snapshot `resetsInMs: 51293` right before a direct upstream call that answered `ratelimit-reset: 52`, `ratelimit-remaining: 13`. The BFF's `remaining` also agreed (13 before that call). |
+
+### Burst numbers
+
+- Requests: 20 × `GET /api/projects/{102..121}/tasks` in parallel (all uncached), at 15:12:05.
+  Budget before the burst: `remaining: 13` of 14.
+- 13 × 200 (about 0.2–0.3 s each). 7 × BFF 429 `RATE_LIMITED` in about 4 ms, with `retryAfter: 49`.
+  No upstream call was made for these.
+- `/api/_meta/rate-limit` polled during and after the burst: `remaining: 0`, `resetsInMs` counting
+  down 48768 → 47738 → 46701 → 45548, `queued: 0`, `blockedForMs: 0`.
+- Server log: no `→ 429` line. The upstream never answered 429.
+- After the reset, the local window re-synced to the upstream one: `resetsInMs` went from 53682 (the
+  local grid) to 59975 after the first upstream answer.
+
+### Notes
+
+- `ratelimit-reset` is not written to the server log, so the comparison in row 7 used one direct
+  upstream request (one request; no write).
+- Problems 1–3 above were not re-tested in this pass. Entry creation was skipped on purpose,
+  because the demo API doesn't keep created entries.
