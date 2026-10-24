@@ -37,6 +37,9 @@ export function timeEntriesPage(limit: number, offset: number, refresh: boolean)
   )
 }
 
+/** One wording for a missing entry, whether it was read or updated. */
+const ENTRY_NOT_FOUND = 'This entry doesn\'t exist. It may have been deleted.'
+
 /** Identical creates inside this window are treated as one (double click, second tab). */
 const CREATE_DEDUPE_MS = 5_000
 const CREATE_DEDUPE_PREFIX = 'time-entry-create:'
@@ -69,7 +72,7 @@ export function mapWriteError(err: unknown, op: 'create' | 'update'): unknown {
 
   if (code === 'NOT_FOUND') {
     if (op === 'update' && /time entry/i.test(message)) {
-      return new ApiException(404, 'NOT_FOUND', 'This entry no longer exists. It may have been deleted.')
+      return new ApiException(404, 'NOT_FOUND', ENTRY_NOT_FOUND)
     }
     // Unverified: API_NOTES records no write that answers 404 for an unknown task. If one ever
     // does, point at the Task field instead of saying the entry is gone. Harmless otherwise.
@@ -126,7 +129,7 @@ export async function getTimeEntry(id: number): Promise<TimeEntry> {
     .then(toPublicTimeEntry)
     .catch((err: unknown) => {
       if (err instanceof ApiException && err.body.code === 'NOT_FOUND') {
-        throw new ApiException(404, 'NOT_FOUND', 'This entry doesn\'t exist, or it was deleted.')
+        throw new ApiException(404, 'NOT_FOUND', ENTRY_NOT_FOUND)
       }
       throw err
     })
