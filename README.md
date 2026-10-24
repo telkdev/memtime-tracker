@@ -78,12 +78,20 @@ Browser (Vue)  ──/api/*──▶  Nitro server (BFF)  ──Bearer key──
   the API returns no totals. Editing from the list costs no read; a save costs the write plus one
   list refresh. The per-action numbers are in `docs/plans/`.
 - **Times.** The UI shows and edits local time; everything sent upstream is UTC ISO 8601 with `Z`.
-  Conversion lives only in `app/utils/time.ts`, tested under a fixed `Europe/Berlin` zone across
+  Conversion lives only in `app/common/lib/time.ts`, tested under a fixed `Europe/Berlin` zone across
   both DST changes and midnight.
 - **Writes are honest about failure.** A 429 is retried (the upstream didn't apply it). A create
   that fails on the network is never retried automatically, because there's no idempotency key and
   the first attempt may have been saved; the form says so and keeps your values. A 404 on update
   offers "Create as new entry".
+
+### Frontend structure
+
+The Vue app is split by feature (`app/features/catalog`, `time-entries`, `entry-form`) plus
+`app/common`. Each feature has `ui/`, `composables/`, `model/`, `api/` and `lib/` folders as needed
+and one public `index.ts`. Feature internals are not auto-imported, and ESLint blocks deep imports
+into another feature, so the index really is the only way in. Rules, the model-vs-lib split and
+the dependency graph: [app/features/README.md](app/features/README.md).
 
 ## Trade-offs and known limits
 

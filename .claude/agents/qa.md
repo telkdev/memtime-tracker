@@ -66,7 +66,7 @@ answer it. Don't report an item as fine without having looked.
   fine, because the upstream rejected the request without applying it.
 
 **Time (hard rule 4, `time-and-ux.md`)**
-- Are local↔UTC conversions only in `app/utils/time.ts`? Grep for `toISOString`, `getTimezoneOffset`,
+- Are local↔UTC conversions only in `app/common/lib/time.ts`? Grep for `toISOString`, `getTimezoneOffset`,
   `new Date(` with string concatenation, and `Date.parse` outside it.
 - DST: a spring-forward gap time (02:30 on 29 Mar 2026, Europe/Berlin) must block saving with a
   hint; a fall-back time (02:30 on 25 Oct 2026) must default to the first occurrence and offer the

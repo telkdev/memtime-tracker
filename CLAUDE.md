@@ -69,19 +69,16 @@ The browser **never** calls the Memtime API directly and never sees the key. Eve
 goes through `server/utils/memtime.ts`.
 
 ```
-app/
-  pages/                index.vue (tree + entries), entries/new.vue, entries/[id]/edit.vue
-  components/
-    tree/               ClientTree.vue, TreeRow.vue, TreeToolbar.vue (rows built by utils/tree-rows.ts)
-    entries/            EntriesPanel.vue, EntriesTable.vue, EntriesCards.vue, EntriesPager.vue, EntriesStatus.vue,
-                        EntriesTaskCell.vue; the form: EntryForm, EntryTimeFields, FormWarnings,
-                        FormAlerts, TaskPicker, TaskBrowser, DurationInput, EditEntry
-    common/             RateLimitIndicator.vue, RetryCountdown.vue
-  composables/          useCatalog, useTimeEntries (+ useTimeEntryCache, useReturnToList), useTaskNames,
-                        useRateLimitState, useNow, useEntryForm, useEntrySources, useEntrySaved,
-                        useLeaveGuard, useTimeEntry
-  utils/                time.ts (local↔UTC, DST, duration), api-error.ts (parseApiError), catalog.ts,
-                        entries.ts, tree-rows.ts, entry-form.ts, task-options.ts, errors.ts
+app/                    split by feature; rules and enforcement in app/features/README.md
+  pages/                thin: index.vue (tree + entries), entries/new.vue, entries/[id]/edit.vue
+  features/<name>/      ui/ (components) composables/ (useX) model/ (types, domain rules)
+                        api/ (the only $fetch calls) lib/ (pure helpers) index.ts (public API)
+    catalog/            ClientTree, useCatalog, useTaskNames, tree-rows
+    time-entries/       EntriesPanel + table/cards/pager, useTimeEntries, useTimeEntry, time-entry API
+    entry-form/         EntryForm, EditEntry, TaskBrowser; useEntryForm = useEntryTimes +
+                        useDurationInput + useDirtyGuard + useSubmitWithRetry; model/rules.ts
+  common/               time.ts (local↔UTC, DST, duration), api-error, errors, useNow,
+                        useRateLimitState, useDirtyGuard, useSubmitWithRetry, useLeaveGuard, widgets
 server/
   api/
     clients/index.get.ts, clients/[id]/projects.get.ts, projects/[id]/tasks.get.ts
@@ -131,7 +128,7 @@ Details are in `.claude/rules/`. Each file loads when you work on matching paths
 3. **Tests and CI never call the real API.** Mock at the `memtime.ts` boundary or with fixtures.
    `scripts/probe-api.sh` is the only thing that touches the real API, and a human runs it.
 4. **All timestamps sent upstream are UTC ISO 8601 with `Z`.** The UI shows and edits local time.
-   Conversion happens only in `app/utils/time.ts`.
+   Conversion happens only in `app/common/lib/time.ts`.
 5. **Validate at both edges.** Zod-parse request bodies in BFF routes and upstream responses in
    `memtime.ts`. If an upstream shape doesn't match, log it and return a 502 with a clear message.
    Don't pass garbage through.
@@ -146,8 +143,9 @@ Details are in `.claude/rules/`. Each file loads when you work on matching paths
 - Commits: Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`), small and focused.
 - Error shape returned by the BFF (always):
   `{ error: { status, code, message, fields?: Record<string,string>, retryAfter?: number } }`
-- Components are auto-imported by file name only (`pathPrefix: false`): `components/tree/ClientTree.vue`
-  is `<ClientTree>`. Keep file names unique.
+- Our own code is imported explicitly; only Vue, Nuxt and Nuxt UI are auto-imported. Another
+  feature is imported as `~/features/<name>`, common code as `~/common` (ESLint enforces both).
+  Inside a feature, use relative imports. See `app/features/README.md`.
 - Client `$fetch` calls to the BFF pass `retry: 0`. ofetch otherwise retries 429/5xx immediately,
   which only burns rate-limit budget. Retrying is handled deliberately (waiting state + countdown).
 - Names: components in PascalCase, composables as `useX`, server utils in camelCase. Files under
