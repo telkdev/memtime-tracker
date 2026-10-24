@@ -57,3 +57,30 @@ export function entryWarnings(entries: readonly TimeEntry[], start: Date, end: D
   if (overlap) warnings.push({ kind: 'overlap', entry: overlap })
   return warnings
 }
+
+export type EntryField = 'taskId' | 'date' | 'start' | 'duration' | 'end' | 'comment'
+export type FieldErrors = Partial<Record<EntryField, string>>
+
+/** Upstream and schema paths → the form field that shows the message. */
+const FIELD_FOR_PATH: Record<string, EntryField> = { taskId: 'taskId', comment: 'comment', start: 'start', end: 'end' }
+
+export function fieldForPath(path: PropertyKey | undefined): EntryField | undefined {
+  return FIELD_FOR_PATH[String(path)]
+}
+
+/**
+ * Which message a field shows. The form's own messages win. Schema messages fill the gaps, except
+ * the ISO-timestamp ones for start/end: when date, start or duration already has a message, it
+ * explains the problem in words a person understands.
+ */
+export function mergeFieldErrors(own: FieldErrors, schemaIssues: readonly { path: readonly PropertyKey[], message: string }[]): FieldErrors {
+  const errors = { ...own }
+  const timesExplained = Boolean(own.date || own.start || own.duration)
+  for (const issue of schemaIssues) {
+    const field = fieldForPath(issue.path[0])
+    if (!field || errors[field]) continue
+    if ((field === 'start' || field === 'end') && timesExplained) continue
+    errors[field] = issue.message
+  }
+  return errors
+}
