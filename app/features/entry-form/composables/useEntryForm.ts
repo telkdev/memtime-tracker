@@ -3,7 +3,8 @@ import { timeEntryInputSchema } from '#shared/schemas/timeEntryInput'
 import { ceilToMinute, entryWarnings, fieldForPath, mergeFieldErrors } from '../model/rules'
 import type { EntryWarning, FieldErrors } from '../model/types'
 import { fromUtcIso, isConnectionError, toUtcIso, useDirtyGuard, useSubmitWithRetry } from '~/common'
-import { createTimeEntry, updateTimeEntry } from '~/features/time-entries'
+import type { ApiErrorCode } from '#shared/schemas/common'
+import { createTimeEntry, updateTimeEntry, useTimeEntryCache } from '~/features/time-entries'
 import { useEntryTimes, type EntryTimesOptions } from './useEntryTimes'
 
 export interface EntryFormOptions extends Omit<EntryTimesOptions, 'now'> {
@@ -39,6 +40,7 @@ export function useEntryForm(opts: EntryFormOptions) {
   }
   const dirty = useDirtyGuard(fields, { comment: c => c.trim() })
   const submitter = useSubmitWithRetry<TimeEntry>()
+  const entryCache = useTimeEntryCache()
 
   // --- validation ----------------------------------------------------------------------------
   const attempted = ref(false)
@@ -68,20 +70,25 @@ export function useEntryForm(opts: EntryFormOptions) {
   const { error, pending, retryIn } = submitter
   const notFound = computed(() => mode.value === 'edit' && error.value?.code === 'NOT_FOUND')
 
-  /** A create whose outcome is unknown: it may have been saved, so saving again could duplicate it. */
-  const maybeSaved = computed(() => mode.value === 'create' && !!error.value && isConnectionError(error.value))
+  /**
+   * A create whose outcome is unknown: it may have been saved, so saving again could duplicate it.
+   * Only errors that prove the upstream didn't apply the write are safe to retry; anything else
+   * (network, 5xx, an answer we couldn't read, our own bug) may come after a saved entry.
+   */
+  const maybeSaved = computed(() => mode.value === 'create' && !!error.value && !UNAPPLIED_CODES.has(error.value.code))
 
   /** Message shown above the form for errors that aren't about one field. */
   const summary = computed(() => {
     const e = error.value
     if (!e || notFound.value) return null
     if (e.code === 'RATE_LIMITED') return retryIn.value > 0 ? null : 'Still too many requests. Wait a few seconds and save again. Your values are kept.'
-    if (isConnectionError(e)) {
-      return mode.value === 'create'
+    if (maybeSaved.value) {
+      return isConnectionError(e)
         ? 'Couldn\'t reach the server. The entry may not have been saved. Check the list before trying again.'
-        // A PUT may have been applied before the connection dropped; repeating it is harmless.
-        : 'Couldn\'t reach the server, so your changes may not be saved. Saving again is safe.'
+        : 'Something went wrong while saving. The entry may still have been saved. Check the list before trying again.'
     }
+    // A PUT may have been applied before the connection dropped; repeating it is harmless.
+    if (isConnectionError(e)) return 'Couldn\'t reach the server, so your changes may not be saved. Saving again is safe.'
     // Field messages already explain it, unless none of them maps to a field the form shows.
     if (Object.keys(serverFields.value).length) return null
     return e.summary
@@ -109,6 +116,8 @@ export function useEntryForm(opts: EntryFormOptions) {
     const entry = await submitter.run(send, () => submit({ auto: true }))
     if (entry) dirty.markSaved(sent)
     else serverFields.value = serverFieldErrors(error.value?.fields ?? {})
+    // The list in this tab must not show a page from before an entry that may have been saved.
+    if (maybeSaved.value) entryCache.invalidate()
     return entry
   }
 
@@ -152,5 +161,8 @@ function serverFieldErrors(fields: Record<string, string>): FieldErrors {
   }
   return out
 }
+
+/** Errors that prove the upstream did not apply a write. */
+const UNAPPLIED_CODES: ReadonlySet<ApiErrorCode> = new Set(['BAD_REQUEST', 'VALIDATION', 'NOT_FOUND', 'RATE_LIMITED', 'UPSTREAM_AUTH'])
 
 export type EntryForm = ReturnType<typeof useEntryForm>

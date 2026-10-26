@@ -189,8 +189,11 @@ A deep link to a missing id (`GET` 404) shows a page-level empty state with "Log
 ### Network or 5xx
 - PUT: "Couldn't reach the server, so your changes may not be saved. Saving again is safe." + Retry.
 - POST: "Couldn't reach the server. The entry may not have been saved. Check the list before
-  trying again." + Retry. Honest, because we can't know. (An "Open list in new tab" action was
-  planned but left out: the list is one Cancel away and keeps the user's page.)
+  trying again." + "Check the list" (opens the list in a new tab, so the typed values stay), and
+  no Retry, which could save the entry twice. Honest, because we can't know. The same applies to
+  any create error that doesn't prove the upstream rejected it (an unreadable answer, a 500), and
+  the loaded list pages are dropped so the list in this tab refetches. (Changed on 2026-10-26: the
+  first version offered Retry here.)
 
 ## Pages
 - `/entries/new` (`?taskId=` optional)

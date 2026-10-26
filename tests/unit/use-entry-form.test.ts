@@ -320,6 +320,29 @@ describe('useEntryForm', () => {
     expect(form.comment.value).toBe('Design review')
   })
 
+  it('treats a create the upstream may have applied as "maybe saved", even when the answer was unreadable', async () => {
+    fetchMock.mockRejectedValueOnce(apiError(502, { code: 'UPSTREAM_INVALID', message: 'Unexpected answer.' }))
+    const form = filled()
+    await form.submit()
+    expect(form.maybeSaved.value).toBe(true)
+    expect(form.summary.value).toMatch(/may still have been saved/)
+  })
+
+  it('does not treat a rejected create as "maybe saved"', async () => {
+    fetchMock.mockRejectedValueOnce(apiError(400, { code: 'BAD_REQUEST', message: 'Invalid request body.' }))
+    const form = filled()
+    await form.submit()
+    expect(form.maybeSaved.value).toBe(false)
+  })
+
+  it('drops the loaded list pages after a create that may have been saved', async () => {
+    const pages = useState<Record<string, unknown>>('time-entries:pages')
+    pages.value = { 'limit=25&offset=0': { key: 'limit=25&offset=0', items: [], hasMore: false, loadedAt: Date.now() } }
+    fetchMock.mockRejectedValueOnce(apiError(503, { code: 'UPSTREAM_UNAVAILABLE', message: 'Down.' }))
+    await filled().submit()
+    expect(pages.value).toEqual({})
+  })
+
   it('on an update the server can\'t answer, keeps the edits and says saving again is safe', async () => {
     fetchMock.mockRejectedValueOnce(apiError(503, { code: 'UPSTREAM_UNAVAILABLE', message: 'Couldn\'t reach the time tracking service.' }))
     const form = useEntryForm({ mode: 'edit', entry: saved, now })

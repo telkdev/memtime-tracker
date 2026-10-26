@@ -55,7 +55,10 @@ Users should be able to log time quickly and get it right the first time.
   - 404 on update → "This entry no longer exists." Offer "Create as new entry" with the form
     prefilled.
   - 429 → banner "Too many requests, retrying in Ns" with a countdown. Retry automatically once.
-  - network / 5xx → "Couldn't reach the server. Your entry is not saved." plus a Retry button
+  - network / 5xx on an update → "Couldn't reach the server, so your changes may not be saved.
+    Saving again is safe." plus a Retry button (a repeated PUT is harmless).
+  - network / 5xx on a create → "The entry may not have been saved. Check the list before trying
+    again." plus "Check the list" in a new tab, and no Retry (a repeated POST can duplicate).
 - Warn about unsaved changes before leaving a dirty form.
 
 ## Tree
