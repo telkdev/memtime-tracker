@@ -16,7 +16,7 @@ registerEndpoint('/api/time-entries/5', (event) => {
   setResponseStatus(event, 404) // deleted elsewhere while the form was open
   return { error: { status: 404, code: 'NOT_FOUND', message: 'Time entry #5 not found.' } }
 })
-registerEndpoint('/api/tasks/7', () => ({ id: 7, parent: 0, name: 'Design review', status: 'active', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }))
+registerEndpoint('/api/tasks/7', () => ({ id: 7, name: 'Design review', status: 'active', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }))
 // The form loads the newest entries for Recent tasks when none are loaded.
 registerEndpoint('/api/time-entries', () => ({ items: [], hasMore: false, nextOffset: null }))
 
@@ -54,5 +54,21 @@ describe('edit page', () => {
     })
     await createAsNew.trigger('click')
     await vi.waitFor(() => expect(wrapper.find('h1').text()).toBe('Log as a new entry'))
+  })
+
+  it('doesn\'t warn that the new entry overlaps the deleted one it replaces', async () => {
+    // Entry #5 is in the loaded list, as when the user came from the list.
+    useState('time-entries:pages').value = { '25:1': { key: '25:1', items: [entry], hasMore: false, loadedAt: Date.now() } }
+    const wrapper = await mountAt('/entries/5/edit')
+    await vi.waitFor(() => expect(wrapper.find('form').exists()).toBe(true))
+    await wrapper.find('form').trigger('submit')
+    const createAsNew = await vi.waitFor(() => {
+      const b = wrapper.findAll('button').find(b => b.text().includes('Create as new entry'))
+      expect(b).toBeDefined()
+      return b!
+    })
+    await createAsNew.trigger('click')
+    await vi.waitFor(() => expect(wrapper.find('h1').text()).toBe('Log as a new entry'))
+    expect(wrapper.text()).not.toMatch(/Overlaps\s+entry #5/)
   })
 })

@@ -1,4 +1,5 @@
 import { buildTaskOptions } from '../lib/task-options'
+import type { TimeEntry } from '#shared/schemas/timeEntry'
 import type { TaskOption, TaskOptionGroups } from '../model/types'
 import { recentTaskIds } from '../model/rules'
 import { useCatalog, useTaskNames } from '~/features/catalog'
@@ -12,14 +13,43 @@ import { useTimeEntryCache } from '~/features/time-entries'
  */
 export function useEntrySources() {
   const { taskIndex } = useCatalog()
-  const { loadedEntries, getCached, ensureNewest, invalidate } = useTimeEntryCache()
+  const cache = useTimeEntryCache()
+  const { getCached, ensureNewest, invalidate } = cache
+
+  // Every write drops the list cache, so the list refetches what it shows. The form keeps the last
+  // entries it saw plus the ones it saved itself: after "Save & log another" (or a failed save) the
+  // next entry still gets Recent tasks and overlap warnings, with no extra request.
+  const seen = shallowRef<readonly TimeEntry[]>(cache.loadedEntries.value)
+  watch(cache.loadedEntries, (entries) => {
+    if (entries.length) seen.value = entries
+  })
+  const saved = shallowRef<readonly TimeEntry[]>([])
+  const loadedEntries = computed<readonly TimeEntry[]>(() => {
+    const ids = new Set(saved.value.map(e => e.id))
+    return [...saved.value, ...seen.value.filter(e => !ids.has(e.id))]
+  })
+
+  /** Call after the save's cache invalidation: the entry this form just saved, for the next one. */
+  function remember(entry: TimeEntry) {
+    saved.value = [entry, ...saved.value.filter(e => e.id !== entry.id)]
+    // The save dropped the newest-entries load if it hadn't answered yet: ask once more.
+    if (!seen.value.length) void ensureNewest()
+  }
+
+  /** An entry the upstream says is gone (404 on update): no longer something to overlap. */
+  function forget(id: number) {
+    seen.value = seen.value.filter(e => e.id !== id)
+    saved.value = saved.value.filter(e => e.id !== id)
+  }
+
   const taskNames = useTaskNames()
   const catalog = computed<readonly TaskOption[]>(() =>
     [...taskIndex.value.values()].map(({ task, project, client }) => ({ id: task.id, label: task.name, path: `${client.name} › ${project.name}` })),
   )
   const nameOf = (id: number): string | undefined => taskNames.label(id)?.name
 
-  // Opened by a link or a reload, nothing is loaded: one request fills Recent and Smart start.
+  // Opened by a link or a reload, nothing is loaded: one request fills Recent, Smart start and the
+  // overlap warnings.
   if (import.meta.client) void ensureNewest()
 
   // Names for recent tasks outside the loaded tree: one cached background lookup each.
@@ -41,5 +71,5 @@ export function useEntrySources() {
     return buildTaskOptions(ids, catalog.value, nameOf)
   }
 
-  return { loadedEntries, getCached, invalidate, taskGroups, watchTaskName }
+  return { loadedEntries, getCached, invalidate, remember, forget, taskGroups, watchTaskName }
 }

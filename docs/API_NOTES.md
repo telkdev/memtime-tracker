@@ -21,7 +21,7 @@ These were checked with real requests and **override anything below that disagre
   404 and the list never shows it. Seeded entries (#0, #2, #4, #6, #8) stay. The app can't fix
   this; after a save the list says when the saved entry isn't on the page.
 - **A bad key gives `401` with a plain-text body `Unauthorized`**, not `404 Unknown user`.
-- **Tasks have `projectId` and no `parent`.** `parent` stays optional in our schema (default 0).
+- **Tasks have `projectId` and no `parent`.** Our schema ignores `parent`.
 - **IDs start at 0.** Time entry `#0` exists, so id params are validated as non-negative.
 - Invalid write body → `400 Invalid request body` (not `Invalid JSON body`).
   404 messages: `Time entry not found` (GET), `Time entry #N not found` (PUT).

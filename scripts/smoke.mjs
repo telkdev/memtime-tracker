@@ -170,6 +170,10 @@ async function main() {
   check('oversized page costs no upstream call', after === before, `${before} → ${after} upstream requests`)
   const unknown = await call(base, '/api/nope')
   check('unknown API route → BFF 404 shape', unknown.status === 404 && isBffError(unknown))
+  const formPost = await fetch(`${base}/api/catalog/refresh`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+  check('cross-site form POST to catalog refresh → 415', formPost.status === 415, `status ${formPost.status}`)
+  const refresh = await call(base, '/api/catalog/refresh', { method: 'POST', body: '{}' })
+  check('JSON POST to catalog refresh → 200', refresh.status === 200 && refresh.json?.ok === true, `status ${refresh.status}`)
 
   // 6. Writes and reading one entry (Task 3).
   const empty = await call(base, '/api/time-entries', { method: 'POST', body: '{}' })

@@ -14,7 +14,7 @@ export function fetchCatalogPage(key: NodeKey, offset: number, signal?: AbortSig
 
 /** Drops the BFF's catalog cache. */
 export function refreshCatalog() {
-  return $fetch('/api/catalog/refresh', { method: 'POST', retry: 0 })
+  return $fetch('/api/catalog/refresh', { method: 'POST', body: {}, retry: 0 })
 }
 
 /** One task by id, for a name the loaded catalog doesn't have. Unparsed; the caller validates it. */

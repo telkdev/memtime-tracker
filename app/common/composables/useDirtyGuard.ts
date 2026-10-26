@@ -20,5 +20,12 @@ export function useDirtyGuard<F extends Fields>(fields: F, normalize: { [K in ke
     saved.value = sent
   }
 
-  return { isDirty, snapshot, markSaved }
+  /** Takes the current values of `keys` as saved and leaves the others alone (a default that moved, not an edit). */
+  function markSavedOnly(keys: readonly (keyof F & string)[]) {
+    const current = new Map(JSON.parse(snapshot()) as [string, unknown][])
+    const base = (JSON.parse(saved.value) as [string, unknown][]).map(([key, value]) => [key, keys.includes(key) ? current.get(key) : value])
+    saved.value = JSON.stringify(base)
+  }
+
+  return { isDirty, snapshot, markSaved, markSavedOnly }
 }

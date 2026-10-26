@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { Page } from '#shared/schemas/common'
+import { WRITE_NOT_APPLIED_CODES, type Page } from '#shared/schemas/common'
 import { timeEntrySchema, upstreamTimeEntrySchema, type TimeEntry } from '#shared/schemas/timeEntry'
 import type { TimeEntryInput } from '#shared/schemas/timeEntryInput'
 import { ApiException } from './errors'
@@ -112,17 +112,29 @@ export async function createTimeEntry(input: TimeEntryInput): Promise<TimeEntry>
 }
 
 export async function updateTimeEntry(id: number, input: TimeEntryInput): Promise<TimeEntry> {
-  const entry = await useMemtime()
-    .request({ method: 'PUT', path: `/time-entries/${id}`, body: input, schema: upstreamTimeEntrySchema })
-    .then(toPublicTimeEntry)
-    .catch((err: unknown) => {
-      throw mapWriteError(err, 'update')
-    })
+  try {
+    const entry = await useMemtime()
+      .request({ method: 'PUT', path: `/time-entries/${id}`, body: input, schema: upstreamTimeEntrySchema })
+      .then(toPublicTimeEntry)
+    afterUpdate()
+    return entry
+  }
+  catch (err) {
+    // A PUT that timed out or got a 5xx may have been applied, like a create.
+    if (mayHaveApplied(err)) afterUpdate()
+    throw mapWriteError(err, 'update')
+  }
+}
+
+function afterUpdate() {
   useServerCache().invalidatePrefix(TIME_ENTRIES_CACHE_PREFIX)
   // A remembered create may now describe an entry that was edited since. Creating the same body
   // again after an edit is a new entry, not a double click.
   useServerCache().invalidatePrefix(CREATE_DEDUPE_PREFIX)
-  return entry
+}
+
+function mayHaveApplied(err: unknown) {
+  return !(err instanceof ApiException && WRITE_NOT_APPLIED_CODES.has(err.body.code))
 }
 
 export async function getTimeEntry(id: number): Promise<TimeEntry> {

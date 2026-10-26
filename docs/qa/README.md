@@ -23,4 +23,4 @@ for an `NUXT_MEMTIME_API_KEY=` with a value; see the scan line at the end of `sm
 |---|---|---|
 | [2026-10-23](2026-10-23/findings.md) | 6 QA runs; 50 findings (47 from QA, 3 while merging): 48 fixed, 2 kept on purpose with the reason written down | [findings](2026-10-23/findings.md), [acceptance criteria](2026-10-23/acceptance.md) |
 | [2026-10-24](2026-10-24/code-review.md) | Code review by area, plus one check against the real API | [code review](2026-10-24/code-review.md), [real-API check](2026-10-24/real-api-check.md) |
-| [2026-10-26](2026-10-26/qa-run-1.md) | Final QA run before submitting: pass with notes, 5 minor findings, all fixed afterwards | [report](2026-10-26/qa-run-1.md) |
+| [2026-10-26](2026-10-26/qa-run-1.md) | Final QA run before submitting: pass with notes, 5 minor findings, all fixed afterwards. Then a final code review: 7 findings fixed, 4 kept with a reason | [report](2026-10-26/qa-run-1.md), [code review](2026-10-26/code-review.md) |

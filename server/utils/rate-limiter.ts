@@ -54,6 +54,9 @@ interface Job {
 /** Escalating pauses after consecutive upstream 429s (no Retry-After is documented). */
 const PENALTY_STEPS_MS = [2_000, 5_000, 15_000, 60_000]
 
+/** Shortest pause when the upstream says its budget is spent (the reset header has whole seconds). */
+const MIN_SYNC_PAUSE_MS = 1_000
+
 export function createRateLimiter(opts: RateLimiterOptions) {
   const now = opts.now ?? Date.now
   const setTimer = opts.setTimer ?? ((fn, ms) => setTimeout(fn, ms))
@@ -212,7 +215,9 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     if (t < blockedUntil) return
     rollWindow(t)
     if (upstreamRemaining <= 0) {
-      blockedUntil = t + (resetMs ?? opts.windowMs)
+      // The reset header has whole seconds, so just before a reset it can say 0. Without a floor
+      // that means no pause at all, and the queue would go straight into the spent upstream window.
+      blockedUntil = t + Math.max(resetMs ?? opts.windowMs, MIN_SYNC_PAUSE_MS)
       restartWindowAt(blockedUntil)
       armTimer()
       return

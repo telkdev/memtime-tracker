@@ -40,6 +40,9 @@ export const apiErrorCodes = [
 
 export type ApiErrorCode = (typeof apiErrorCodes)[number]
 
+/** Errors that prove the upstream did not apply a write. Any other failure may follow a saved write. */
+export const WRITE_NOT_APPLIED_CODES: ReadonlySet<ApiErrorCode> = new Set(['BAD_REQUEST', 'VALIDATION', 'NOT_FOUND', 'RATE_LIMITED', 'UPSTREAM_AUTH'])
+
 export const apiErrorBodySchema = z.object({
   status: z.number().int(),
   code: z.enum(apiErrorCodes),

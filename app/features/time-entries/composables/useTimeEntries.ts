@@ -69,7 +69,8 @@ export function useTimeEntryCache() {
     }
     finally {
       ticket.done()
-      newestLoading.value = false
+      // After invalidate() a newer load may own the flag; a dropped one leaves it alone.
+      if (ticket.isCurrent()) newestLoading.value = false
     }
   }
 
@@ -77,6 +78,8 @@ export function useTimeEntryCache() {
   function invalidate() {
     requests.invalidate()
     pages.value = {}
+    // A dropped load must not block the next ensureNewest().
+    newestLoading.value = false
   }
 
   return { pages, requests, loadedEntries, getCached, ensureNewest, invalidate }

@@ -336,8 +336,8 @@ describe('useEntryForm', () => {
   })
 
   it('drops the loaded list pages after a create that may have been saved', async () => {
-    const pages = useState<Record<string, unknown>>('time-entries:pages')
-    pages.value = { 'limit=25&offset=0': { key: 'limit=25&offset=0', items: [], hasMore: false, loadedAt: Date.now() } }
+    const pages = useState<Record<string, { items: unknown[], loadedAt: number }>>('time-entries:pages')
+    pages.value = { '25:1': { key: '25:1', items: [saved], hasMore: false, loadedAt: Date.now() } }
     fetchMock.mockRejectedValueOnce(apiError(503, { code: 'UPSTREAM_UNAVAILABLE', message: 'Down.' }))
     await filled().submit()
     expect(pages.value).toEqual({})
@@ -353,6 +353,49 @@ describe('useEntryForm', () => {
     expect(form.comment.value).toBe('Edited')
     expect(form.isDirty.value).toBe(true)
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('drops the loaded list pages after an update that may have been applied', async () => {
+    const pages = useState<Record<string, { items: unknown[], loadedAt: number }>>('time-entries:pages')
+    pages.value = { '25:1': { key: '25:1', items: [saved], hasMore: false, loadedAt: Date.now() } }
+    fetchMock.mockRejectedValueOnce(apiError(503, { code: 'UPSTREAM_UNAVAILABLE', message: 'Down.' }))
+    const form = useEntryForm({ mode: 'edit', entry: saved, now })
+    form.comment.value = 'Edited'
+    await form.submit()
+    expect(pages.value).toEqual({})
+  })
+
+  it('applies a late default start only to an untouched new entry', () => {
+    const later = new Date(2026, 9, 23, 14, 0)
+    const untouched = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 17, 0), anchor: 'now' })
+    untouched.applyDefaultStart(later)
+    expect(untouched.startTime.value).toBe('14:00')
+    expect(untouched.isDirty.value).toBe(false)
+    // The start now continues after the earlier entry: a duration moves the end, not the start.
+    untouched.setDurationText('1h')
+    expect([untouched.startTime.value, untouched.endTime.value]).toEqual(['14:00', '15:00'])
+
+    // A comment typed first doesn't block it, and stays unsaved.
+    const commented = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 17, 0), anchor: 'now' })
+    commented.comment.value = 'Started typing'
+    commented.applyDefaultStart(later)
+    expect(commented.startTime.value).toBe('14:00')
+    expect(commented.isDirty.value).toBe(true)
+
+    const typed = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 17, 0), anchor: 'now' })
+    typed.setStartTime('08:30')
+    typed.applyDefaultStart(later)
+    expect(typed.startTime.value).toBe('08:30')
+
+    const halfTyped = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 17, 0), anchor: 'now' })
+    halfTyped.setDurationText('1:')
+    halfTyped.applyDefaultStart(later)
+    expect([halfTyped.startTime.value, halfTyped.durationText.value]).toEqual(['17:00', '1:'])
+
+    const edited = useEntryForm({ mode: 'edit', entry: saved, now })
+    const before = edited.startTime.value
+    edited.applyDefaultStart(later)
+    expect(edited.startTime.value).toBe(before)
   })
 
   it('retries once by itself after a rate limit', async () => {
