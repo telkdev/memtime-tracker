@@ -35,28 +35,37 @@ function createForm() {
   // Opened by a link or a reload, the newest entries are still loading. Once they are in, continue
   // after today's last entry, unless the user has already started typing.
   if (!knownEntries().length) {
+    const apply = () => {
+      // A date or time box keeps a half-typed value to itself until it is complete: wait until the
+      // user leaves it. If they set a time there, applyDefaultStart sees it and does nothing.
+      const editing = editingTime()
+      if (editing) return editing.addEventListener('blur', apply, { once: true })
+      const next = defaultStart(knownEntries(), new Date())
+      if (next.from === 'previous') created.applyDefaultStart(next.start)
+    }
     const stop = watch(knownEntries, (entries) => {
       if (!entries.length) return
       stop()
-      // A date or time box keeps a half-typed value to itself until it is complete; the user is
-      // setting the start, so leave it.
-      if (editingTime()) return
-      const next = defaultStart(entries, new Date())
-      if (next.from === 'previous') created.applyDefaultStart(next.start)
+      apply()
     })
   }
   return created
 }
 
-watch(form.mode, mode => emit('mode', mode))
+watch(form.mode, (mode) => {
+  // "Create as new entry" after a 404: the old entry is gone, so it can't overlap the new one.
+  if (mode === 'create' && props.entry) sources.forget(props.entry.id)
+  emit('mode', mode)
+})
 sources.watchTaskName(() => form.taskId.value)
 const taskGroups = computed(() => sources.taskGroups(form.taskId.value))
 const taskName = (id: number) => [...taskGroups.value.recent, ...taskGroups.value.catalog].find(o => o.id === id)?.label
 const browsing = ref(false)
 const root = useTemplateRef<HTMLElement>('root')
-function editingTime() {
+/** The form's date or time box that has focus, if any. */
+function editingTime(): HTMLInputElement | null {
   const el = document.activeElement
-  return el instanceof HTMLInputElement && (el.type === 'date' || el.type === 'time') && !!root.value?.contains(el)
+  return el instanceof HTMLInputElement && (el.type === 'date' || el.type === 'time') && root.value?.contains(el) ? el : null
 }
 
 useLeaveGuard(() => form.isDirty.value && !form.pending.value)

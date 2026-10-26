@@ -153,7 +153,8 @@ export function useEntryTimes(opts: EntryTimesOptions) {
   return {
     date, startTime, startOccurrence, duration, start, end, endTime, endDayOffset, startAmbiguous, errors,
     setDate, setStartTime, setDurationText, setEndTime, setEndNow, fixStartGap, restartAt,
-    touched: () => touched,
+    /** Whether the user set any time, the DST first/second choice included (the radio writes it directly). */
+    touched: () => touched || startOccurrence.value !== initialOccurrence,
   }
 }
 

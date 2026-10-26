@@ -55,4 +55,20 @@ describe('edit page', () => {
     await createAsNew.trigger('click')
     await vi.waitFor(() => expect(wrapper.find('h1').text()).toBe('Log as a new entry'))
   })
+
+  it('doesn\'t warn that the new entry overlaps the deleted one it replaces', async () => {
+    // Entry #5 is in the loaded list, as when the user came from the list.
+    useState('time-entries:pages').value = { '25:1': { key: '25:1', items: [entry], hasMore: false, loadedAt: Date.now() } }
+    const wrapper = await mountAt('/entries/5/edit')
+    await vi.waitFor(() => expect(wrapper.find('form').exists()).toBe(true))
+    await wrapper.find('form').trigger('submit')
+    const createAsNew = await vi.waitFor(() => {
+      const b = wrapper.findAll('button').find(b => b.text().includes('Create as new entry'))
+      expect(b).toBeDefined()
+      return b!
+    })
+    await createAsNew.trigger('click')
+    await vi.waitFor(() => expect(wrapper.find('h1').text()).toBe('Log as a new entry'))
+    expect(wrapper.text()).not.toMatch(/Overlaps\s+entry #5/)
+  })
 })

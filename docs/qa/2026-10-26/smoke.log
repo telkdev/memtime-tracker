@@ -18,6 +18,8 @@
 ✓ oversized page → 400 VALIDATION
 ✓ oversized page costs no upstream call
 ✓ unknown API route → BFF 404 shape
+✓ cross-site form POST to catalog refresh → 415
+✓ JSON POST to catalog refresh → 200
 ✓ POST {} → 400 with field errors
 ✓ invalid POST costs no upstream call
 ✓ POST invalid JSON → 400 BFF shape
@@ -32,4 +34,4 @@
 ✓ upstream never answered 429
 ✓ server log never contains the key
 
-29 of 29 smoke checks passed or skipped
+31 of 31 smoke checks passed or skipped

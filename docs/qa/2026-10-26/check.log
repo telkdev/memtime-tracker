@@ -2,6 +2,6 @@
 > check
 > node scripts/check.mjs --no-fix
 
-✓ lint (5.0s)
-✓ typecheck (11.1s)
-✓ test (22.7s)
+✓ lint (4.9s)
+✓ typecheck (10.1s)
+✓ test (19.6s)

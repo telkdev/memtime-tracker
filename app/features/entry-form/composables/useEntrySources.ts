@@ -29,15 +29,18 @@ export function useEntrySources() {
     return [...saved.value, ...seen.value.filter(e => !ids.has(e.id))]
   })
 
-  /** The entry this form just saved, so the next one is checked against it. */
+  /** Call after the save's cache invalidation: the entry this form just saved, for the next one. */
   function remember(entry: TimeEntry) {
     saved.value = [entry, ...saved.value.filter(e => e.id !== entry.id)]
+    // The save dropped the newest-entries load if it hadn't answered yet: ask once more.
+    if (!seen.value.length) void ensureNewest()
   }
-  // A save (or a failed one) drops the list cache, and with it the newest-entries load if it
-  // hadn't answered yet. If the form has nothing yet, ask once more.
-  watch(cache.requests.generation, () => {
-    if (import.meta.client && !seen.value.length) void ensureNewest()
-  })
+
+  /** An entry the upstream says is gone (404 on update): no longer something to overlap. */
+  function forget(id: number) {
+    seen.value = seen.value.filter(e => e.id !== id)
+    saved.value = saved.value.filter(e => e.id !== id)
+  }
 
   const taskNames = useTaskNames()
   const catalog = computed<readonly TaskOption[]>(() =>
@@ -68,5 +71,5 @@ export function useEntrySources() {
     return buildTaskOptions(ids, catalog.value, nameOf)
   }
 
-  return { loadedEntries, getCached, invalidate, remember, taskGroups, watchTaskName }
+  return { loadedEntries, getCached, invalidate, remember, forget, taskGroups, watchTaskName }
 }
