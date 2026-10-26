@@ -3,7 +3,7 @@ import { timeEntryInputSchema } from '#shared/schemas/timeEntryInput'
 import { ceilToMinute, entryWarnings, fieldForPath, mergeFieldErrors } from '../model/rules'
 import type { EntryWarning, FieldErrors } from '../model/types'
 import { fromUtcIso, isConnectionError, toUtcIso, useDirtyGuard, useSubmitWithRetry } from '~/common'
-import type { ApiErrorCode } from '#shared/schemas/common'
+import { WRITE_NOT_APPLIED_CODES } from '#shared/schemas/common'
 import { createTimeEntry, updateTimeEntry, useTimeEntryCache } from '~/features/time-entries'
 import { useEntryTimes, type EntryTimesOptions } from './useEntryTimes'
 
@@ -75,7 +75,7 @@ export function useEntryForm(opts: EntryFormOptions) {
    * upstream didn't apply it are excluded; anything else (network, 5xx, an answer we couldn't read,
    * our own bug) may come after a saved entry. For a create, saving again could duplicate it.
    */
-  const mayBeApplied = computed(() => !!error.value && !UNAPPLIED_CODES.has(error.value.code))
+  const mayBeApplied = computed(() => !!error.value && !WRITE_NOT_APPLIED_CODES.has(error.value.code))
   const maybeSaved = computed(() => mode.value === 'create' && mayBeApplied.value)
 
   /** Message shown above the form for errors that aren't about one field. */
@@ -132,15 +132,15 @@ export function useEntryForm(opts: EntryFormOptions) {
 
   /**
    * A better default start arrived after the form opened (the newest entries were still loading).
-   * Applied only while the form is untouched: never over the user's input or a "log another" start.
+   * Applied only while the times are untouched: never over the user's input or a "log another"
+   * start. Picking a task or typing a comment doesn't count, and stays unsaved.
    */
   let startSettled = opts.mode === 'edit'
   function applyDefaultStart(start: Date) {
-    // A half-typed duration ("1:") isn't a value yet, so the dirty check misses it.
-    if (startSettled || mode.value !== 'create' || dirty.isDirty.value || times.duration.text.value.trim()) return
+    if (startSettled || times.touched()) return
     startSettled = true
     times.restartAt(fromUtcIso(start.toISOString()))
-    dirty.markSaved()
+    dirty.markSavedOnly(['date', 'startTime', 'startOccurrence', 'duration'])
   }
 
   /** "Save & log another": same task, next entry starts where this one ended. */
@@ -208,8 +208,5 @@ function serverFieldErrors(fields: Record<string, string>): FieldErrors {
   }
   return out
 }
-
-/** Errors that prove the upstream did not apply a write. */
-const UNAPPLIED_CODES: ReadonlySet<ApiErrorCode> = new Set(['BAD_REQUEST', 'VALIDATION', 'NOT_FOUND', 'RATE_LIMITED', 'UPSTREAM_AUTH'])
 
 export type EntryForm = ReturnType<typeof useEntryForm>

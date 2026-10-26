@@ -72,19 +72,18 @@ describe('EntryEditor (create)', () => {
     expect(listCalls).toEqual(['list'])
   })
 
-  it('keeps what the user typed while the entries were still loading', async () => {
+  it('keeps a start the user typed while the entries were still loading', async () => {
     const earlier = endedToday(7)
     if (!earlier) return
     reset([earlier])
     let release!: () => void
     gate = new Promise(r => release = r)
     const wrapper = await mountNew()
-    const before = startValue(wrapper)
-    await wrapper.find('textarea').setValue('Typed before the list arrived')
+    await wrapper.find('input[name="start"]').setValue('08:30')
     release()
     await vi.waitFor(() => expect(listCalls).toEqual(['list']))
     await new Promise(r => setTimeout(r, 50))
-    expect(startValue(wrapper)).toBe(before)
+    expect(startValue(wrapper)).toBe('08:30')
   })
 
   it('after "Save & log another", still warns about an overlap with the entry just saved', async () => {

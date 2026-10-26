@@ -29,12 +29,15 @@ export function useEntrySources() {
     return [...saved.value, ...seen.value.filter(e => !ids.has(e.id))]
   })
 
-  /** Call after the save's cache invalidation: the entry this form just saved, for the next one. */
+  /** The entry this form just saved, so the next one is checked against it. */
   function remember(entry: TimeEntry) {
     saved.value = [entry, ...saved.value.filter(e => e.id !== entry.id)]
-    // The save dropped the newest-entries load if it hadn't answered yet: ask once more.
-    if (!seen.value.length) void ensureNewest()
   }
+  // A save (or a failed one) drops the list cache, and with it the newest-entries load if it
+  // hadn't answered yet. If the form has nothing yet, ask once more.
+  watch(cache.requests.generation, () => {
+    if (import.meta.client && !seen.value.length) void ensureNewest()
+  })
 
   const taskNames = useTaskNames()
   const catalog = computed<readonly TaskOption[]>(() =>
@@ -43,8 +46,8 @@ export function useEntrySources() {
   const nameOf = (id: number): string | undefined => taskNames.label(id)?.name
 
   // Opened by a link or a reload, nothing is loaded: one request fills Recent, Smart start and the
-  // overlap warnings. `newestLoaded` resolves when it is in (at once if entries were loaded).
-  const newestLoaded = import.meta.client ? ensureNewest() : Promise.resolve()
+  // overlap warnings.
+  if (import.meta.client) void ensureNewest()
 
   // Names for recent tasks outside the loaded tree: one cached background lookup each.
   watchEffect(() => taskNames.resolve(recentTaskIds(loadedEntries.value).filter(id => !taskIndex.value.has(id))))
@@ -65,5 +68,5 @@ export function useEntrySources() {
     return buildTaskOptions(ids, catalog.value, nameOf)
   }
 
-  return { loadedEntries, newestLoaded, getCached, invalidate, remember, taskGroups, watchTaskName }
+  return { loadedEntries, getCached, invalidate, remember, taskGroups, watchTaskName }
 }

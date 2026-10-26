@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { ApiErrorCode, Page } from '#shared/schemas/common'
+import { WRITE_NOT_APPLIED_CODES, type Page } from '#shared/schemas/common'
 import { timeEntrySchema, upstreamTimeEntrySchema, type TimeEntry } from '#shared/schemas/timeEntry'
 import type { TimeEntryInput } from '#shared/schemas/timeEntryInput'
 import { ApiException } from './errors'
@@ -133,11 +133,8 @@ function afterUpdate() {
   useServerCache().invalidatePrefix(CREATE_DEDUPE_PREFIX)
 }
 
-/** Errors that prove the upstream did not apply a write (same list as the form's). */
-const UNAPPLIED_CODES: ReadonlySet<ApiErrorCode> = new Set(['BAD_REQUEST', 'VALIDATION', 'NOT_FOUND', 'RATE_LIMITED', 'UPSTREAM_AUTH'])
-
 function mayHaveApplied(err: unknown) {
-  return !(err instanceof ApiException && UNAPPLIED_CODES.has(err.body.code))
+  return !(err instanceof ApiException && WRITE_NOT_APPLIED_CODES.has(err.body.code))
 }
 
 export async function getTimeEntry(id: number): Promise<TimeEntry> {

@@ -375,10 +375,17 @@ describe('useEntryForm', () => {
     untouched.setDurationText('1h')
     expect([untouched.startTime.value, untouched.endTime.value]).toEqual(['14:00', '15:00'])
 
+    // A comment typed first doesn't block it, and stays unsaved.
+    const commented = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 17, 0), anchor: 'now' })
+    commented.comment.value = 'Started typing'
+    commented.applyDefaultStart(later)
+    expect(commented.startTime.value).toBe('14:00')
+    expect(commented.isDirty.value).toBe(true)
+
     const typed = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 17, 0), anchor: 'now' })
-    typed.comment.value = 'Started typing'
+    typed.setStartTime('08:30')
     typed.applyDefaultStart(later)
-    expect(typed.startTime.value).toBe('17:00')
+    expect(typed.startTime.value).toBe('08:30')
 
     const halfTyped = useEntryForm({ mode: 'create', now, start: new Date(2026, 9, 23, 17, 0), anchor: 'now' })
     halfTyped.setDurationText('1:')

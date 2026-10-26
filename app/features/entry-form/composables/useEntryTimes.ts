@@ -28,6 +28,8 @@ export function useEntryTimes(opts: EntryTimesOptions) {
   const duration = useDurationInput(entry ? Date.parse(entry.end) - Date.parse(entry.start) : null)
   const endError = ref<string | null>(null)
   let anchorNow = !entry && opts.anchor === 'now'
+  // Whether the user has set any of the times (date, start, duration, end) since the form opened.
+  let touched = false
 
   if (entry) {
     // An edited entry may sit on the second pass through a repeated hour; keep it there.
@@ -52,18 +54,21 @@ export function useEntryTimes(opts: EntryTimesOptions) {
   // An End error was about the old start; once the start moves, End is recomputed from the
   // duration and the message would be stale (and block saving a valid entry).
   function setDate(value: string) {
+    touched = true
     anchorNow = false
     endError.value = null
     date.value = value
   }
 
   function setStartTime(value: string) {
+    touched = true
     anchorNow = false
     endError.value = null
     startTime.value = value
   }
 
   function setDurationText(text: string) {
+    touched = true
     // A refused End stays refused until something actually moves End; otherwise the End box would
     // keep the refused text while the form saves a different time.
     if (duration.input(text)) endError.value = null
@@ -83,6 +88,7 @@ export function useEntryTimes(opts: EntryTimesOptions) {
 
   /** Called when the user commits a typed end time: recompute the duration from it. */
   function setEndTime(text: string) {
+    touched = true
     endError.value = null
     if (!start.value.ok || !text) return
     // Same as the start is almost always a slip, not a 24-hour entry: ask instead of guessing.
@@ -101,6 +107,7 @@ export function useEntryTimes(opts: EntryTimesOptions) {
 
   /** Ends the entry now: duration = now − start, on whatever day the start is. */
   function setEndNow() {
+    touched = true
     endError.value = null
     if (!start.value.ok) return
     // Passing only the clock time would land on the start's day: "End now" on Monday's entry,
@@ -146,6 +153,7 @@ export function useEntryTimes(opts: EntryTimesOptions) {
   return {
     date, startTime, startOccurrence, duration, start, end, endTime, endDayOffset, startAmbiguous, errors,
     setDate, setStartTime, setDurationText, setEndTime, setEndNow, fixStartGap, restartAt,
+    touched: () => touched,
   }
 }
 

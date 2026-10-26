@@ -35,10 +35,13 @@ function createForm() {
   // Opened by a link or a reload, the newest entries are still loading. Once they are in, continue
   // after today's last entry, unless the user has already started typing.
   if (!knownEntries().length) {
-    void sources.newestLoaded.then(() => {
-      // A date or time box keeps a half-typed value to itself until it is complete; don't move it.
+    const stop = watch(knownEntries, (entries) => {
+      if (!entries.length) return
+      stop()
+      // A date or time box keeps a half-typed value to itself until it is complete; the user is
+      // setting the start, so leave it.
       if (editingTime()) return
-      const next = defaultStart(knownEntries(), new Date())
+      const next = defaultStart(entries, new Date())
       if (next.from === 'previous') created.applyDefaultStart(next.start)
     })
   }

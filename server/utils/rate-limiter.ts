@@ -215,8 +215,8 @@ export function createRateLimiter(opts: RateLimiterOptions) {
     if (t < blockedUntil) return
     rollWindow(t)
     if (upstreamRemaining <= 0) {
-      // A reset of 0 (seen near a window edge) would otherwise mean no pause at all, and the
-      // queue would go straight into the spent upstream window.
+      // The reset header has whole seconds, so just before a reset it can say 0. Without a floor
+      // that means no pause at all, and the queue would go straight into the spent upstream window.
       blockedUntil = t + Math.max(resetMs ?? opts.windowMs, MIN_SYNC_PAUSE_MS)
       restartWindowAt(blockedUntil)
       armTimer()
