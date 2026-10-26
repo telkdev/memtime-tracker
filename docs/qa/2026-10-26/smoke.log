@@ -1,0 +1,35 @@
+
+> smoke
+> node scripts/smoke.mjs
+
+✓ client bundle has no API key or key config name
+✓ GET / renders
+✓ GET / has no key
+✓ security headers set
+✓ GET /api/clients returns a page
+✓ GET /api/clients/1/projects returns a page
+✓ GET /api/projects/:id/tasks returns a page
+✓ GET /api/time-entries returns seeded entries
+✓ time entries contain no key
+✓ time entries have no userId field
+✓ time entries are Cache-Control: no-store
+✓ bad id → 400 VALIDATION
+✓ unknown task → 404 NOT_FOUND
+✓ oversized page → 400 VALIDATION
+✓ oversized page costs no upstream call
+✓ unknown API route → BFF 404 shape
+✓ POST {} → 400 with field errors
+✓ invalid POST costs no upstream call
+✓ POST invalid JSON → 400 BFF shape
+✓ POST valid entry → 2xx with id
+✓ POST response has no key
+✓ PUT unknown entry → 404 NOT_FOUND
+✓ GET /api/time-entries/:id returns the entry without userId or key
+✓ PUT existing entry → 200 with the updated entry
+✓ GET unknown entry → 404 NOT_FOUND
+✓ burst: every reply is data or 429 with retryAfter
+✓ burst: some requests were held back
+✓ upstream never answered 429
+✓ server log never contains the key
+
+29 of 29 smoke checks passed or skipped

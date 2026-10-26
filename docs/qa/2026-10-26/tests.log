@@ -1,0 +1,897 @@
+
+ RUN  v5.0.5 memtime-tracker
+
+stdout | tests/unit/leave-guard.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+stderr | tests/unit/leave-guard.test.ts > useLeaveGuard > asks before opening another entry on the same edit route
+[Vue warn]: onMounted is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+[Vue warn]: onBeforeUnmount is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+
+stderr | tests/unit/leave-guard.test.ts > useLeaveGuard > lets the user go when they confirm
+[Vue warn]: onMounted is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+[Vue warn]: onBeforeUnmount is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+
+stderr | tests/unit/leave-guard.test.ts > useLeaveGuard > does not ask on a query-only change or when nothing is unsaved
+[Vue warn]: onMounted is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+[Vue warn]: onBeforeUnmount is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+[Vue warn]: onMounted is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+[Vue warn]: onBeforeUnmount is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+
+stderr | tests/unit/leave-guard.test.ts > useLeaveGuard > still asks when leaving the page
+[Vue warn]: onMounted is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+[Vue warn]: onBeforeUnmount is called when there is no active component instance to be associated with. Lifecycle injection APIs can only be used during execution of setup(). If you are using async setup(), make sure to register lifecycle hooks before the first await statement.
+
+ ✓ tests/unit/leave-guard.test.ts > useLeaveGuard > asks before opening another entry on the same edit route 5ms
+ ✓ tests/unit/leave-guard.test.ts > useLeaveGuard > lets the user go when they confirm 1ms
+ ✓ tests/unit/leave-guard.test.ts > useLeaveGuard > does not ask on a query-only change or when nothing is unsaved 2ms
+ ✓ tests/unit/leave-guard.test.ts > useLeaveGuard > still asks when leaving the page 1ms
+stdout | tests/components/EntriesPanel.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+stdout | tests/components/entry-form.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > sends one request per page change, not one per watcher
+[Icon] failed to load icon `lucide:refresh-cw`
+[Icon] failed to load icon `lucide:pencil`
+[Icon] failed to load icon `lucide:pencil`
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/entry-form.test.ts > EntryForm > shows each error under its field and links it with aria-describedby 492ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > sends one request per page change, not one per watcher
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > sends one request per page change, not one per watcher
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > sends one request per page change, not one per watcher
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > sends one request per page change, not one per watcher
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > requests the page and size from the URL 669ms
+stderr | tests/components/entry-form.test.ts > EntryForm > marks an end on the next day
+[Icon] failed to load icon `lucide:folder-tree`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > marks an end on the next day
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > marks an end on the next day
+[Icon] failed to load icon `lucide:folder-tree`
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+ ✓ tests/components/entry-form.test.ts > EntryForm > marks an end on the next day 256ms
+stderr | tests/components/entry-form.test.ts > EntryForm > offers a one-click fix for a time skipped by DST
+[Icon] failed to load icon `lucide:folder-tree`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > offers a one-click fix for a time skipped by DST
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps the cached page on screen when an older request lands late
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps the cached page on screen when an older request lands late
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps the cached page on screen when an older request lands late
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps the cached page on screen when an older request lands late
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > sends one request per page change, not one per watcher 306ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps the cached page on screen when an older request lands late
+[Icon] failed to load icon `lucide:refresh-cw`
+
+ ✓ tests/components/entry-form.test.ts > EntryForm > offers a one-click fix for a time skipped by DST 217ms
+stderr | tests/components/entry-form.test.ts > EntryForm > updates the duration field when End is edited, and End when the duration is
+[Icon] failed to load icon `lucide:folder-tree`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > updates the duration field when End is edited, and End when the duration is
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > reloads the page on screen once when a write clears the cache
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > reloads the page on screen once when a write clears the cache
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > reloads the page on screen once when a write clears the cache
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > reloads the page on screen once when a write clears the cache
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > keeps the cached page on screen when an older request lands late 374ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > reloads the page on screen once when a write clears the cache
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > shows the End that will be saved once a Date change clears a refused End
+[Icon] failed to load icon `lucide:folder-tree`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > shows the End that will be saved once a Date change clears a refused End
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+ ✓ tests/components/entry-form.test.ts > EntryForm > updates the duration field when End is edited, and End when the duration is 221ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > does not put a list answer that started before a save back into the cache
+[Icon] failed to load icon `lucide:refresh-cw`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > reloads the page on screen once when a write clears the cache 235ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > does not put a list answer that started before a save back into the cache
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > does not put a list answer that started before a save back into the cache
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > does not put a list answer that started before a save back into the cache
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > offers "Save & log another" only on a form that was opened to create
+[Icon] failed to load icon `lucide:folder-tree`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > offers "Save & log another" only on a form that was opened to create
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+ ✓ tests/components/entry-form.test.ts > EntryForm > shows the End that will be saved once a Date change clears a refused End 253ms
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > does not put a list answer that started before a save back into the cache 178ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > says so when a just-saved entry is not on the page it returned to
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > says so when a just-saved entry is not on the page it returned to
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > says so when a just-saved entry is not on the page it returned to
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > says so when a just-saved entry is not on the page it returned to
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > keeps "Save & log another" when the save is retried after a rate limit
+[Icon] failed to load icon `lucide:folder-tree`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > keeps "Save & log another" when the save is retried after a rate limit
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+ ✓ tests/components/entry-form.test.ts > EntryForm > offers "Save & log another" only on a form that was opened to create 165ms
+stderr | tests/components/entry-form.test.ts > EntryForm > keeps "Save & log another" when the save is retried after a rate limit
+[Icon] failed to load icon `lucide:hourglass`
+
+stdout | tests/components/ClientTree.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows an already-seen page again without asking the server (within the cache TTL)
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows an already-seen page again without asking the server (within the cache TTL)
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows an already-seen page again without asking the server (within the cache TTL)
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows an already-seen page again without asking the server (within the cache TTL)
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > says so when a just-saved entry is not on the page it returned to 220ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows an already-seen page again without asking the server (within the cache TTL)
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps a cached page on screen when a slower request for another page answers late
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps a cached page on screen when a slower request for another page answers late
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps a cached page on screen when a slower request for another page answers late
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps a cached page on screen when a slower request for another page answers late
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > shows an already-seen page again without asking the server (within the cache TTL) 193ms
+ ✓ tests/components/ClientTree.test.ts > ClientTree > loads only clients on mount, then one level per expand, and nothing on re-expand 269ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > keeps a cached page on screen when a slower request for another page answers late
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > supports full keyboard navigation and Enter on a task emits log
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > supports full keyboard navigation and Enter on a task emits log
+[Icon] failed to load icon `lucide:refresh-cw`
+[Icon] failed to load icon `lucide:building-2`
+[Icon] failed to load icon `lucide:building-2`
+[Icon] failed to load icon `lucide:building-2`
+[Icon] failed to load icon `lucide:gauge`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > supports full keyboard navigation and Enter on a task emits log
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > supports full keyboard navigation and Enter on a task emits log
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > supports full keyboard navigation and Enter on a task emits log
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > supports full keyboard navigation and Enter on a task emits log
+[Icon] failed to load icon `lucide:gauge`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > supports full keyboard navigation and Enter on a task emits log
+[Icon] failed to load icon `lucide:circle-dot`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > keeps a cached page on screen when a slower request for another page answers late 229ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > schedules no retry for a rate limit that answers after the panel is gone
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > shows a waiting countdown on 429 and retries by itself
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > shows a waiting countdown on 429 and retries by itself
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > shows a waiting countdown on 429 and retries by itself
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > shows a waiting countdown on 429 and retries by itself
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > shows a waiting countdown on 429 and retries by itself
+[Icon] failed to load icon `lucide:gauge`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > shows a waiting countdown on 429 and retries by itself
+[Icon] failed to load icon `lucide:hourglass`
+
+ ✓ tests/components/ClientTree.test.ts > ClientTree > supports full keyboard navigation and Enter on a task emits log 151ms
+ ✓ tests/components/entry-form.test.ts > EntryForm > keeps "Save & log another" when the save is retried after a rate limit 1244ms
+stderr | tests/components/entry-form.test.ts > EntryForm > offers "Check the list", not "Try again", after a create that may have been saved
+[Icon] failed to load icon `lucide:folder-tree`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > offers "Check the list", not "Try again", after a create that may have been saved
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > offers "Check the list", not "Try again", after a create that may have been saved
+[Icon] failed to load icon `lucide:external-link`
+
+ ✓ tests/components/entry-form.test.ts > EntryForm > offers "Check the list", not "Try again", after a create that may have been saved 137ms
+stderr | tests/components/entry-form.test.ts > EntryForm > still offers "Try again" after an update that may not have been saved
+[Icon] failed to load icon `lucide:folder-tree`
+
+stderr | tests/components/entry-form.test.ts > EntryForm > still offers "Try again" after an update that may not have been saved
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+ ✓ tests/components/entry-form.test.ts > EntryForm > still offers "Try again" after an update that may not have been saved 136ms
+ ✓ tests/components/ClientTree.test.ts > ClientTree > shows a waiting countdown on 429 and retries by itself 1074ms
+stderr | tests/components/ClientTree.test.ts > ClientTree > keeps keyboard focus when the loading row it sits on resolves
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > keeps keyboard focus when the loading row it sits on resolves
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > keeps keyboard focus when the loading row it sits on resolves
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > keeps keyboard focus when the loading row it sits on resolves
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > keeps keyboard focus when the loading row it sits on resolves
+[Icon] failed to load icon `lucide:gauge`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > says why a failed refresh changed nothing, keeps the tree, and clears once it works
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > says why a failed refresh changed nothing, keeps the tree, and clears once it works
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > says why a failed refresh changed nothing, keeps the tree, and clears once it works
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > says why a failed refresh changed nothing, keeps the tree, and clears once it works
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > says why a failed refresh changed nothing, keeps the tree, and clears once it works
+[Icon] failed to load icon `lucide:gauge`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > says why a failed refresh changed nothing, keeps the tree, and clears once it works
+[Icon] failed to load icon `lucide:refresh-cw`
+
+ ✓ tests/components/ClientTree.test.ts > ClientTree > keeps keyboard focus when the loading row it sits on resolves 118ms
+stderr | tests/components/ClientTree.test.ts > ClientTree > shows no Retry for a misconfigured server key, and Enter does not retry it
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > clears the refresh error once the clients load again through a Retry
+[Icon] failed to load icon `lucide:refresh-cw`
+
+ ✓ tests/components/ClientTree.test.ts > ClientTree > says why a failed refresh changed nothing, keeps the tree, and clears once it works 109ms
+ ✓ tests/components/ClientTree.test.ts > ClientTree > shows no Retry for a misconfigured server key, and Enter does not retry it 72ms
+stderr | tests/components/ClientTree.test.ts > ClientTree > clears the refresh error once the clients load again through a Retry
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > clears the refresh error once the clients load again through a Retry
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > clears the refresh error once the clients load again through a Retry
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > clears the refresh error once the clients load again through a Retry
+[Icon] failed to load icon `lucide:building-2`
+
+stderr | tests/components/ClientTree.test.ts > ClientTree > clears the refresh error once the clients load again through a Retry
+[Icon] failed to load icon `lucide:gauge`
+
+ ✓ tests/components/ClientTree.test.ts > ClientTree > clears the refresh error once the clients load again through a Retry 171ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > follows back and forward through pages via the URL
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > follows back and forward through pages via the URL
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > follows back and forward through pages via the URL
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > follows back and forward through pages via the URL
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > schedules no retry for a rate limit that answers after the panel is gone 1612ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > follows back and forward through pages via the URL
+[Icon] failed to load icon `lucide:refresh-cw`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > follows back and forward through pages via the URL 281ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows entries grouped by local day with totals and local times
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows entries grouped by local day with totals and local times
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows entries grouped by local day with totals and local times
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows entries grouped by local day with totals and local times
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > resolves each unknown task once, however many rows use it
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > resolves each unknown task once, however many rows use it
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > resolves each unknown task once, however many rows use it
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > resolves each unknown task once, however many rows use it
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > shows entries grouped by local day with totals and local times 161ms
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > resolves each unknown task once, however many rows use it 223ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > links every row to its edit page with an accessible Edit button
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > links every row to its edit page with an accessible Edit button
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > links every row to its edit page with an accessible Edit button
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > links every row to its edit page with an accessible Edit button
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > links every row to its edit page with an accessible Edit button 214ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > says "nothing on this page" instead of "no entries" past the end
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows a misconfiguration without a pointless retry
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows a misconfiguration without a pointless retry
+[Icon] failed to load icon `lucide:clock`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > shows the empty state with a call to action on page 1 89ms
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > says "nothing on this page" instead of "no entries" past the end 91ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > waits out a rate limit and then loads by itself
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > waits out a rate limit and then loads by itself
+[Icon] failed to load icon `lucide:refresh-cw`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > shows a misconfiguration without a pointless retry 104ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > waits out a rate limit and then loads by itself
+[Icon] failed to load icon `lucide:cloud-off`
+[Icon] failed to load icon `lucide:hourglass`
+
+stdout | tests/unit/request-guard.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/unit/feature-boundaries.test.ts > feature boundaries > blocks a deep import into another feature 2268ms
+ ✓ tests/unit/request-guard.test.ts > useRequestGuard > keeps a ticket current until the guard is invalidated, then aborts it 5ms
+ ✓ tests/unit/request-guard.test.ts > useRequestGuard > startLatest replaces the previous request 3ms
+ ✓ tests/unit/request-guard.test.ts > useRequestGuard > lets independent requests run side by side with start() 1ms
+ ✓ tests/unit/request-guard.test.ts > useRequestGuard > is shared by key, so one caller can invalidate another caller's requests 1ms
+ ✓ tests/unit/request-guard.test.ts > useRequestGuard > a ticket can also depend on a second guard 1ms
+ ✓ tests/unit/request-guard.test.ts > useRequestGuard > does not abort a request that already finished 1ms
+ ✓ tests/unit/feature-boundaries.test.ts > feature boundaries > blocks climbing out of a feature with ../../ 27ms
+ ✓ tests/unit/feature-boundaries.test.ts > feature boundaries > blocks common/ from importing any feature 90ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > waits out a rate limit and then loads by itself
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > waits out a rate limit and then loads by itself
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > waits out a rate limit and then loads by itself
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/unit/feature-boundaries.test.ts > feature boundaries > blocks $fetch outside an api/ folder 33ms
+ ✓ tests/unit/feature-boundaries.test.ts > feature boundaries > allows the public index and imports inside the same feature 107ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > takes task names from the loaded tree without asking the server
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > takes task names from the loaded tree without asking the server
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > takes task names from the loaded tree without asking the server
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > takes task names from the loaded tree without asking the server
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > waits out a rate limit and then loads by itself 1211ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > treats id 0 as a real entry and task
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > treats id 0 as a real entry and task
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > takes task names from the loaded tree without asking the server 217ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > drops the post-save highlight after a few seconds, but not after the panel is gone
+[Icon] failed to load icon `lucide:refresh-cw`
+[Icon] failed to load icon `lucide:pencil`
+[Icon] failed to load icon `lucide:pencil`
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > treats id 0 as a real entry and task 140ms
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > drops the post-save highlight after a few seconds, but not after the panel is gone 229ms
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > remembers the page on screen, so a save can return to it
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > remembers the page on screen, so a save can return to it
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > remembers the page on screen, so a save can return to it
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > remembers the page on screen, so a save can return to it
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows the brief's columns, and the task id even once the name is known
+[Icon] failed to load icon `lucide:refresh-cw`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows the brief's columns, and the task id even once the name is known
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows the brief's columns, and the task id even once the name is known
+[Icon] failed to load icon `lucide:pencil`
+
+stderr | tests/components/EntriesPanel.test.ts > EntriesPanel > shows the brief's columns, and the task id even once the name is known
+[Icon] failed to load icon `lucide:pencil`
+
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > remembers the page on screen, so a save can return to it 219ms
+ ✓ tests/components/EntriesPanel.test.ts > EntriesPanel > shows the brief's columns, and the task id even once the name is known 213ms
+stdout | tests/unit/api-error.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/unit/api-error.test.ts > parseApiError > passes a BFF error body through 10ms
+ ✓ tests/unit/api-error.test.ts > parseApiError > reports a response that fails our schema as invalid data, not as a connection problem 5ms
+ ✓ tests/unit/api-error.test.ts > parseApiError > reports a request that got no answer as a connection problem 1ms
+ ✓ tests/unit/api-error.test.ts > parseApiError > reports a status without our error shape, or a plain bug, as a generic failure 1ms
+stdout | tests/unit/time-input.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/unit/time-input.test.ts > resolveLocal > converts a summer local time to UTC 3ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > converts a winter local time to UTC 1ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > round-trips through fromUtcIso 1ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > reports a time inside the spring-forward gap instead of shifting it 1ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > offers both occurrences of a time repeated when clocks fall back 1ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > does not flag ordinary times as ambiguous 1ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > rejects invalid input 2026-02-31 10:00 0ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > rejects invalid input 2026-13-01 10:00 0ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > rejects invalid input 2026-10-23 24:00 1ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > rejects invalid input 2026-10-23 9:00 0ms
+ ✓ tests/unit/time-input.test.ts > resolveLocal > rejects invalid input  10:00 0ms
+ ✓ tests/unit/time-input.test.ts > resolveEndTime > keeps the end on the same day when it is after the start 1ms
+ ✓ tests/unit/time-input.test.ts > resolveEndTime > moves an end at or before the start to the next day (23:00 to 01:00) 0ms
+ ✓ tests/unit/time-input.test.ts > resolveEndTime > treats an end equal to the start as 24 hours later, not zero 0ms
+ ✓ tests/unit/time-input.test.ts > resolveEndTime > keeps an end in the repeated hour on the same night when the start is the second occurrence 0ms
+ ✓ tests/unit/time-input.test.ts > resolveEndTime > counts real elapsed time across the fall-back night 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "1h 30m" as 90 minutes 5ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "1h30" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "1h30m" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "1 h 30 min" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "1:30" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "0:45" as 45 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "90m" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "90 min" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "1.5h" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "1,5h" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "1,5" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "2h" as 120 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "2" as 120 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "12" as 720 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "90" as 90 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "0.25" as 15 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > reads "  2 hours " as 120 minutes 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > rejects "" 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > rejects "abc" 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > rejects "1h30x" 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > rejects "1:75" 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > rejects "-1h" 4ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > rejects "1.5h30m" 0ms
+ ✓ tests/unit/time-input.test.ts > parseDuration > rejects "h" 0ms
+ ✓ tests/unit/time-input.test.ts > roundDownToMinutes > rounds down to the previous quarter hour 0ms
+stdout | tests/components/edit-page.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+stderr | tests/components/edit-page.test.ts > edit page > turns the heading into a create after a 404 on save and "Create as new entry"
+[Icon] failed to load icon `lucide:file-x`
+
+stderr | tests/components/edit-page.test.ts > edit page > turns the heading into a create after a 404 on save and "Create as new entry"
+[Icon] failed to load icon `lucide:file-x`
+
+ ✓ tests/components/edit-page.test.ts > edit page > explains a deep link to a missing entry and offers a way forward 179ms
+ ✓ tests/components/edit-page.test.ts > edit page > treats a malformed id as missing without asking the server 95ms
+stderr | tests/components/edit-page.test.ts > edit page > turns the heading into a create after a 404 on save and "Create as new entry"
+[VUE_ROUTER_R0020] No active route record was found when calling `onBeforeRouteLeave()`. Maybe you called it inside of App.vue?
+├▶ fix: Call it from a component rendered inside <router-view> (a page component or one of its children), not from App.vue.
+╰▶ see: https://router.vuejs.org/guide/advanced/composition-api.html#Navigation-Guards
+[VUE_ROUTER_R0020] No active route record was found when calling `onBeforeRouteUpdate()`. Maybe you called it inside of App.vue?
+├▶ fix: Call it from a component rendered inside <router-view> (a page component or one of its children), not from App.vue.
+╰▶ see: https://router.vuejs.org/guide/advanced/composition-api.html#Navigation-Guards
+
+stderr | tests/components/edit-page.test.ts > edit page > turns the heading into a create after a 404 on save and "Create as new entry"
+[Icon] failed to load icon `lucide:file-x`
+
+ ✓ tests/components/edit-page.test.ts > edit page > turns the heading into a create after a 404 on save and "Create as new entry" 347ms
+stderr | node_modules/@nuxt/icon/dist/runtime/components/shared.js:15:13
+[Icon] failed to load icon `lucide:folder-tree`
+[Icon] failed to load icon `lucide:clock-arrow-down`
+
+stdout | tests/unit/time.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/unit/time.test.ts > time display helpers > runs in the pinned zone 9ms
+ ✓ tests/unit/time.test.ts > time display helpers > formats 0 ms as 0m 1ms
+ ✓ tests/unit/time.test.ts > time display helpers > formats 2700000 ms as 45m 0ms
+ ✓ tests/unit/time.test.ts > time display helpers > formats 5400000 ms as 1h 30m 0ms
+ ✓ tests/unit/time.test.ts > time display helpers > formats 28800000 ms as 8h 0ms
+ ✓ tests/unit/time.test.ts > time display helpers > formats 5376000 ms as 1h 30m 0ms
+ ✓ tests/unit/time.test.ts > time display helpers > formats -300000 ms as 0m 0ms
+ ✓ tests/unit/time.test.ts > time display helpers > shows UTC timestamps in local time 2ms
+ ✓ tests/unit/time.test.ts > time display helpers > uses the UI locale by default, whatever the runtime locale is 2ms
+ ✓ tests/unit/time.test.ts > time display helpers > follows the spring-forward jump 1ms
+ ✓ tests/unit/time.test.ts > time display helpers > groups by the local day, not the UTC day 0ms
+ ✓ tests/unit/time.test.ts > time display helpers > detects an entry that crosses local midnight 0ms
+ ✓ tests/unit/time.test.ts > time display helpers > counts calendar days across the fall-back day 0ms
+ ✓ tests/unit/time.test.ts > time display helpers > adds the year only for other years 1ms
+ ✓ tests/unit/time.test.ts > instant helpers > sends UTC with Z and finds the local midnight (Berlin) 1ms
+stdout | tests/components/RetryCountdown.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/components/RetryCountdown.test.ts > RetryCountdown > shows the whole seconds left and hides itself at zero 76ms
+stdout | tests/components/entry-sources.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/components/entry-sources.test.ts > useEntrySources > loads the newest entries once when the form is opened directly, so Recent is not empty 175ms
+stdout | tests/components/use-catalog-retry.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/components/entry-sources.test.ts > useEntrySources > looks up the name of a deep-linked task that nothing else has loaded 68ms
+ ✓ tests/components/use-catalog-retry.test.ts > useCatalog retry > retries a failed "Load more" from where it stopped, keeping the loaded page 44ms
+ ✓ tests/components/use-catalog-retry.test.ts > useCatalog retry > does not jump the queue when the user activates a row that is waiting out a rate limit 5ms
+ ✓ tests/components/use-catalog-retry.test.ts > useCatalog retry > drops a load that was in flight when the catalog was refreshed 19ms
+ ✓ tests/components/use-catalog-retry.test.ts > useCatalog retry > keeps the rate-limit retry of a waiting node when the refresh request fails 66ms
+ ✓ tests/components/entry-sources.test.ts > useEntrySources > does not retry a failing task-name lookup in a loop 311ms
+stdout | tests/unit/default-start.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/unit/default-start.test.ts > defaultStart > continues on the minute after the last entry, so it never overlaps it 6ms
+ ✓ tests/unit/default-start.test.ts > defaultStart > says it continues the last entry even when that entry ended on a quarter hour 1ms
+ ✓ tests/unit/default-start.test.ts > defaultStart > falls back to now, rounded down to 15 minutes, with no entry today 1ms
+stdout | tests/unit/entries-row.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/unit/entries-row.test.ts > entry row helpers > links id 0 to its edit page 3ms
+ ✓ tests/unit/entries-row.test.ts > entry row helpers > counts the local days an entry runs past its start (Berlin: 23:00 → 01:30) 1ms
+ ✓ tests/unit/entries-row.test.ts > entry row helpers > highlights a just-saved entry more strongly than entries of the selected task 1ms
+ ✓ tests/unit/entries-row.test.ts > listReturnQuery > returns an update to the page the user came from, with the row highlighted 2ms
+ ✓ tests/unit/entries-row.test.ts > listReturnQuery > opens page 1 at the same size after a create (new entries are the newest) 1ms
+ ✓ tests/unit/entries-row.test.ts > listReturnQuery > cancels back to the same page without a highlight 1ms
+stdout | tests/unit/entries.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/unit/entries.test.ts > groupEntriesByDay > groups by local start day and totals each day 4ms
+ ✓ tests/unit/entries.test.ts > groupEntriesByDay > marks edge days as partial when neighbouring pages exist 1ms
+ ✓ tests/unit/entries.test.ts > groupEntriesByDay > ignores negative durations in the total 0ms
+ ✓ tests/unit/entries.test.ts > list position in the URL > reads page and size 1ms
+ ✓ tests/unit/entries.test.ts > list position in the URL > falls back to defaults for {} 0ms
+ ✓ tests/unit/entries.test.ts > list position in the URL > falls back to defaults for {"page":"abc","size":"1000"} 0ms
+ ✓ tests/unit/entries.test.ts > list position in the URL > falls back to defaults for {"page":"0","size":"7"} 0ms
+ ✓ tests/unit/entries.test.ts > list position in the URL > falls back to defaults for {"page":"2.5"} 0ms
+ ✓ tests/unit/entries.test.ts > list position in the URL > falls back to defaults for {"page":["4","5"]} 1ms
+ ✓ tests/unit/entries.test.ts > list position in the URL > leaves defaults out of the canonical query 1ms
+ ✓ tests/unit/entries.test.ts > list position in the URL > flags URLs that need correcting 0ms
+stdout | tests/unit/entry-form-parts.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+ ✓ tests/unit/entry-form-parts.test.ts > useDurationInput > treats 0 as a value with its own message, not as empty 4ms
+ ✓ tests/unit/entry-form-parts.test.ts > useDurationInput > keeps the last good duration while the text is unreadable 2ms
+ ✓ tests/unit/entry-form-parts.test.ts > useDurationInput > reports no change when the same duration is typed differently 1ms
+ ✓ tests/unit/entry-form-parts.test.ts > useDirtyGuard > tracks every field it is given, with optional normalising 1ms
+ ✓ tests/unit/entry-form-parts.test.ts > mergeFieldErrors > hides ISO messages when a time field already explains the problem 0ms
+ ✓ tests/unit/entry-form-parts.test.ts > mergeFieldErrors > keeps the form's own message over the schema's for the same field 0ms
+ ✓ tests/unit/entry-form-parts.test.ts > mergeFieldErrors > fills fields the form had nothing to say about 0ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > sends the bearer key and requests limit+1 to detect more pages 46ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > reports no more pages when the extra item is missing 2ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > drops unknown upstream fields 3ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps an unexpected response shape to UPSTREAM_INVALID 3ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps upstream {"status":404,"body":{"error":"Client not found"}} 3ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps upstream {"status":404,"body":{"error":"Time entry not found"}} 2ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps upstream {"status":404,"body":{"error":"Unknown user"}} 1ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps upstream {"status":401,"body":{"error":"Unauthorized"}} 1ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps upstream {"status":400,"body":{"error":"Invalid JSON body"}} 3ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps upstream {"status":400,"body":{"error":"Invalid request body"}} 2ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps upstream {"status":500,"body":{"error":"Internal"}} 1ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps network failures to UPSTREAM_UNAVAILABLE 1ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > never leaks the key through upstream error messages or logs 1ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > retries after a 429 once the limiter pause ends 6ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > syncs the limiter from the upstream ratelimit-remaining header 2ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > uses ratelimit-reset as the pause after a 429 without Retry-After 2ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > maps a plain-text 401 Unauthorized to UPSTREAM_AUTH 1ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > gives up after maxRetries when 429s persist and the caller may wait 12ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > stops retrying as soon as the next backoff is longer than the interactive wait 2ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > waits exactly Retry-After before retrying, then succeeds 2ms
+ ✓ tests/server/memtime-client.test.ts > memtime client > parses Retry-After as seconds or an HTTP date 1ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > creates an entry and never returns the API key 58ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > sends one upstream request for a double-submitted create 2ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > creates again after an edit, instead of returning the edited entry from the dedupe memo 3ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > does not retry a create after a network failure, because it might have been saved 2ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > clears cached list pages after a write 2ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > clears cached list pages after a create that failed on the network, since it may have been saved 2ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > maps an update 404 to a plain "no longer exists" message 3ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > says the same thing for a missing entry on read and on update 2ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > maps "Unknown user" to a server misconfiguration, not a missing entry 2ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > shows "Invalid JSON body" as a summary without blaming a field 2ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > shows "Invalid request body" as a summary without blaming a field 1ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > attaches an upstream 400 that names a field to that field 1ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > puts the upstream 400 "End must be after start" under the field it names first, matching whole words 1ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > puts the upstream 400 "Entry is pending review" under the field it names first, matching whole words 1ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > puts the upstream 400 "The extended comment is too long" under the field it names first, matching whole words 1ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > accepts id 0 and task 0, which exist upstream 3ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > updates with PUT and the full entry 1ms
+ ✓ tests/server/time-entry-writes.test.ts > time entry writes > reads one entry for deep links and reports a missing one clearly 2ms
+ ✓ tests/server/time-entry-writes.test.ts > timeEntryInputSchema > accepts a valid entry and trims the comment 0ms
+ ✓ tests/server/time-entry-writes.test.ts > timeEntryInputSchema > rejects end before start on the end field 1ms
+ ✓ tests/server/time-entry-writes.test.ts > timeEntryInputSchema > rejects entries longer than 24 hours 0ms
+ ✓ tests/server/time-entry-writes.test.ts > timeEntryInputSchema > rejects blank comment 1ms
+ ✓ tests/server/time-entry-writes.test.ts > timeEntryInputSchema > rejects missing task 0ms
+ ✓ tests/server/time-entry-writes.test.ts > timeEntryInputSchema > rejects local time without offset 0ms
+ ✓ tests/server/time-entry-writes.test.ts > timeEntryInputSchema > rejects comment over 500 chars 1ms
+ ✓ tests/server/task-lookup.test.ts > task lookup (GET /api/tasks/:id) > runs in the background lane, so it never delays paging or saves 55ms
+ ✓ tests/server/task-lookup.test.ts > task lookup (GET /api/tasks/:id) > caches a found task: the second lookup costs no upstream call 4ms
+ ✓ tests/server/task-lookup.test.ts > task lookup (GET /api/tasks/:id) > remembers a missing task for 30 s, then asks again 5ms
+ ✓ tests/server/task-lookup.test.ts > task lookup (GET /api/tasks/:id) > does not remember transient failures 4ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > never runs more than the budget in any window, with 50 callers across all lanes 14ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > waits for the upstream reset when the upstream window ends later than ours 2ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > runs interactive work before queued background work 1ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > runs writes before interactive work 2ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > keeps a reserve that background work cannot use 2ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > caps background work at half the window, so user actions never wait behind name lookups 2ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > lets background use less than its share when the upstream says the budget is low 1ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > rejects instead of queueing when the wait would exceed maxWaitMs 1ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > starts a fresh budget when the window resets 2ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > pauses every lane after penalize() and escalates on repeated 429s 2ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > honours an explicit retry-after when given 1ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > lowers its own budget to what the upstream reports, keeping one spare 1ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > pauses every lane until the upstream reset when it reports 0 remaining 1ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > rejects a queued call at its own deadline, not when a later pause ends 1ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > runs a queued call whose deadline falls exactly when a slot frees 2ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > never pauses for less than the backoff step, even if the header says 0 1ms
+ ✓ tests/server/rate-limiter.test.ts > rate limiter > reports a snapshot of the budget 1ms
+ ✓ tests/server/time-entries.test.ts > time entries list (BFF) > never returns the API key or a userId field 51ms
+ ✓ tests/server/time-entries.test.ts > time entries list (BFF) > asks for limit+1, newest first 8ms
+ ✓ tests/server/time-entries.test.ts > time entries list (BFF) > uses the extra row only to detect a next page 3ms
+ ✓ tests/server/time-entries.test.ts > time entries list (BFF) > reports the last page when no extra row comes back 2ms
+ ✓ tests/server/time-entries.test.ts > time entries list (BFF) > the list query schema refuses an oversized page and defaults the rest 3ms
+stdout | tests/unit/use-entry-form.test.ts
+<Suspense> is an experimental feature and its API will likely change.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > keeps an edited entry's exact seconds when only the comment changes
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > shows the server message when its field errors match no form field
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > starts the next entry on the minute after a previous end with seconds
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > "End now" on an entry from two days ago ends it now, not on its own day
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > "End now" refuses a start in the future
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > sends UTC timestamps derived from local start and duration
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > saves 23:00 to 01:00 as two hours ending the next day
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > keeps End and duration in sync both ways
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > never puts End before Start: an earlier end time means the next day
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > refuses an End equal to Start instead of saving 0 or 24 hours
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > accepts an End equal to Start in the repeated fall-back hour as one hour later
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > keeps a refused End refused when the duration is entered again unchanged
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+ ✓ tests/server/cache.test.ts > cache > coalesces concurrent identical calls into one fetch 8ms
+ ✓ tests/server/cache.test.ts > cache > serves fresh values without refetching and refetches after the TTL 4ms
+ ✓ tests/server/cache.test.ts > cache > serves stale values while revalidating in the background 2ms
+ ✓ tests/server/cache.test.ts > cache > tells the loader whether it is a cold load or the quiet refresh behind a stale value 2ms
+ ✓ tests/server/cache.test.ts > cache > never makes a waiting caller join a quiet revalidation that is still queued 4ms
+ ✓ tests/server/cache.test.ts > cache > after invalidation, a new call neither reuses nor is overwritten by the old in-flight load 1ms
+ ✓ tests/server/cache.test.ts > cache > coalesces cold and forced callers that arrive during a pending revalidation into one load 1ms
+ ✓ tests/server/cache.test.ts > cache > clear() also forgets in-flight loads 1ms
+ ✓ tests/server/cache.test.ts > cache > does not cache errors 4ms
+ ✓ tests/server/cache.test.ts > cache > invalidates by prefix and bypasses with force 1ms
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > drops a stale End error when Start or Date changes, so a valid entry can be saved
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > reports an impossible date under Date, not under Start
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > blocks saving a start time inside the DST gap and offers the fix
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > lets the user pick the second 02:30 on the fall-back night
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > shows field errors only after the first save attempt, and sends nothing
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > explains unreadable durations
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > explains a zero duration "0" under Duration, not as an ISO error under End
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > explains a zero duration "0m" under Duration, not as an ISO error under End
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > explains a zero duration "0:00" under Duration, not as an ISO error under End
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > shows "0m" again when an entry of zero length is opened
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > marks the form unsaved when only the DST "first / second" choice changes
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > tracks every editable field for "leave without saving?"
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > sends exactly one request when save is clicked twice
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > keeps edits typed while a save is in flight marked as unsaved
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > updates with PUT and the full entry
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > offers create-as-new after a 404 on update, keeping every value
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > puts a server field error next to that field
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > keeps an edited entry's exact seconds when only the comment changes 13ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > shows the server message when its field errors match no form field 6ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > starts the next entry on the minute after a previous end with seconds 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > "End now" on an entry from two days ago ends it now, not on its own day 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > "End now" refuses a start in the future 7ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > sends UTC timestamps derived from local start and duration 2ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > saves 23:00 to 01:00 as two hours ending the next day 6ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > keeps End and duration in sync both ways 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > never puts End before Start: an earlier end time means the next day 2ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > refuses an End equal to Start instead of saving 0 or 24 hours 6ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > accepts an End equal to Start in the repeated fall-back hour as one hour later 6ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > keeps a refused End refused when the duration is entered again unchanged 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > drops a stale End error when Start or Date changes, so a valid entry can be saved 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > reports an impossible date under Date, not under Start 2ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > blocks saving a start time inside the DST gap and offers the fix 5ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > lets the user pick the second 02:30 on the fall-back night 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > shows field errors only after the first save attempt, and sends nothing 4ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > explains unreadable durations 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > explains a zero duration "0" under Duration, not as an ISO error under End 2ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > explains a zero duration "0m" under Duration, not as an ISO error under End 4ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > explains a zero duration "0:00" under Duration, not as an ISO error under End 14ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > shows "0m" again when an entry of zero length is opened 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > marks the form unsaved when only the DST "first / second" choice changes 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > tracks every editable field for "leave without saving?" 2ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > sends exactly one request when save is clicked twice 3ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > keeps edits typed while a save is in flight marked as unsaved 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > updates with PUT and the full entry 2ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > offers create-as-new after a 404 on update, keeping every value 2ms
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > warns that a failed create may still have been saved
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > on an update the server can't answer, keeps the edits and says saving again is safe
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > retries once by itself after a rate limit
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm > warns about overlaps with loaded entries but still allows saving
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm with anchor "now" > keeps the end at now and moves the start back while the start is untouched
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+stderr | tests/unit/use-entry-form.test.ts > useEntryForm with anchor "now" > stops anchoring once the user sets the start
+[Vue warn] onScopeDispose() is called when there is no active effect scope to be associated with.
+
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > puts a server field error next to that field 2ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > warns that a failed create may still have been saved 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > on an update the server can't answer, keeps the edits and says saving again is safe 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > retries once by itself after a rate limit 14ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm > warns about overlaps with loaded entries but still allows saving 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm with anchor "now" > keeps the end at now and moves the start back while the start is untouched 1ms
+ ✓ tests/unit/use-entry-form.test.ts > useEntryForm with anchor "now" > stops anchoring once the user sets the start 1ms
+ ✓ tests/unit/id-schema.test.ts > id and paging params > reads plain digits, including id 0 6ms
+ ✓ tests/unit/id-schema.test.ts > id and paging params > rejects "0x10" instead of guessing another id 1ms
+ ✓ tests/unit/id-schema.test.ts > id and paging params > rejects "1e2" instead of guessing another id 0ms
+ ✓ tests/unit/id-schema.test.ts > id and paging params > rejects "1.0" instead of guessing another id 1ms
+ ✓ tests/unit/id-schema.test.ts > id and paging params > rejects " 5" instead of guessing another id 0ms
+ ✓ tests/unit/id-schema.test.ts > id and paging params > rejects "-1" instead of guessing another id 0ms
+ ✓ tests/unit/id-schema.test.ts > id and paging params > rejects "" instead of guessing another id 0ms
+ ✓ tests/unit/id-schema.test.ts > id and paging params > rejects "abc" instead of guessing another id 0ms
+ ✓ tests/unit/id-schema.test.ts > id and paging params > applies the same rule to limit and offset 3ms
+ ✓ tests/server/catalog-lanes.test.ts > catalog page lanes > loads a cold page in the interactive lane: someone is waiting on that expand 14ms
+ ✓ tests/server/catalog-lanes.test.ts > catalog page lanes > refreshes a stale page in the background lane, so it never competes with user actions 3ms
+ ✓ tests/unit/tree-rows.test.ts > buildTreeRows > shows a loading row before clients arrive 4ms
+ ✓ tests/unit/tree-rows.test.ts > buildTreeRows > shows only expanded branches 2ms
+ ✓ tests/unit/tree-rows.test.ts > buildTreeRows > shows per-node status rows: loading, waiting, error, empty and load more 1ms
+ ✓ tests/unit/tree-rows.test.ts > buildTreeRows > reports item counts, with + when more pages exist 2ms
+ ✓ tests/unit/tree-rows.test.ts > buildTreeRows > reads counts aloud with the right word and number 1ms
+ ✓ tests/unit/tree-rows.test.ts > buildTreeRows > sets aria positions within each sibling group 1ms
+ ✓ tests/unit/tree-rows.test.ts > buildTreeRows > filters loaded data only and opens the path to each match 1ms
+ ✓ tests/unit/tree-rows.test.ts > buildTreeRows > offers Retry on an error row, except when the server key was rejected 1ms
+ ✓ tests/server/read-json-body.test.ts > readJsonBody > parses a JSON body, with or without a charset 10ms
+ ✓ tests/server/read-json-body.test.ts > readJsonBody > refuses bodies a cross-site page can send without a preflight 3ms
+ ✓ tests/server/read-json-body.test.ts > readJsonBody > answers invalid JSON with a 400 1ms
+ ✓ tests/unit/catalog.test.ts > nestTasks > keeps tasks with parent 0 at the top level 4ms
+ ✓ tests/unit/catalog.test.ts > nestTasks > nests a task under a parent from the same list 1ms
+ ✓ tests/unit/catalog.test.ts > nestTasks > shows tasks whose parent is not loaded at the top level instead of hiding them 0ms
+ ✓ tests/unit/catalog.test.ts > nestTasks > never loses tasks in a parent cycle 1ms
+ ✓ tests/unit/timestamp-schema.test.ts > timestamp schemas > reads upstream timestamps with Z or an explicit offset 5ms
+ ✓ tests/unit/timestamp-schema.test.ts > timestamp schemas > rejects an upstream timestamp without a zone instead of guessing local time 1ms
+ ✓ tests/unit/timestamp-schema.test.ts > timestamp schemas > accepts only UTC with Z for what we send upstream 1ms
+
+ Test Files  30 passed (30)
+      Tests  297 passed (297)
+   Start at  10:45:22
+   Duration  23.11s (tests 43%, import 19%, environment 19%, setup 11%, transform 8%)
+
+    Isolate  30 workers spawned · ~569ms startup each (spawn + environment, per file)
+             at least ~5.12s faster with isolate: false — reuses workers across files instead of one per file
+

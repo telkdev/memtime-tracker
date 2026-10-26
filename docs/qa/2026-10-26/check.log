@@ -1,0 +1,7 @@
+
+> check
+> node scripts/check.mjs --no-fix
+
+✓ lint (5.0s)
+✓ typecheck (11.1s)
+✓ test (22.7s)
