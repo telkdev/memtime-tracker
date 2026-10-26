@@ -97,12 +97,12 @@ describe('EntryEditor (create)', () => {
     const savedStart = startValue(wrapper)
     await wrapper.findAll('button').find(b => b.text() === 'Save & log another')!.trigger('click')
 
-    // The form restarts at the saved entry's end, and the entries are loaded again.
-    await vi.waitFor(() => expect(listCalls).toEqual(['list', 'list']))
+    // The form restarts at the saved entry's end and knows that entry without asking again.
     await vi.waitFor(() => expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe(''))
     await wrapper.find('input[name="start"]').setValue(savedStart)
     await wrapper.find('input[name="duration"]').setValue('30m')
     await wrapper.find('input[name="duration"]').trigger('change')
     await vi.waitFor(() => expect(wrapper.text()).toMatch(/Overlaps\s+entry #\d+/))
+    expect(listCalls).toEqual(['list'])
   })
 })

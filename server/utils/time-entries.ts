@@ -121,10 +121,11 @@ export async function updateTimeEntry(id: number, input: TimeEntryInput): Promis
     .finally(() => {
       // Also on failure, like a create: a PUT that timed out may have been applied.
       useServerCache().invalidatePrefix(TIME_ENTRIES_CACHE_PREFIX)
-      // A remembered create may now describe an entry that was edited since. Creating the same
-      // body again after an edit is a new entry, not a double click.
-      useServerCache().invalidatePrefix(CREATE_DEDUPE_PREFIX)
     })
+  // A remembered create may now describe an entry that was edited since. Creating the same body
+  // again after an edit is a new entry, not a double click. Only after a PUT that went through: a
+  // failed one must not break the double-click guard of a create in flight.
+  useServerCache().invalidatePrefix(CREATE_DEDUPE_PREFIX)
   return entry
 }
 

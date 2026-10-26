@@ -27,9 +27,9 @@ export function parseQuery<S extends z.ZodType>(event: H3Event, schema: S): z.in
 }
 
 /**
- * Every POST/PUT must say `application/json`. A form post or a `no-cors` fetch from another site
- * can't send that header without a CORS preflight, so this keeps other sites from calling writes,
- * including the ones without a body (catalog refresh).
+ * Refuses a request that doesn't say `application/json` (415). A form post or a `no-cors` fetch
+ * from another site can't send that header without a CORS preflight. Applied to every API write
+ * by server/middleware/json-writes.ts.
  */
 export function requireJsonContentType(event: H3Event) {
   const type = getRequestHeader(event, 'content-type') ?? ''

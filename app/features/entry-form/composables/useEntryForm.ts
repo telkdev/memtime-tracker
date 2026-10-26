@@ -117,8 +117,9 @@ export function useEntryForm(opts: EntryFormOptions) {
     const entry = await submitter.run(send, () => submit({ auto: true }))
     if (entry) dirty.markSaved(sent)
     else serverFields.value = serverFieldErrors(error.value?.fields ?? {})
-    // The list in this tab must not show a page from before a write that may have been applied.
-    if (mayBeApplied.value) entryCache.invalidate()
+    // The list in this tab must not trust a page from before a write that may have been applied.
+    // Stale, not dropped: the open form still needs the entries for its overlap warnings.
+    if (mayBeApplied.value) entryCache.markStale()
     return entry
   }
 
@@ -135,7 +136,8 @@ export function useEntryForm(opts: EntryFormOptions) {
    */
   let startSettled = opts.mode === 'edit'
   function applyDefaultStart(start: Date) {
-    if (startSettled || mode.value !== 'create' || dirty.isDirty.value) return
+    // A half-typed duration ("1:") isn't a value yet, so the dirty check misses it.
+    if (startSettled || mode.value !== 'create' || dirty.isDirty.value || times.duration.text.value.trim()) return
     startSettled = true
     times.restartAt(fromUtcIso(start.toISOString()))
     dirty.markSaved()

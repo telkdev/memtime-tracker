@@ -42,5 +42,5 @@ export function useEntrySources() {
     return buildTaskOptions(ids, catalog.value, nameOf)
   }
 
-  return { loadedEntries, newestLoaded, ensureNewest, getCached, invalidate, taskGroups, watchTaskName }
+  return { loadedEntries, newestLoaded, getCached, invalidate, taskGroups, watchTaskName }
 }
