@@ -316,6 +316,7 @@ describe('useEntryForm', () => {
     const form = filled()
     await form.submit()
     expect(form.summary.value).toMatch(/may not have been saved/)
+    expect(form.maybeSaved.value).toBe(true)
     expect(form.comment.value).toBe('Design review')
   })
 
@@ -325,6 +326,7 @@ describe('useEntryForm', () => {
     form.comment.value = 'Edited'
     await form.submit()
     expect(form.summary.value).toBe('Couldn\'t reach the server, so your changes may not be saved. Saving again is safe.')
+    expect(form.maybeSaved.value).toBe(false)
     expect(form.comment.value).toBe('Edited')
     expect(form.isDirty.value).toBe(true)
     expect(fetchMock).toHaveBeenCalledTimes(1)

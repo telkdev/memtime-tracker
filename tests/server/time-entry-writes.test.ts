@@ -106,6 +106,16 @@ describe('time entry writes', () => {
     expect(loader).toHaveBeenCalledTimes(2)
   })
 
+  it('clears cached list pages after a create that failed on the network, since it may have been saved', async () => {
+    setup([new Error('socket hang up')])
+    const cache = state.cache as ReturnType<typeof createCache>
+    const loader = vi.fn(async () => 'page')
+    await cache.cached(`${TIME_ENTRIES_CACHE_PREFIX}limit=25&offset=0`, loader, { ttlMs: 60_000 })
+    await apiError(createTimeEntry(input))
+    await cache.cached(`${TIME_ENTRIES_CACHE_PREFIX}limit=25&offset=0`, loader, { ttlMs: 60_000 })
+    expect(loader).toHaveBeenCalledTimes(2)
+  })
+
   it('maps an update 404 to a plain "no longer exists" message', async () => {
     setup([json(errors.entryNotFoundPut.status, errors.entryNotFoundPut.body)])
     const body = await apiError(updateTimeEntry(5, input))

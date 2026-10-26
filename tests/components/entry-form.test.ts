@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { setResponseStatus } from 'h3'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import { UApp } from '#components'
 import EntryForm from '../../app/features/entry-form/ui/EntryForm.vue'
 import { useEntryForm } from '../../app/features/entry-form/composables/useEntryForm'
@@ -15,17 +15,22 @@ afterEach(async () => {
   await new Promise(r => setTimeout(r, 20))
 })
 
-async function mountForm() {
+async function mountForm(mode: 'create' | 'edit' = 'create') {
+  let form!: ReturnType<typeof useEntryForm>
   const wrapper = await mountSuspended(defineComponent({
     setup() {
-      const form = useEntryForm({ mode: 'create', start: new Date(2026, 9, 23, 9, 0) })
+      form = mode === 'create'
+        ? useEntryForm({ mode, start: new Date(2026, 9, 23, 9, 0) })
+        : useEntryForm({ mode, now: () => new Date(2026, 9, 23, 17, 0), entry: { id: 5, taskId: 7, comment: 'Design review', start: '2026-10-23T07:00:00.000Z', end: '2026-10-23T08:00:00.000Z', createdAt: '2026-10-23T08:01:00.000Z', updatedAt: '2026-10-23T08:01:00.000Z' } })
       // UApp provides the tooltip and toast context that Nuxt UI components need.
       return () => h(UApp, () => h(EntryForm, { form, taskGroups: groups }))
     },
   }))
   mounted.push(wrapper)
-  return wrapper
+  return Object.assign(wrapper, { form })
 }
+
+const connectionLost = { status: 0, code: 'UPSTREAM_UNAVAILABLE', summary: 'Couldn\'t reach the server.', fields: {} } as const
 
 describe('EntryForm', () => {
   it('shows each error under its field and links it with aria-describedby', async () => {
@@ -124,5 +129,20 @@ describe('EntryForm', () => {
     await vi.waitFor(() => expect(form.emitted('saved')).toHaveLength(1), { timeout: 3000 })
     expect(posts).toBe(2)
     expect(form.emitted('saved')![0]![1]).toEqual({ another: true })
+  })
+
+  it('offers "Check the list", not "Try again", after a create that may have been saved', async () => {
+    const wrapper = await mountForm()
+    wrapper.form.error.value = { ...connectionLost }
+    await nextTick()
+    expect(wrapper.text()).toContain('Check the list')
+    expect(wrapper.text()).not.toContain('Try again')
+  })
+
+  it('still offers "Try again" after an update that may not have been saved', async () => {
+    const wrapper = await mountForm('edit')
+    wrapper.form.error.value = { ...connectionLost }
+    await nextTick()
+    expect(wrapper.text()).toContain('Try again')
   })
 })

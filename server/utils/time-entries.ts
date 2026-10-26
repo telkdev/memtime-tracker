@@ -104,8 +104,10 @@ export async function createTimeEntry(input: TimeEntryInput): Promise<TimeEntry>
     { ttlMs: CREATE_DEDUPE_MS },
   ).catch((err: unknown) => {
     throw mapWriteError(err, 'create')
+  }).finally(() => {
+    // Also on failure: a create that timed out may have been saved, and the list must show it.
+    useServerCache().invalidatePrefix(TIME_ENTRIES_CACHE_PREFIX)
   })
-  useServerCache().invalidatePrefix(TIME_ENTRIES_CACHE_PREFIX)
   return entry
 }
 

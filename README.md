@@ -15,6 +15,8 @@ keeps every request within the API's limit of 15 requests per 60 seconds.
 
 ## Setup
 
+Needs Node.js 22 or newer.
+
 ```bash
 npm install
 cp .env.example .env     # put your key in NUXT_MEMTIME_API_KEY (the file is gitignored)
@@ -111,6 +113,19 @@ the dependency graph: [app/features/README.md](app/features/README.md).
 - **End is derived from Start + Duration**, with an editable End field kept in sync and no
   separate end date. An End equal to Start is refused; an earlier End means the next day. Entries
   longer than 24 h are refused (our rule; the API documents none).
+
+### Known issues
+
+Found in review and not fixed yet, because each is small and has a known fix:
+
+- `isConnectionError` (`app/common/lib/errors.ts`) treats every status 0 as a connection error,
+  including an answer that didn't parse. It should check the error code only.
+- The server cache (`server/utils/cache.ts`) never evicts expired keys. Fine for one user; a real
+  server needs a periodic sweep or an LRU size cap.
+- While the tree filter is on, a row's open/closed state follows the filter, so clicking expand
+  or collapse (or ArrowLeft) seems to do nothing until the filter is cleared.
+- Small form edge cases: `1h 75` is accepted as 2h 15m; choosing the DST "first / second" option
+  doesn't clear an End error until the next edit.
 
 ## What I'd do next
 
