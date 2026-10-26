@@ -138,18 +138,48 @@ export function useEntryForm(opts: EntryFormOptions) {
   }
 
   return {
-    /** How the form was opened; `mode` can change from edit to create after a 404. */
-    initialMode: opts.mode,
+    // Editable values. `fields` is the same set as one object (what the dirty check covers).
     fields,
     ...fields,
-    mode, entryId,
-    durationText: times.duration.text,
     durationMs: times.duration.ms,
-    start: times.start, end: times.end, endTime: times.endTime, endDayOffset: times.endDayOffset, startAmbiguous: times.startAmbiguous,
-    errors, isValid, warnings, isDirty: dirty.isDirty, markSaved: () => dirty.markSaved(), pending, error, notFound, maybeSaved, summary, retryIn,
-    setDate: times.setDate, setStartTime: times.setStartTime, setDurationText: times.setDurationText,
-    setEndTime: times.setEndTime, setEndNow: times.setEndNow, fixStartGap: times.fixStartGap,
-    onSaved: submitter.onRetried, submit, switchToCreate, resetForNext,
+    durationText: times.duration.text,
+
+    // Mode: `mode` can change from edit to create after a 404; `initialMode` is how it was opened.
+    initialMode: opts.mode,
+    mode,
+    entryId,
+
+    // Derived times, for display.
+    start: times.start,
+    end: times.end,
+    endTime: times.endTime,
+    endDayOffset: times.endDayOffset,
+    startAmbiguous: times.startAmbiguous,
+
+    // Validation and save state.
+    errors,
+    isValid,
+    warnings,
+    isDirty: dirty.isDirty,
+    pending,
+    error,
+    notFound,
+    maybeSaved,
+    summary,
+    retryIn,
+
+    // Actions.
+    setDate: times.setDate,
+    setStartTime: times.setStartTime,
+    setDurationText: times.setDurationText,
+    setEndTime: times.setEndTime,
+    setEndNow: times.setEndNow,
+    fixStartGap: times.fixStartGap,
+    submit,
+    switchToCreate,
+    resetForNext,
+    markSaved: () => dirty.markSaved(),
+    onSaved: submitter.onRetried,
   }
 }
 

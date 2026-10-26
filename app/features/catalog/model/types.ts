@@ -32,8 +32,3 @@ export interface TaskLabel {
   /** "Client › Project", only known for tasks loaded through the tree. */
   path?: string
 }
-
-export interface TaskNode {
-  task: Task
-  children: TaskNode[]
-}

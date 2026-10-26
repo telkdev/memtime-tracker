@@ -1,6 +1,5 @@
 import type { Client, Project, Task } from '#shared/schemas/catalog'
-import type { CatalogNode, NodeKey, TaskNode } from '../model/types'
-import { nestTasks } from './catalog'
+import type { CatalogNode, NodeKey } from '../model/types'
 
 export type EntityRow
   = | { kind: 'client', entity: Client }
@@ -76,20 +75,11 @@ export function buildTreeRows(input: TreeInput): TreeRow[] {
     }
   }
 
-  function taskRows(nodes: TaskNode[], level: number, parentKey: string, ctx: { project?: Project, client?: Client }): { rows: Draft[], hit: boolean } {
-    const rows: Draft[] = []
-    let anyHit = false
-    for (const tn of nodes) {
-      const key = `task:${tn.task.id}`
-      const children = taskRows(tn.children, level + 1, key, ctx)
-      const self = !query || matches(tn.task.name)
-      if (query && !self && !children.hit) continue
-      anyHit = true
-      const expanded = tn.children.length > 0 && (query ? children.hit : input.isExpanded(key))
-      rows.push({ kind: 'task', entity: tn.task, ...ctx, key, level, parentKey, label: tn.task.name, expandable: tn.children.length > 0, expanded })
-      if (expanded) rows.push(...children.rows)
-    }
-    return { rows, hit: anyHit }
+  function taskRows(tasks: Task[], level: number, parentKey: string, ctx: { project: Project, client: Client }): { rows: Draft[], hit: boolean } {
+    const rows: Draft[] = tasks
+      .filter(task => !query || matches(task.name))
+      .map(task => ({ kind: 'task', entity: task, ...ctx, key: `task:${task.id}`, level, parentKey, label: task.name, expandable: false, expanded: false }))
+    return { rows, hit: rows.length > 0 }
   }
 
   function projectRows(clientKey: NodeKey, client: Client, level: number): { rows: Draft[], hit: boolean } {
@@ -99,7 +89,7 @@ export function buildTreeRows(input: TreeInput): TreeRow[] {
     for (const project of n.items) {
       const key = `project:${project.id}` as const
       const tasks = input.node<Task>(key)
-      const children = taskRows(nestTasks(tasks.items), level + 1, key, { project, client })
+      const children = taskRows(tasks.items, level + 1, key, { project, client })
       const self = !query || matches(project.name)
       if (query && !self && !children.hit) continue
       anyHit = true

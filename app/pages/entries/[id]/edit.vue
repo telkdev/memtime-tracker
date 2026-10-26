@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EditEntry } from '~/features/entry-form'
+import { EntryEditor } from '~/features/entry-form'
 import { useTimeEntry } from '~/features/time-entries'
 import { idSchema } from '#shared/schemas/common'
 import { parseApiError } from '~/common'
@@ -50,7 +50,7 @@ const loadError = computed(() => error.value ? parseApiError(error.value) : null
       <USkeleton class="h-10 w-full" />
       <USkeleton class="h-24 w-full" />
     </div>
-    <EditEntry
+    <EntryEditor
       v-else
       :key="data.entry.id"
       :entry="data.entry"
