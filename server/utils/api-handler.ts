@@ -27,15 +27,24 @@ export function parseQuery<S extends z.ZodType>(event: H3Event, schema: S): z.in
 }
 
 /**
+ * Every POST/PUT must say `application/json`. A form post or a `no-cors` fetch from another site
+ * can't send that header without a CORS preflight, so this keeps other sites from calling writes,
+ * including the ones without a body (catalog refresh).
+ */
+export function requireJsonContentType(event: H3Event) {
+  const type = getRequestHeader(event, 'content-type') ?? ''
+  if (!/^application\/json\s*(;|$)/i.test(type)) {
+    throw new ApiException(415, 'BAD_REQUEST', 'Send the request body as application/json.')
+  }
+}
+
+/**
  * The JSON body, or an error in the BFF shape. Only `application/json` is accepted: a form post or a
  * `no-cors` fetch from another site can send a body without a CORS preflight, and h3 would happily
  * parse it as JSON, so any web page could create entries through a running BFF.
  */
 export async function readJsonBody(event: H3Event): Promise<unknown> {
-  const type = getRequestHeader(event, 'content-type') ?? ''
-  if (!/^application\/json\s*(;|$)/i.test(type)) {
-    throw new ApiException(415, 'BAD_REQUEST', 'Send the request body as application/json.')
-  }
+  requireJsonContentType(event)
   const raw = await readRawBody(event, 'utf8')
   try {
     return JSON.parse(raw ?? '')

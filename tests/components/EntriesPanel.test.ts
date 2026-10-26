@@ -21,11 +21,11 @@ registerEndpoint('/api/time-entries', (event) => {
 })
 registerEndpoint('/api/tasks/7', () => {
   taskCalls.push('7')
-  return { id: 7, parent: 0, name: 'Design review', status: 'active', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }
+  return { id: 7, name: 'Design review', status: 'active', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }
 })
 registerEndpoint('/api/tasks/9', () => {
   taskCalls.push('9')
-  return { id: 9, parent: 0, name: 'Release', status: 'active', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }
+  return { id: 9, name: 'Release', status: 'active', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }
 })
 
 const mounted: Array<{ unmount: () => void }> = []
@@ -255,7 +255,7 @@ describe('EntriesPanel', () => {
     useState('catalog:nodes').value = {
       'root': loaded([{ id: 1, name: 'Acme', description: '', ...stamp }]),
       'client:1': loaded([{ id: 5, clientId: 1, name: 'Website', ...stamp }]),
-      'project:5': loaded([{ id: 7, parent: 0, name: 'Homepage copy', ...stamp }]),
+      'project:5': loaded([{ id: 7, name: 'Homepage copy', ...stamp }]),
     }
     const wrapper = await mountAt('/')
     await vi.waitFor(() => expect(wrapper.text()).toContain('Homepage copy'))

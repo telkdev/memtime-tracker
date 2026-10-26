@@ -3,7 +3,7 @@ import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
 import { createEvent } from 'h3'
 import { describe, expect, it } from 'vitest'
-import { readJsonBody } from '../../server/utils/api-handler'
+import { readJsonBody, requireJsonContentType } from '../../server/utils/api-handler'
 import { ApiException } from '../../server/utils/errors'
 
 function event(body: string, contentType?: string) {
@@ -32,6 +32,13 @@ describe('readJsonBody', () => {
     expect(await status(readJsonBody(event('{"a":1}')))).toBe(415)
     expect(await status(readJsonBody(event('{"a":1}', 'text/plain')))).toBe(415)
     expect(await status(readJsonBody(event('a=1', 'application/x-www-form-urlencoded')))).toBe(415)
+  })
+
+  it('refuses a body-less write (catalog refresh) unless it says application/json', async () => {
+    const check = async (type?: string) => requireJsonContentType(event('', type))
+    expect(await status(check())).toBe(415)
+    expect(await status(check('application/x-www-form-urlencoded'))).toBe(415)
+    expect(await status(check('application/json'))).toBe('ok')
   })
 
   it('answers invalid JSON with a 400', async () => {

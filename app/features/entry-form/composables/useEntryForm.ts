@@ -71,11 +71,12 @@ export function useEntryForm(opts: EntryFormOptions) {
   const notFound = computed(() => mode.value === 'edit' && error.value?.code === 'NOT_FOUND')
 
   /**
-   * A create whose outcome is unknown: it may have been saved, so saving again could duplicate it.
-   * Only errors that prove the upstream didn't apply the write are safe to retry; anything else
-   * (network, 5xx, an answer we couldn't read, our own bug) may come after a saved entry.
+   * A write whose outcome is unknown: the server may have applied it. Only errors that prove the
+   * upstream didn't apply it are excluded; anything else (network, 5xx, an answer we couldn't read,
+   * our own bug) may come after a saved entry. For a create, saving again could duplicate it.
    */
-  const maybeSaved = computed(() => mode.value === 'create' && !!error.value && !UNAPPLIED_CODES.has(error.value.code))
+  const mayBeApplied = computed(() => !!error.value && !UNAPPLIED_CODES.has(error.value.code))
+  const maybeSaved = computed(() => mode.value === 'create' && mayBeApplied.value)
 
   /** Message shown above the form for errors that aren't about one field. */
   const summary = computed(() => {
@@ -116,8 +117,8 @@ export function useEntryForm(opts: EntryFormOptions) {
     const entry = await submitter.run(send, () => submit({ auto: true }))
     if (entry) dirty.markSaved(sent)
     else serverFields.value = serverFieldErrors(error.value?.fields ?? {})
-    // The list in this tab must not show a page from before an entry that may have been saved.
-    if (maybeSaved.value) entryCache.invalidate()
+    // The list in this tab must not show a page from before a write that may have been applied.
+    if (mayBeApplied.value) entryCache.invalidate()
     return entry
   }
 
@@ -128,8 +129,21 @@ export function useEntryForm(opts: EntryFormOptions) {
     error.value = null
   }
 
+  /**
+   * A better default start arrived after the form opened (the newest entries were still loading).
+   * Applied only while the form is untouched: never over the user's input or a "log another" start.
+   */
+  let startSettled = opts.mode === 'edit'
+  function applyDefaultStart(start: Date) {
+    if (startSettled || mode.value !== 'create' || dirty.isDirty.value) return
+    startSettled = true
+    times.restartAt(fromUtcIso(start.toISOString()))
+    dirty.markSaved()
+  }
+
   /** "Save & log another": same task, next entry starts where this one ended. */
   function resetForNext(previous: TimeEntry) {
+    startSettled = true
     times.restartAt(fromUtcIso(ceilToMinute(new Date(previous.end)).toISOString()))
     fields.comment.value = ''
     attempted.value = false
@@ -178,6 +192,7 @@ export function useEntryForm(opts: EntryFormOptions) {
     submit,
     switchToCreate,
     resetForNext,
+    applyDefaultStart,
     markSaved: () => dirty.markSaved(),
     onSaved: submitter.onRetried,
   }

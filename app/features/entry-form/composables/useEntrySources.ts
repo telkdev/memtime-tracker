@@ -19,8 +19,9 @@ export function useEntrySources() {
   )
   const nameOf = (id: number): string | undefined => taskNames.label(id)?.name
 
-  // Opened by a link or a reload, nothing is loaded: one request fills Recent and Smart start.
-  if (import.meta.client) void ensureNewest()
+  // Opened by a link or a reload, nothing is loaded: one request fills Recent, Smart start and the
+  // overlap warnings. `newestLoaded` resolves when it is in (at once if entries were loaded).
+  const newestLoaded = import.meta.client ? ensureNewest() : Promise.resolve()
 
   // Names for recent tasks outside the loaded tree: one cached background lookup each.
   watchEffect(() => taskNames.resolve(recentTaskIds(loadedEntries.value).filter(id => !taskIndex.value.has(id))))
@@ -41,5 +42,5 @@ export function useEntrySources() {
     return buildTaskOptions(ids, catalog.value, nameOf)
   }
 
-  return { loadedEntries, getCached, invalidate, taskGroups, watchTaskName }
+  return { loadedEntries, newestLoaded, ensureNewest, getCached, invalidate, taskGroups, watchTaskName }
 }

@@ -17,6 +17,10 @@ interface LoadedPage {
   loadedAt: number
 }
 
+// The ensureNewest() load in flight, so a second caller waits for the same answer. Client-only, like
+// the request guard's controllers (a promise can't live in useState).
+let newestInFlight: Promise<void> | null = null
+
 function pageKey(page: number, size: number) {
   return `${size}:${page}`
 }
@@ -47,36 +51,44 @@ export function useTimeEntryCache() {
     return undefined
   }
 
-  const newestLoading = useState('time-entries:newest-loading', () => false)
-
   /**
    * The newest page, when nothing is loaded yet (the form opened by a link or a reload). One
    * request at most; it is stored like a list page, so going back to the list reuses it.
+   * Resolves when that page is in (or the load failed or was dropped); callers that need the
+   * entries, like the form's smart start, wait for it.
    */
-  async function ensureNewest() {
-    if (Object.keys(pages.value).length || newestLoading.value) return
-    newestLoading.value = true
+  function ensureNewest(): Promise<void> {
+    if (newestInFlight) return newestInFlight
+    if (Object.keys(pages.value).length) return Promise.resolve()
     const ticket = requests.start()
     const { size } = useLastListPosition().value
-    try {
-      const data = entryPageSchema.parse(await fetchTimeEntries({ limit: size, offset: 0 }, ticket.signal))
-      if (!ticket.isCurrent()) return
-      const key = pageKey(1, size)
-      pages.value = { ...pages.value, [key]: { key, items: data.items, hasMore: data.hasMore, loadedAt: Date.now() } }
-    }
-    catch {
-      // Recent tasks are a convenience; the form works without them.
-    }
-    finally {
-      ticket.done()
-      newestLoading.value = false
-    }
+    // Started on the next microtask, so `run` is assigned before the body can read it.
+    const run: Promise<void> = Promise.resolve().then(async () => {
+      try {
+        const data = entryPageSchema.parse(await fetchTimeEntries({ limit: size, offset: 0 }, ticket.signal))
+        if (!ticket.isCurrent()) return
+        const key = pageKey(1, size)
+        pages.value = { ...pages.value, [key]: { key, items: data.items, hasMore: data.hasMore, loadedAt: Date.now() } }
+      }
+      catch {
+        // Recent tasks are a convenience; the form works without them.
+      }
+      finally {
+        ticket.done()
+        // invalidate() may already have started a newer load; leave that one in place.
+        if (newestInFlight === run) newestInFlight = null
+      }
+    })
+    newestInFlight = run
+    return run
   }
 
   /** Forget every loaded page; the list refetches the one on screen. */
   function invalidate() {
     requests.invalidate()
     pages.value = {}
+    // A dropped load must not block the next ensureNewest() (it would join an answer that is thrown away).
+    newestInFlight = null
   }
 
   return { pages, requests, loadedEntries, getCached, ensureNewest, invalidate }

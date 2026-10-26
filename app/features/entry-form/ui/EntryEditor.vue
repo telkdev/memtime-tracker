@@ -22,7 +22,7 @@ const form = props.entry ? useEntryForm({ mode: 'edit', entry: props.entry, know
 
 function createForm() {
   const { start, from } = defaultStart(knownEntries(), new Date())
-  return useEntryForm({
+  const created = useEntryForm({
     mode: 'create',
     taskId: props.taskId ?? null,
     start,
@@ -32,6 +32,15 @@ function createForm() {
     anchor: from === 'now' ? 'now' : 'start',
     knownEntries,
   })
+  // Opened by a link or a reload, the newest entries are still loading. Once they are in, continue
+  // after today's last entry, unless the user has already started typing.
+  if (!knownEntries().length) {
+    void sources.newestLoaded.then(() => {
+      const next = defaultStart(knownEntries(), new Date())
+      if (next.from === 'previous') created.applyDefaultStart(next.start)
+    })
+  }
+  return created
 }
 
 watch(form.mode, mode => emit('mode', mode))

@@ -19,7 +19,7 @@ const summary = (rows: ReturnType<typeof build>) => rows.map(r => `${'  '.repeat
 const catalog = {
   'root': loaded([{ id: 1, name: 'Acme', ...at }, { id: 2, name: 'Globex', ...at }]),
   'client:1': loaded([{ id: 10, clientId: 1, name: 'Website', ...at }]),
-  'project:10': loaded([{ id: 100, parent: 0, name: 'Design', ...at }, { id: 101, parent: 0, name: 'Review', ...at }]),
+  'project:10': loaded([{ id: 100, name: 'Design', ...at }, { id: 101, name: 'Review', ...at }]),
 } satisfies Partial<Record<NodeKey, CatalogNode>>
 
 describe('buildTreeRows', () => {

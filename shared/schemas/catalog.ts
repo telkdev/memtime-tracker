@@ -22,10 +22,9 @@ export const projectSchema = z.object({
 
 export const taskSchema = z.object({
   id: z.number().int(),
-  // The real API sends projectId and no `parent`, despite the docs. Keep both tolerant.
+  // The real API sends projectId and no `parent`, despite the docs. Nothing reads either, so a
+  // documented `parent` is simply dropped.
   projectId: z.number().int().optional(),
-  /** Parent task id; 0 means top level. Documented but not sent by the real API. */
-  parent: z.number().int().default(0),
   name: z.string(),
   status: z.string(),
   createdAt: z.string(),

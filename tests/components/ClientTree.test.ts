@@ -27,7 +27,7 @@ registerEndpoint('/api/clients/1/projects', () => {
 })
 registerEndpoint('/api/projects/10/tasks', () => {
   calls.push('tasks:10')
-  return page([{ id: 100, parent: 0, name: 'Design', ...at }])
+  return page([{ id: 100, name: 'Design', ...at }])
 })
 let globexAttempts = 0
 registerEndpoint('/api/clients/2/projects', (event) => {

@@ -223,6 +223,18 @@ describe('rate limiter', () => {
     expect(limiter.snapshot().blockedForMs).toBe(2_000)
   })
 
+  it('pauses when the upstream says its budget is spent, even with a reset of 0', async () => {
+    const { limiter, calls, call } = setup()
+    limiter.sync(0, 0)
+    expect(limiter.snapshot().blockedForMs).toBeGreaterThan(0)
+    const job = limiter.schedule('interactive', call())
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls).toHaveLength(0)
+    await vi.advanceTimersByTimeAsync(1_000)
+    await job
+    expect(calls).toHaveLength(1)
+  })
+
   it('reports a snapshot of the budget', async () => {
     const { limiter, call } = setup()
     await limiter.schedule('interactive', call())

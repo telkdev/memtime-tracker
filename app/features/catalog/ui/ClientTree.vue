@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{
   mode?: 'browse' | 'pick'
 }>(), { mode: 'browse' })
 
-type TaskEvent = [task: TaskContext['task'], context: Partial<Omit<TaskContext, 'task'>>]
+type TaskEvent = [task: TaskContext['task'], context: Omit<TaskContext, 'task'>]
 
 const emit = defineEmits<{
   /** Click or Space on a task (in pick mode also Enter): the task the user is looking at. */

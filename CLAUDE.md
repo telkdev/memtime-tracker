@@ -81,7 +81,7 @@ app/                    split by feature; rules and enforcement in app/features/
                         api/ (the only $fetch calls) lib/ (pure helpers) index.ts (public API)
     catalog/            ClientTree, useCatalog, useTaskNames, tree-rows
     time-entries/       EntriesPanel + table/cards/pager, useTimeEntries, useTimeEntry, time-entry API
-    entry-form/         EntryForm, EditEntry, TaskBrowser; useEntryForm = useEntryTimes +
+    entry-form/         EntryEditor (create + edit), EntryForm, TaskBrowser; useEntryForm = useEntryTimes +
                         useDurationInput + useDirtyGuard + useSubmitWithRetry; model/rules.ts
   common/               time.ts (local↔UTC, DST, duration), api-error, errors, useNow,
                         useRateLimitState, useDirtyGuard, useSubmitWithRetry, useLeaveGuard, widgets

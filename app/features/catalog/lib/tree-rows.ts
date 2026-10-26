@@ -4,7 +4,7 @@ import type { CatalogNode, NodeKey } from '../model/types'
 export type EntityRow
   = | { kind: 'client', entity: Client }
     | { kind: 'project', entity: Project }
-    | { kind: 'task', entity: Task, project?: Project, client?: Client }
+    | { kind: 'task', entity: Task, project: Project, client: Client }
 
 export type StatusKind = 'loading' | 'loadingMore' | 'waiting' | 'error' | 'empty' | 'more'
 

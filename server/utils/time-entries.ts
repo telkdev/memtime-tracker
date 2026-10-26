@@ -118,10 +118,13 @@ export async function updateTimeEntry(id: number, input: TimeEntryInput): Promis
     .catch((err: unknown) => {
       throw mapWriteError(err, 'update')
     })
-  useServerCache().invalidatePrefix(TIME_ENTRIES_CACHE_PREFIX)
-  // A remembered create may now describe an entry that was edited since. Creating the same body
-  // again after an edit is a new entry, not a double click.
-  useServerCache().invalidatePrefix(CREATE_DEDUPE_PREFIX)
+    .finally(() => {
+      // Also on failure, like a create: a PUT that timed out may have been applied.
+      useServerCache().invalidatePrefix(TIME_ENTRIES_CACHE_PREFIX)
+      // A remembered create may now describe an entry that was edited since. Creating the same
+      // body again after an edit is a new entry, not a double click.
+      useServerCache().invalidatePrefix(CREATE_DEDUPE_PREFIX)
+    })
   return entry
 }
 
