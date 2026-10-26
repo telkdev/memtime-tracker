@@ -96,6 +96,11 @@ and one public `index.ts`. Feature internals are not auto-imported, and ESLint b
 into another feature, so the index really is the only way in. Rules, the model-vs-lib split and
 the dependency graph: [app/features/README.md](app/features/README.md).
 
+For three features this is more structure than the code strictly needs, and that is a deliberate
+choice: it is the layout I would use on a product that grows past a take-home, so the boundaries
+are set (and linted) before they are needed rather than retrofitted later. A smaller app could
+keep each feature's files in one flat folder without losing anything.
+
 ## Trade-offs and known limits
 
 - **The demo API doesn't keep new entries.** A create succeeds and returns an id, but the entry is
