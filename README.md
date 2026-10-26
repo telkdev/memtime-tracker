@@ -75,7 +75,8 @@ Browser (Vue)  ──/api/*──▶  Nitro server (BFF)  ──Bearer key──
   8 s, the BFF answers 429 with `retryAfter` instead of holding the connection, and the UI shows a
   countdown and continues by itself. The limiter also syncs from the API's `ratelimit-remaining`
   header, so another client of the same key (curl, a second app) can't push us into a 429.
-- **Cheap by design.** Opening the page costs 1 request; each expand 1; re-expanding or paging back
+- **Cheap by design.** Opening the page costs 2 requests (the clients and the first list page), plus
+  background name lookups for tasks the tree hasn't loaded; each expand 1; re-expanding or paging back
   within the cache TTL 0. Lists ask for `limit+1` to learn whether there is a next page, because
   the API returns no totals. Editing from the list costs no read; a save costs the write plus one
   list refresh. The per-action numbers are in `docs/plans/`.

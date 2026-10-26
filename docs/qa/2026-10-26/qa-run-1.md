@@ -46,3 +46,10 @@ Checks: check --no-fix ✓ · smoke ✓ (29 passed, 0 skipped)
 
 The two small form edge cases in Known issues (taken from the README). "Check the list" opening
 a new tab in a real browser (only the component text is tested). The real API.
+
+## Follow-up
+
+All five findings were fixed on branch `qa-minor-fixes` and merged to main the same day:
+the form drops the loaded list pages and offers "Check the list" for every create error that
+doesn't prove the upstream rejected it (with tests in `tests/unit/use-entry-form.test.ts`), and
+the plan, the UX rule, the README request count and this index were corrected.
