@@ -117,9 +117,9 @@ export function useEntryForm(opts: EntryFormOptions) {
     const entry = await submitter.run(send, () => submit({ auto: true }))
     if (entry) dirty.markSaved(sent)
     else serverFields.value = serverFieldErrors(error.value?.fields ?? {})
-    // The list in this tab must not trust a page from before a write that may have been applied.
-    // Stale, not dropped: the open form still needs the entries for its overlap warnings.
-    if (mayBeApplied.value) entryCache.markStale()
+    // The list in this tab must not show a page from before a write that may have been applied.
+    // The open form keeps its own copy of the entries (useEntrySources), so its warnings stay.
+    if (mayBeApplied.value) entryCache.invalidate()
     return entry
   }
 

@@ -5,7 +5,7 @@ import { useReturnToList, useTimeEntryCache } from '~/features/time-entries'
 /** Toast + return to the list (the page the user came from) with the saved row highlighted. Shared by the create and edit pages. */
 export function useEntrySaved() {
   const toast = useToast()
-  const { invalidate, markStale, remember } = useTimeEntryCache()
+  const { invalidate } = useTimeEntryCache()
   const returnToList = useReturnToList()
 
   return async function onSaved(entry: TimeEntry, verb: 'created' | 'updated', taskName: string | undefined, navigate = true) {
@@ -17,17 +17,10 @@ export function useEntrySaved() {
       color: 'success',
       icon: 'i-lucide-circle-check',
     })
+    // Loaded list pages are stale now (the server cache was cleared on write). Dropping them costs
+    // nothing; the list refetches only the page it shows.
+    invalidate()
     clearNuxtData(`time-entry:${entry.id}`)
-    if (navigate) {
-      // Loaded list pages are stale now (the server cache was cleared on write). Dropping them
-      // costs nothing; the list refetches only the page it shows.
-      invalidate()
-      await returnToList(verb, entry.id)
-      return
-    }
-    // "Save & log another" stays on the form. It keeps the loaded entries plus the one just saved,
-    // so the next entry still gets Recent tasks and overlap warnings, with no extra request.
-    markStale()
-    remember(entry)
+    if (navigate) await returnToList(verb, entry.id)
   }
 }

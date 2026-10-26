@@ -9,12 +9,17 @@ export function defineApiHandler<T>(handler: (event: H3Event) => Promise<T>) {
       return await handler(event)
     }
     catch (err) {
-      const error = toApiError(err)
-      setResponseStatus(event, error.status)
-      if (error.retryAfter !== undefined) setResponseHeader(event, 'Retry-After', error.retryAfter)
-      return { error }
+      return sendApiError(event, err)
     }
   })
+}
+
+/** Any error as the shared `{ error: ApiErrorBody }` answer, with its status and Retry-After. */
+export function sendApiError(event: H3Event, err: unknown) {
+  const error = toApiError(err)
+  setResponseStatus(event, error.status)
+  if (error.retryAfter !== undefined) setResponseHeader(event, 'Retry-After', error.retryAfter)
+  return { error }
 }
 
 /** Validates route params; a bad id is answered locally and costs no upstream request. */

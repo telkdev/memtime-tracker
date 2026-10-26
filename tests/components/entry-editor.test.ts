@@ -88,7 +88,8 @@ describe('EntryEditor (create)', () => {
   })
 
   it('after "Save & log another", still warns about an overlap with the entry just saved', async () => {
-    reset()
+    const yesterday = new Date(Date.now() - 24 * 3600_000)
+    reset([{ id: 2, taskId: 7, comment: 'Yesterday', start: new Date(yesterday.getTime() - 3600_000).toISOString(), end: yesterday.toISOString(), createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() }])
     const wrapper = await mountNew()
     await vi.waitFor(() => expect(listCalls).toEqual(['list']))
     await wrapper.find('input[name="duration"]').setValue('1h')
@@ -104,5 +105,16 @@ describe('EntryEditor (create)', () => {
     await wrapper.find('input[name="duration"]').trigger('change')
     await vi.waitFor(() => expect(wrapper.text()).toMatch(/Overlaps\s+entry #\d+/))
     expect(listCalls).toEqual(['list'])
+  })
+
+  it('after "Save & log another" with nothing loaded yet, loads the entries once more', async () => {
+    reset()
+    const wrapper = await mountNew()
+    await vi.waitFor(() => expect(listCalls).toEqual(['list']))
+    await wrapper.find('input[name="duration"]').setValue('1h')
+    await wrapper.find('input[name="duration"]').trigger('change')
+    await wrapper.find('textarea').setValue('First')
+    await wrapper.findAll('button').find(b => b.text() === 'Save & log another')!.trigger('click')
+    await vi.waitFor(() => expect(listCalls).toEqual(['list', 'list']))
   })
 })

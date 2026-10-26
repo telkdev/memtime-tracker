@@ -126,6 +126,16 @@ describe('time entry writes', () => {
     expect(loader).toHaveBeenCalledTimes(2)
   })
 
+  it('keeps cached list pages after an update the upstream rejected, since nothing changed', async () => {
+    setup([json(404, { error: 'Time entry #123 not found' })])
+    const cache = state.cache as ReturnType<typeof createCache>
+    const loader = vi.fn(async () => 'page')
+    await cache.cached(`${TIME_ENTRIES_CACHE_PREFIX}limit=25&offset=0`, loader, { ttlMs: 60_000 })
+    await apiError(updateTimeEntry(123, input))
+    await cache.cached(`${TIME_ENTRIES_CACHE_PREFIX}limit=25&offset=0`, loader, { ttlMs: 60_000 })
+    expect(loader).toHaveBeenCalledTimes(1)
+  })
+
   it('maps an update 404 to a plain "no longer exists" message', async () => {
     setup([json(errors.entryNotFoundPut.status, errors.entryNotFoundPut.body)])
     const body = await apiError(updateTimeEntry(5, input))

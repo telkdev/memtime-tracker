@@ -335,12 +335,12 @@ describe('useEntryForm', () => {
     expect(form.maybeSaved.value).toBe(false)
   })
 
-  it('marks the loaded list pages stale after a create that may have been saved, keeping them for overlaps', async () => {
+  it('drops the loaded list pages after a create that may have been saved', async () => {
     const pages = useState<Record<string, { items: unknown[], loadedAt: number }>>('time-entries:pages')
     pages.value = { '25:1': { key: '25:1', items: [saved], hasMore: false, loadedAt: Date.now() } }
     fetchMock.mockRejectedValueOnce(apiError(503, { code: 'UPSTREAM_UNAVAILABLE', message: 'Down.' }))
     await filled().submit()
-    expect(pages.value['25:1']).toMatchObject({ items: [saved], loadedAt: 0 })
+    expect(pages.value).toEqual({})
   })
 
   it('on an update the server can\'t answer, keeps the edits and says saving again is safe', async () => {
@@ -355,14 +355,14 @@ describe('useEntryForm', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
-  it('marks the loaded list pages stale after an update that may have been applied', async () => {
+  it('drops the loaded list pages after an update that may have been applied', async () => {
     const pages = useState<Record<string, { items: unknown[], loadedAt: number }>>('time-entries:pages')
     pages.value = { '25:1': { key: '25:1', items: [saved], hasMore: false, loadedAt: Date.now() } }
     fetchMock.mockRejectedValueOnce(apiError(503, { code: 'UPSTREAM_UNAVAILABLE', message: 'Down.' }))
     const form = useEntryForm({ mode: 'edit', entry: saved, now })
     form.comment.value = 'Edited'
     await form.submit()
-    expect(pages.value['25:1']).toMatchObject({ items: [saved], loadedAt: 0 })
+    expect(pages.value).toEqual({})
   })
 
   it('applies a late default start only to an untouched new entry', () => {

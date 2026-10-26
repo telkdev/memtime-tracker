@@ -21,9 +21,6 @@ interface LoadedPage {
 // the request guard's controllers (a promise can't live in useState).
 let newestInFlight: Promise<void> | null = null
 
-/** Entries saved from a form that stayed open; not a list page (list keys are `size:page`). */
-const SAVED_KEY = 'saved'
-
 function pageKey(page: number, size: number) {
   return `${size}:${page}`
 }
@@ -94,24 +91,7 @@ export function useTimeEntryCache() {
     newestInFlight = null
   }
 
-  /**
-   * After a write while the form stays open ("Save & log another", or a save that failed but may
-   * have been applied): the list must ask again before trusting a page, but the form keeps the
-   * entries for Recent tasks and overlap warnings. Requests in flight are dropped, as in invalidate().
-   */
-  function markStale() {
-    requests.invalidate()
-    newestInFlight = null
-    pages.value = Object.fromEntries(Object.entries(pages.value).map(([key, page]) => [key, { ...page, loadedAt: 0 }]))
-  }
-
-  /** An entry just saved, known to the form at once without a request. No list page shows it. */
-  function remember(entry: TimeEntry) {
-    const items = [entry, ...(pages.value[SAVED_KEY]?.items ?? []).filter(e => e.id !== entry.id)]
-    pages.value = { ...pages.value, [SAVED_KEY]: { key: SAVED_KEY, items, hasMore: false, loadedAt: 0 } }
-  }
-
-  return { pages, requests, loadedEntries, getCached, ensureNewest, invalidate, markStale, remember }
+  return { pages, requests, loadedEntries, getCached, ensureNewest, invalidate }
 }
 
 /** The list page the user last looked at, so the form can send them back to it. */

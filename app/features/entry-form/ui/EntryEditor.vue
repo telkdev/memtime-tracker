@@ -36,6 +36,8 @@ function createForm() {
   // after today's last entry, unless the user has already started typing.
   if (!knownEntries().length) {
     void sources.newestLoaded.then(() => {
+      // A date or time box keeps a half-typed value to itself until it is complete; don't move it.
+      if (editingTime()) return
       const next = defaultStart(knownEntries(), new Date())
       if (next.from === 'previous') created.applyDefaultStart(next.start)
     })
@@ -48,6 +50,11 @@ sources.watchTaskName(() => form.taskId.value)
 const taskGroups = computed(() => sources.taskGroups(form.taskId.value))
 const taskName = (id: number) => [...taskGroups.value.recent, ...taskGroups.value.catalog].find(o => o.id === id)?.label
 const browsing = ref(false)
+const root = useTemplateRef<HTMLElement>('root')
+function editingTime() {
+  const el = document.activeElement
+  return el instanceof HTMLInputElement && (el.type === 'date' || el.type === 'time') && !!root.value?.contains(el)
+}
 
 useLeaveGuard(() => form.isDirty.value && !form.pending.value)
 const onSaved = useEntrySaved()
@@ -58,11 +65,12 @@ async function handleSaved(entry: TimeEntry, { another }: { another: boolean }) 
   // A 404 on update may have turned an edit into a create ("Create as new entry").
   const verb = entry.id === props.entry?.id ? 'updated' : 'created'
   await onSaved(entry, verb, taskName(entry.taskId), !another)
+  if (another) sources.remember(entry)
 }
 </script>
 
 <template>
-  <div>
+  <div ref="root">
     <EntryForm
       :form="form"
       :task-groups="taskGroups"
