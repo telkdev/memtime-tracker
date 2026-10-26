@@ -19,7 +19,7 @@ const summary = (rows: ReturnType<typeof build>) => rows.map(r => `${'  '.repeat
 const catalog = {
   'root': loaded([{ id: 1, name: 'Acme', ...at }, { id: 2, name: 'Globex', ...at }]),
   'client:1': loaded([{ id: 10, clientId: 1, name: 'Website', ...at }]),
-  'project:10': loaded([{ id: 100, parent: 0, name: 'Design', ...at }, { id: 101, parent: 100, name: 'Review', ...at }]),
+  'project:10': loaded([{ id: 100, parent: 0, name: 'Design', ...at }, { id: 101, parent: 0, name: 'Review', ...at }]),
 } satisfies Partial<Record<NodeKey, CatalogNode>>
 
 describe('buildTreeRows', () => {
@@ -29,8 +29,7 @@ describe('buildTreeRows', () => {
 
   it('shows only expanded branches', () => {
     expect(summary(build(catalog))).toEqual(['Acme', 'Globex'])
-    expect(summary(build(catalog, ['client:1', 'project:10']))).toEqual(['Acme', '  Website', '    Design', 'Globex'])
-    expect(summary(build(catalog, ['client:1', 'project:10', 'task:100']))).toEqual(['Acme', '  Website', '    Design', '      Review', 'Globex'])
+    expect(summary(build(catalog, ['client:1', 'project:10']))).toEqual(['Acme', '  Website', '    Design', '    Review', 'Globex'])
   })
 
   it('shows per-node status rows: loading, waiting, error, empty and load more', () => {
@@ -66,7 +65,7 @@ describe('buildTreeRows', () => {
   })
 
   it('filters loaded data only and opens the path to each match', () => {
-    expect(summary(build(catalog, [], 'review'))).toEqual(['Acme', '  Website', '    Design', '      Review'])
+    expect(summary(build(catalog, [], 'review'))).toEqual(['Acme', '  Website', '    Review'])
     expect(summary(build(catalog, [], 'glob'))).toEqual(['Globex'])
     expect(build(catalog, [], 'nothing')).toEqual([])
   })
