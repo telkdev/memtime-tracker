@@ -4,6 +4,8 @@ import type { EntryForm } from '../composables/useEntryForm'
 const props = defineProps<{ form: EntryForm }>()
 const emit = defineEmits<{ retry: [] }>()
 const f = props.form
+// A create that may have been saved offers no "Try again", which could save it twice. The list
+// opens in a new tab so the typed values stay here while the user checks.
 </script>
 
 <template>
@@ -37,7 +39,9 @@ const f = props.form
       variant="subtle"
       icon="i-lucide-circle-alert"
       :title="f.summary.value"
-      :actions="[{ label: 'Try again', onClick: () => emit('retry') }]"
+      :actions="f.maybeSaved.value
+        ? [{ label: 'Check the list', to: '/', target: '_blank', icon: 'i-lucide-external-link' }]
+        : [{ label: 'Try again', onClick: () => emit('retry') }]"
     />
   </div>
 </template>

@@ -68,6 +68,9 @@ export function useEntryForm(opts: EntryFormOptions) {
   const { error, pending, retryIn } = submitter
   const notFound = computed(() => mode.value === 'edit' && error.value?.code === 'NOT_FOUND')
 
+  /** A create whose outcome is unknown: it may have been saved, so saving again could duplicate it. */
+  const maybeSaved = computed(() => mode.value === 'create' && !!error.value && isConnectionError(error.value))
+
   /** Message shown above the form for errors that aren't about one field. */
   const summary = computed(() => {
     const e = error.value
@@ -134,7 +137,7 @@ export function useEntryForm(opts: EntryFormOptions) {
     durationText: times.duration.text,
     durationMs: times.duration.ms,
     start: times.start, end: times.end, endTime: times.endTime, endDayOffset: times.endDayOffset, startAmbiguous: times.startAmbiguous,
-    errors, isValid, warnings, isDirty: dirty.isDirty, markSaved: () => dirty.markSaved(), pending, error, notFound, summary, retryIn,
+    errors, isValid, warnings, isDirty: dirty.isDirty, markSaved: () => dirty.markSaved(), pending, error, notFound, maybeSaved, summary, retryIn,
     setDate: times.setDate, setStartTime: times.setStartTime, setDurationText: times.setDurationText,
     setEndTime: times.setEndTime, setEndNow: times.setEndNow, fixStartGap: times.fixStartGap,
     onSaved: submitter.onRetried, submit, switchToCreate, resetForNext,
