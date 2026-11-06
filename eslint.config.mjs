@@ -7,6 +7,14 @@ const keyAccess = {
   selector: 'MemberExpression[property.name=\'memtimeApiKey\'], ObjectPattern > Property[key.name=\'memtimeApiKey\']',
   message: 'Only server/utils/memtime.ts may read the API key (CLAUDE.md hard rule 1).',
 }
+const authSecretAccess = {
+  // The OAuth client secret and the session secret, read the same two ways as the key.
+  selector: ['clientSecret', 'sessionSecret'].flatMap(n => [
+    `MemberExpression[property.name='${n}']`,
+    `ObjectPattern > Property[key.name='${n}']`,
+  ]).join(', '),
+  message: 'Only server/utils/auth-config.ts may read the OAuth client secret or the session secret (CLAUDE.md hard rule 1).',
+}
 const upstreamUrl = {
   selector: 'Literal[value=/memtime-demo\\.deno\\.net/]',
   message: 'Call the upstream only through server/utils/memtime.ts; the base URL lives in runtimeConfig (hard rule 2).',
@@ -16,7 +24,7 @@ export default withNuxt(
   {
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'no-restricted-syntax': ['error', keyAccess, upstreamUrl],
+      'no-restricted-syntax': ['error', keyAccess, authSecretAccess, upstreamUrl],
       'vue/no-v-html': 'error',
     },
   },
@@ -25,7 +33,7 @@ export default withNuxt(
     files: ['app/**'],
     ignores: ['app/**/api/**'],
     rules: {
-      'no-restricted-syntax': ['error', keyAccess, upstreamUrl, {
+      'no-restricted-syntax': ['error', keyAccess, authSecretAccess, upstreamUrl, {
         selector: 'CallExpression[callee.name=\'$fetch\']',
         message: 'Only files in an api/ folder call $fetch. Add a function there and call it.',
       }],
@@ -65,6 +73,10 @@ export default withNuxt(
   {
     files: ['server/utils/memtime.ts', 'nuxt.config.ts'],
     rules: { 'no-restricted-syntax': 'off' },
+  },
+  {
+    files: ['server/utils/auth-config.ts'],
+    rules: { 'no-restricted-syntax': ['error', keyAccess, upstreamUrl] },
   },
   {
     files: ['scripts/**'],

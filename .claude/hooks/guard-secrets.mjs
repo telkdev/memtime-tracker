@@ -19,16 +19,17 @@ const text = [tool.content, tool.new_string, ...(tool.edits ?? []).map(e => e.ne
 
 const problems = []
 
-// The real key, if this machine has one. The hook may read .env even though Claude may not.
+// The real secrets, if this machine has them. The hook may read .env even though Claude may not.
+const SECRET_VARS = ['NUXT_MEMTIME_API_KEY', 'NUXT_CLIENT_SECRET', 'NUXT_SESSION_SECRET']
 const envFile = join(root, '.env')
-const realKey = existsSync(envFile)
-  ? readFileSync(envFile, 'utf8').match(/^NUXT_MEMTIME_API_KEY=(.+)$/m)?.[1]?.trim() ?? ''
-  : ''
-if (realKey.length >= 8 && text.includes(realKey))
-  problems.push('the real API key from .env appears in this write')
-
-if (rel === '.env.example' && /^NUXT_MEMTIME_API_KEY=\S/m.test(text))
-  problems.push('.env.example must keep NUXT_MEMTIME_API_KEY empty')
+const envText = existsSync(envFile) ? readFileSync(envFile, 'utf8') : ''
+for (const name of SECRET_VARS) {
+  const value = envText.match(new RegExp(`^${name}=(.+)$`, 'm'))?.[1]?.trim().replace(/^['"]|['"]$/g, '') ?? ''
+  if (value.length >= 8 && text.includes(value))
+    problems.push(`the real ${name} from .env appears in this write`)
+  if (rel === '.env.example' && new RegExp(`^${name}=\\S`, 'm').test(text))
+    problems.push(`.env.example must keep ${name} empty`)
+}
 
 // A literal bearer token or key-like assignment (24+ chars of base62) anywhere outside .env.
 if (/Bearer\s+[A-Za-z0-9_-]{24,}/.test(text))
@@ -36,13 +37,15 @@ if (/Bearer\s+[A-Za-z0-9_-]{24,}/.test(text))
 if (/(api[_-]?key|memtimeApiKey)\s*[:=]\s*['"`][A-Za-z0-9_-]{24,}['"`]/i.test(text))
   problems.push('hard-coded API key value found')
 
-// Client code must never touch the key, even by name.
+// Client code must never touch the key or the auth secrets, even by name.
 if (rel.startsWith('app/') && /memtimeApiKey|MEMTIME_API_KEY/.test(text))
   problems.push('client code (app/) references the API key; only server/utils/memtime.ts may')
+if (rel.startsWith('app/') && /clientSecret|sessionSecret|CLIENT_SECRET|SESSION_SECRET/.test(text))
+  problems.push('client code (app/) references an auth secret; only server/utils/auth-config.ts may')
 
 // The key must not be exposed through public runtime config.
-if (/nuxt\.config\.[cm]?ts$/.test(rel) && /public\s*:\s*\{[^}]*apiKey/is.test(text))
-  problems.push('API key placed under runtimeConfig.public; keep it private')
+if (/nuxt\.config\.[cm]?ts$/.test(rel) && /public\s*:\s*\{[^}]*(apiKey|clientSecret|sessionSecret)/is.test(text))
+  problems.push('a secret placed under runtimeConfig.public; keep it private')
 
 if (problems.length) {
   console.error(`Blocked write to ${rel}:\n- ${problems.join('\n- ')}`)

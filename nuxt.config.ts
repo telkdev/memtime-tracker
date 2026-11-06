@@ -14,6 +14,16 @@ export default defineNuxtConfig({
     // Private: only available on the server. Set via NUXT_MEMTIME_API_KEY.
     memtimeApiKey: '',
     memtimeBaseUrl: 'https://interview-api.memtime-demo.deno.net/api/v1',
+    // OAuth 2.0 login, with Memtime as the authorization server. All private. Login is on only
+    // when NUXT_CLIENT_ID is set; without it the app runs on the API key (mock API, smoke).
+    // Read only in server/utils/auth-config.ts.
+    clientId: '',
+    clientSecret: '',
+    redirectUri: '',
+    authBaseUrl: '',
+    authScope: '',
+    // Encrypts tokens at rest. NUXT_SESSION_SECRET, 32+ characters.
+    sessionSecret: '',
     rateLimit: {
       // Upstream allows 15/60s; one request is kept spare for clock skew.
       budget: 14,
@@ -35,6 +45,11 @@ export default defineNuxtConfig({
     },
   },
   compatibilityDate: '2026-10-01',
+  nitro: {
+    // Users and login sessions. A file store is right for one instance; with several, mount
+    // Redis/Upstash here instead (same reasoning as the rate limiter and cache).
+    storage: { auth: { driver: 'fs', base: './.data/auth' } },
+  },
   typescript: { strict: true },
   eslint: { config: { stylistic: true } },
 })
